@@ -4,5 +4,6 @@ public enum LocationType {
     BOTTOM_LANE,
     ALLY_BASE,
     ENEMY_BASE,
-    OTHER
+    FOREST,
+    RIVER
 }

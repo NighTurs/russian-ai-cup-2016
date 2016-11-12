@@ -60,6 +60,6 @@ public final class TestRunner {
     }
 
     private void validate(MyStrategy strategy) {
-        UnitLocationTypeStoreTest.test(strategy);
+        UnitLocationTypeTest.test(strategy);
     }
 }

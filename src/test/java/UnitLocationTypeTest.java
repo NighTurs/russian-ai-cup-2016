@@ -9,9 +9,9 @@ import java.util.Map;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public final class UnitLocationTypeStoreTest {
+public final class UnitLocationTypeTest {
 
-    private UnitLocationTypeStoreTest() {
+    private UnitLocationTypeTest() {
     }
 
     public static void test(MyStrategy myStrategy) {
@@ -22,7 +22,7 @@ public final class UnitLocationTypeStoreTest {
             towerCounter.put(type, 0);
         }
         for (Unit unit : myStrategy.worldProxy.allUnits()) {
-            LocationType type = myStrategy.unitLocationTypeStore.getLocationType(unit.getId());
+            LocationType type = myStrategy.unitLocationType.getLocationType(unit.getId());
             assertNotNull(type);
             counter.put(type, counter.get(type) + 1);
             if (unit instanceof Building && ((Building) unit).getType() == BuildingType.FACTION_BASE) {
@@ -37,7 +37,7 @@ public final class UnitLocationTypeStoreTest {
             }
         }
         for (Map.Entry<LocationType, Integer> entry : counter.entrySet()) {
-            if (entry.getKey() == LocationType.ENEMY_BASE) {
+            if (entry.getKey() == LocationType.ENEMY_BASE || entry.getKey() == LocationType.RIVER) {
                 continue;
             }
             assertTrue(String.format("Location %s can't be empty", entry.getKey()), entry.getValue() > 0);
