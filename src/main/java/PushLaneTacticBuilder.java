@@ -69,7 +69,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         double bestDist = Double.MAX_VALUE;
         Unit bestUnit = null;
         for (Unit unit : world.allUnits()) {
-            if (unitLocationType.getLocationType(unit.getId()) != lane) {
+            LocationType curLane = unitLocationType.getLocationType(unit.getId());
+            if (curLane != lane && curLane != LocationType.ALLY_BASE && curLane != LocationType.ENEMY_BASE) {
                 continue;
             }
             if (unit.getFaction() != opposingFaction &&
@@ -95,7 +96,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         double bestDist = Double.MAX_VALUE;
         Unit bestUnit = null;
         for (Unit unit : world.allUnits()) {
-            if (unitLocationType.getLocationType(unit.getId()) != lane) {
+            LocationType curLane = unitLocationType.getLocationType(unit.getId());
+            if (curLane != lane && curLane != LocationType.ALLY_BASE && curLane != LocationType.ENEMY_BASE) {
                 continue;
             }
             if (unit.getFaction() != allyFaction) {
