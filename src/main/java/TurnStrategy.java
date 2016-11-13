@@ -4,7 +4,8 @@ import java.util.*;
 
 public class TurnStrategy {
 
-    private static final List<TacticBuilder> tacticBuilders = Arrays.asList(new PushLaneTacticBuilder());
+    private static final List<TacticBuilder> tacticBuilders =
+            Arrays.asList(new PushLaneTacticBuilder(), new CastMagicMissileTacticBuilder());
     private final TurnContainer turnContainer;
     private final Move move;
 

@@ -26,4 +26,8 @@ public final class WizardTraits {
     public static double getWizardCastRange(Wizard wizard, Game game) {
         return game.getWizardCastRange();
     }
+
+    public static double getWizardCastSector(Game game) {
+        return game.getStaffSector() / 2;
+    }
 }

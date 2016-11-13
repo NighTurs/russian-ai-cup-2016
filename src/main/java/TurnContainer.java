@@ -1,6 +1,4 @@
-import model.Game;
-import model.Wizard;
-import model.World;
+import model.*;
 
 public class TurnContainer {
 
@@ -48,5 +46,23 @@ public class TurnContainer {
 
     public LanePicker getLanePicker() {
         return lanePicker;
+    }
+
+    public boolean isOffensiveMinion(Minion minion) {
+        return minion.getFaction() == opposingFaction() || (minion.getFaction() == Faction.NEUTRAL &&
+                (Math.abs(minion.getSpeedX()) + Math.abs(minion.getSpeedY()) != 0));
+    }
+
+    public boolean isOffensiveBuilding(Building building) {
+        return building.getFaction() == opposingFaction();
+    }
+
+    public boolean isOffensiveUnit(Unit unit) {
+        return (unit instanceof Building && isOffensiveBuilding((Building) unit)) ||
+                (unit instanceof Minion && isOffensiveMinion(((Minion) unit)));
+    }
+
+    public Faction opposingFaction() {
+        return self.getFaction() == Faction.ACADEMY ? Faction.RENEGADES : Faction.ACADEMY;
     }
 }

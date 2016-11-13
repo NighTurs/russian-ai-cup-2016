@@ -64,7 +64,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         WorldProxy world = turnContainer.getWorldProxy();
         Wizard self = turnContainer.getSelf();
         UnitLocationType unitLocationType = turnContainer.getUnitLocationType();
-        Faction opposingFaction = opposingFaction(self.getFaction());
+        Faction opposingFaction = turnContainer.opposingFaction();
 
         double bestDist = Double.MAX_VALUE;
         Unit bestUnit = null;
@@ -73,8 +73,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                 continue;
             }
             if (unit.getFaction() != opposingFaction &&
-                    !(unit.getFaction() == Faction.NEUTRAL && unit instanceof Minion &&
-                            (Math.abs(unit.getSpeedX()) + Math.abs(unit.getSpeedY()) != 0))) {
+                    !(unit instanceof Minion && turnContainer.isOffensiveMinion((Minion) unit))) {
                 continue;
             }
 
@@ -114,7 +113,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
 
     private boolean hasEnemyInAttackRange(TurnContainer turnContainer) {
         Wizard self = turnContainer.getSelf();
-        Faction opposingFaction = opposingFaction(self.getFaction());
+        Faction opposingFaction = turnContainer.opposingFaction();
         for (Unit unit : turnContainer.getWorldProxy().allUnits()) {
             if (unit.getFaction() != opposingFaction) {
                 continue;
@@ -125,10 +124,6 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             }
         }
         return false;
-    }
-
-    private Faction opposingFaction(Faction allyFaction) {
-        return allyFaction == Faction.ACADEMY ? Faction.RENEGADES : Faction.ACADEMY;
     }
 
     private static double dist(double x1, double y1, double x2, double y2) {

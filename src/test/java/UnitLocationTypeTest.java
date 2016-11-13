@@ -37,13 +37,14 @@ public final class UnitLocationTypeTest {
                 towerCounter.put(type, towerCounter.get(type) + 1);
             }
         }
-        for (Map.Entry<LocationType, Integer> entry : counter.entrySet()) {
-            if (entry.getKey() == LocationType.ENEMY_BASE || entry.getKey() == LocationType.RIVER) {
-                continue;
-            }
-            assertTrue(String.format("Location %s can't be empty", entry.getKey()), entry.getValue() > 0);
-        }
         if (turnContainer.getWorldProxy().getTickIndex() < 100) {
+            for (Map.Entry<LocationType, Integer> entry : counter.entrySet()) {
+                if (entry.getKey() == LocationType.ENEMY_BASE || entry.getKey() == LocationType.RIVER) {
+                    continue;
+                }
+                assertTrue(String.format("Location %s can't be empty", entry.getKey()), entry.getValue() > 0);
+            }
+
             for (Map.Entry<LocationType, Integer> entry : counter.entrySet()) {
                 if (!Arrays.asList(LocationType.TOP_LANE, LocationType.BOTTOM_LANE, LocationType.MIDDLE_LANE)
                         .contains(entry.getKey())) {

@@ -5,4 +5,5 @@ public final class Tactics {
     }
 
     public static final int PUSH_LANE_TACTIC_PRIORITY = 10;
+    public static final int CAST_MAGIC_MISSILE_TACTIC_PRIORITY = 15;
 }
