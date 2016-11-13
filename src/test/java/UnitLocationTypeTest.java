@@ -15,14 +15,15 @@ public final class UnitLocationTypeTest {
     }
 
     public static void test(MyStrategy myStrategy) {
+        TurnContainer turnContainer = myStrategy.turnContainer;
         Map<LocationType, Integer> counter = new EnumMap<>(LocationType.class);
         Map<LocationType, Integer> towerCounter = new EnumMap<>(LocationType.class);
         for (LocationType type : LocationType.values()) {
             counter.put(type, 0);
             towerCounter.put(type, 0);
         }
-        for (Unit unit : myStrategy.worldProxy.allUnits()) {
-            LocationType type = myStrategy.unitLocationType.getLocationType(unit.getId());
+        for (Unit unit : turnContainer.getWorldProxy().allUnits()) {
+            LocationType type = turnContainer.getUnitLocationType().getLocationType(unit.getId());
             assertNotNull(type);
             counter.put(type, counter.get(type) + 1);
             if (unit instanceof Building && ((Building) unit).getType() == BuildingType.FACTION_BASE) {
@@ -42,7 +43,7 @@ public final class UnitLocationTypeTest {
             }
             assertTrue(String.format("Location %s can't be empty", entry.getKey()), entry.getValue() > 0);
         }
-        if (myStrategy.worldProxy.getTickIndex() < 100) {
+        if (turnContainer.getWorldProxy().getTickIndex() < 100) {
             for (Map.Entry<LocationType, Integer> entry : counter.entrySet()) {
                 if (!Arrays.asList(LocationType.TOP_LANE, LocationType.BOTTOM_LANE, LocationType.MIDDLE_LANE)
                         .contains(entry.getKey())) {

@@ -1,19 +1,12 @@
 import model.*;
 
 public final class MyStrategy implements Strategy {
-    WorldProxy worldProxy;
-    Game game;
-    UnitLocationType unitLocationType;
+    TurnContainer turnContainer;
 
     @Override
     public void move(Wizard self, World world, Game game, Move move) {
-        this.game = game;
-        this.worldProxy = new WorldProxy(world);
-        this.unitLocationType = new UnitLocationType(worldProxy, game);
+        this.turnContainer = new TurnContainer(self, world, game);
 
-        move.setSpeed(game.getWizardForwardSpeed());
-        move.setStrafeSpeed(game.getWizardStrafeSpeed());
-        move.setTurn(game.getWizardMaxTurnAngle());
-        move.setAction(ActionType.MAGIC_MISSILE);
+        new TurnStrategy(turnContainer, move).findStrategy();
     }
 }
