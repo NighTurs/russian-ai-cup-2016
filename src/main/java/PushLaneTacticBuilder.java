@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public class PushLaneTacticBuilder implements TacticBuilder {
     private static final int SAFE_DISTANCE_MIN = 200;
-    private static final int SAFE_DISTANCE_MAX = 400;
+    private static final int SAFE_DISTANCE_MAX = 300;
 
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
