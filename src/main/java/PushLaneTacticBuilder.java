@@ -53,7 +53,9 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         MoveBuilder moveBuilder = new MoveBuilder();
         moveBuilder.setSpeed(mov.getSpeed());
         moveBuilder.setStrafeSpeed(mov.getStrafeSpeed());
-        moveBuilder.setTurn(mov.getTurn());
+        if (!hasEnemyInAttackRange(turnContainer)) {
+            moveBuilder.setTurn(mov.getTurn());
+        }
 
         return Optional.of(new TacticImpl("PushLane", moveBuilder, Tactics.PUSH_LANE_TACTIC_PRIORITY));
     }
@@ -62,7 +64,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         WorldProxy world = turnContainer.getWorldProxy();
         Wizard self = turnContainer.getSelf();
         UnitLocationType unitLocationType = turnContainer.getUnitLocationType();
-        Faction opposingFaction = self.getFaction() == Faction.ACADEMY ? Faction.RENEGADES : Faction.ACADEMY;
+        Faction opposingFaction = opposingFaction(self.getFaction());
 
         double bestDist = Double.MAX_VALUE;
         Unit bestUnit = null;
@@ -108,6 +110,25 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             }
         }
         return Optional.ofNullable(bestUnit);
+    }
+
+    private boolean hasEnemyInAttackRange(TurnContainer turnContainer) {
+        Wizard self = turnContainer.getSelf();
+        Faction opposingFaction = opposingFaction(self.getFaction());
+        for (Unit unit : turnContainer.getWorldProxy().allUnits()) {
+            if (unit.getFaction() != opposingFaction) {
+                continue;
+            }
+            double dist = unit.getDistanceTo(self);
+            if (dist < WizardTraits.getWizardCastRange(self, turnContainer.getGame())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Faction opposingFaction(Faction allyFaction) {
+        return allyFaction == Faction.ACADEMY ? Faction.RENEGADES : Faction.ACADEMY;
     }
 
     private static double dist(double x1, double y1, double x2, double y2) {

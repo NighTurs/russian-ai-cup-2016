@@ -22,4 +22,8 @@ public final class WizardTraits {
     public static double getWizardMaxTurnAngle(Wizard wizard, Game game) {
         return game.getWizardMaxTurnAngle();
     }
+
+    public static double getWizardCastRange(Wizard wizard, Game game) {
+        return game.getWizardCastRange();
+    }
 }
