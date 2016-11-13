@@ -54,7 +54,7 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
 
         double bestDist = Double.MAX_VALUE;
         Unit bestUnit = null;
-        for (Unit unit : world.allUnits()) {
+        for (Unit unit : world.allUnitsWoTrees()) {
             if (!turnContainer.isOffensiveUnit(unit)) {
                 continue;
             }
@@ -71,7 +71,7 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
         WorldProxy world = turnContainer.getWorldProxy();
         Wizard self = turnContainer.getSelf();
 
-        for (Unit unit : world.allUnits()) {
+        for (Unit unit : world.allUnitsWoTrees()) {
             if (!turnContainer.isOffensiveUnit(unit)) {
                 continue;
             }

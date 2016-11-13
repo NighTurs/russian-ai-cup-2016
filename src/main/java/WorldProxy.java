@@ -2,15 +2,46 @@ import model.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @SuppressWarnings("WeakerAccess")
 public final class WorldProxy {
 
     private final World world;
+    private final List<Player> players;
+    private final List<Wizard> wizards;
+    private final List<Minion> minions;
+    private final List<Projectile> projectiles;
+    private final List<Bonus> bonuses;
+    private final List<Building> buildings;
+    private final List<Tree> trees;
+    private final List<Unit> allUnits;
+    private final List<Unit> allUnitsWoTrees;
 
     public WorldProxy(World world) {
         this.world = world;
+        this.players = unmodifiableList(world.getPlayers());
+        this.wizards = unmodifiableList(world.getWizards());
+        this.minions = unmodifiableList(world.getMinions());
+        this.projectiles = unmodifiableList(world.getProjectiles());
+        this.bonuses = unmodifiableList(world.getBonuses());
+        this.buildings = unmodifiableList(world.getBuildings());
+        this.trees = unmodifiableList(world.getTrees());
+
+        List<Unit> units = new ArrayList<>();
+        units.addAll(getWizards());
+        units.addAll(getMinions());
+        units.addAll(getProjectiles());
+        units.addAll(getBonuses());
+        units.addAll(getBuildings());
+        this.allUnitsWoTrees = Collections.unmodifiableList(units);
+        units.addAll(getTrees());
+        this.allUnits = Collections.unmodifiableList(units);
+    }
+
+    private <T> List<T> unmodifiableList(T[] array) {
+        return Collections.unmodifiableList(Arrays.asList(array));
     }
 
     /**
@@ -47,7 +78,7 @@ public final class WorldProxy {
      * После каждого тика объекты, задающие игроков, пересоздаются.
      */
     public List<Player> getPlayers() {
-        return Arrays.asList(world.getPlayers());
+        return players;
     }
 
     /**
@@ -55,7 +86,7 @@ public final class WorldProxy {
      * После каждого тика объекты, задающие волшебников, пересоздаются.
      */
     public List<Wizard> getWizards() {
-        return Arrays.asList(world.getWizards());
+        return wizards;
     }
 
     /**
@@ -63,7 +94,7 @@ public final class WorldProxy {
      * После каждого тика объекты, задающие последователей, пересоздаются.
      */
     public List<Minion> getMinions() {
-        return Arrays.asList(world.getMinions());
+        return minions;
     }
 
     /**
@@ -71,7 +102,7 @@ public final class WorldProxy {
      * После каждого тика объекты, задающие снаряды, пересоздаются.
      */
     public List<Projectile> getProjectiles() {
-        return Arrays.asList(world.getProjectiles());
+        return projectiles;
     }
 
     /**
@@ -79,7 +110,7 @@ public final class WorldProxy {
      * После каждого тика объекты, задающие бонусы, пересоздаются.
      */
     public List<Bonus> getBonuses() {
-        return Arrays.asList(world.getBonuses());
+        return bonuses;
     }
 
     /**
@@ -87,7 +118,7 @@ public final class WorldProxy {
      * После каждого тика объекты, задающие строения, пересоздаются.
      */
     public List<Building> getBuildings() {
-        return Arrays.asList(world.getBuildings());
+        return buildings;
     }
 
     /**
@@ -95,7 +126,7 @@ public final class WorldProxy {
      * После каждого тика объекты, задающие деревья, пересоздаются.
      */
     public List<Tree> getTrees() {
-        return Arrays.asList(world.getTrees());
+        return trees;
     }
 
     /**
@@ -106,14 +137,11 @@ public final class WorldProxy {
     }
 
     public List<Unit> allUnits() {
-        List<Unit> units = new ArrayList<>();
-        units.addAll(getWizards());
-        units.addAll(getMinions());
-        units.addAll(getProjectiles());
-        units.addAll(getBonuses());
-        units.addAll(getBuildings());
-        units.addAll(getTrees());
-        return units;
+        return this.allUnits;
+    }
+
+    public List<Unit> allUnitsWoTrees() {
+        return this.allUnitsWoTrees;
     }
 
     public Building allyBase() {

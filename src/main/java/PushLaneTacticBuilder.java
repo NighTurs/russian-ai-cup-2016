@@ -68,7 +68,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
 
         double bestDist = Double.MAX_VALUE;
         Unit bestUnit = null;
-        for (Unit unit : world.allUnits()) {
+        for (Unit unit : world.allUnitsWoTrees()) {
             LocationType curLane = unitLocationType.getLocationType(unit.getId());
             if (curLane != lane && curLane != LocationType.ALLY_BASE && curLane != LocationType.ENEMY_BASE) {
                 continue;
@@ -95,7 +95,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
 
         double bestDist = Double.MAX_VALUE;
         Unit bestUnit = null;
-        for (Unit unit : world.allUnits()) {
+        for (Unit unit : world.allUnitsWoTrees()) {
             LocationType curLane = unitLocationType.getLocationType(unit.getId());
             if (curLane != lane && curLane != LocationType.ALLY_BASE && curLane != LocationType.ENEMY_BASE) {
                 continue;
@@ -116,7 +116,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     private boolean hasEnemyInAttackRange(TurnContainer turnContainer) {
         Wizard self = turnContainer.getSelf();
         Faction opposingFaction = turnContainer.opposingFaction();
-        for (Unit unit : turnContainer.getWorldProxy().allUnits()) {
+        for (Unit unit : turnContainer.getWorldProxy().allUnitsWoTrees()) {
             if (unit.getFaction() != opposingFaction) {
                 continue;
             }
