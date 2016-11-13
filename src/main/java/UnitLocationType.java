@@ -26,7 +26,7 @@ public class UnitLocationType {
         this.allyBaseYTop = world.getHeight() - (world.getHeight() - allyBase.getY()) * 2;
         this.enemyBaseXLeft = world.getWidth() -  allyBaseXRight;
         this.enemyBaseYBottom = (world.getHeight() - allyBase.getY()) * 2;
-        this.laneWidth = allyBaseXRight * 3 / 4;
+        this.laneWidth = allyBaseXRight * 1 / 2;
         this.worldWidth = world.getWidth();
         this.worldHeight = world.getHeight();
 
@@ -53,9 +53,9 @@ public class UnitLocationType {
             return LocationType.BOTTOM_LANE;
         } else if (y <= laneWidth || x <= laneWidth) {
             return LocationType.TOP_LANE;
-        } else if (Math.abs((worldHeight - y) - x) <= allyBaseXRight * Math.sqrt(2)) {
+        } else if (Math.abs((worldHeight - y) - x) <= laneWidth) {
             return LocationType.MIDDLE_LANE;
-        } else if (Math.abs(y - (worldWidth - x)) <= allyBaseXRight * Math.sqrt(2)) {
+        } else if (Math.abs((worldHeight - y) - (worldWidth - x)) <= laneWidth) {
             return LocationType.RIVER;
         } else {
             return LocationType.FOREST;
