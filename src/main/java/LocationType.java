@@ -5,5 +5,9 @@ public enum LocationType {
     ALLY_BASE,
     ENEMY_BASE,
     FOREST,
-    RIVER
+    RIVER;
+
+    public boolean isLane() {
+        return this == TOP_LANE || this == MIDDLE_LANE || this == BOTTOM_LANE;
+    }
 }

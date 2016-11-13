@@ -7,7 +7,7 @@ import static java.lang.StrictMath.hypot;
 public class PathFinder {
     private static final int DEFAULT_CELL_WIDTH = 100;
     private static final int STATIC_OBJECTS_BOOSTED_RADIUS = DEFAULT_CELL_WIDTH * 2;
-    private static final int UNSTATIC_OBJECTS_RADIUS_ADJUST = 3;
+    private static final double UNSTATIC_OBJECTS_RADIUS_ADJUST = 2.9;
     private static final double E = 1e-9;
 
     private final WorldProxy world;

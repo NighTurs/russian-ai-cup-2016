@@ -10,6 +10,7 @@ public class TurnContainer {
     private final WorldProxy worldProxy;
     private final UnitLocationType unitLocationType;
     private final PathFinder pathFinder;
+    private final LanePicker lanePicker;
 
     public TurnContainer(Wizard self, World world, Game game) {
         this.self = self;
@@ -18,6 +19,7 @@ public class TurnContainer {
         this.worldProxy = new WorldProxy(world);
         this.unitLocationType = new UnitLocationType(worldProxy, game);
         this.pathFinder = new PathFinder(self, worldProxy, game, unitLocationType);
+        this.lanePicker = new LanePicker(worldProxy, self, unitLocationType);
     }
 
     public Wizard getSelf() {
@@ -42,5 +44,9 @@ public class TurnContainer {
 
     public PathFinder getPathFinder() {
         return pathFinder;
+    }
+
+    public LanePicker getLanePicker() {
+        return lanePicker;
     }
 }
