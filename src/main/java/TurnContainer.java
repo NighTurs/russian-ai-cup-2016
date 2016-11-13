@@ -57,9 +57,32 @@ public class TurnContainer {
         return building.getFaction() == opposingFaction();
     }
 
+    public boolean isOffensiveWizard(Wizard wizard) {
+        return wizard.getFaction() == opposingFaction();
+    }
+
+    public boolean isAllyMinion(Minion minion) {
+        return minion.getFaction() == self.getFaction();
+    }
+
+    public boolean isAllyBuilding(Building building) {
+        return building.getFaction() == self.getFaction();
+    }
+
+    public boolean isAllyWizard(Wizard wizard) {
+        return wizard.getFaction() == self.getFaction() && wizard.getId() != self.getId();
+    }
+
     public boolean isOffensiveUnit(Unit unit) {
         return (unit instanceof Building && isOffensiveBuilding((Building) unit)) ||
-                (unit instanceof Minion && isOffensiveMinion(((Minion) unit)));
+                (unit instanceof Minion && isOffensiveMinion(((Minion) unit))) ||
+                (unit instanceof Wizard && isOffensiveWizard(((Wizard) unit)));
+    }
+
+    public boolean isAllyUnit(Unit unit) {
+        return (unit instanceof Building && isAllyBuilding((Building) unit)) ||
+                (unit instanceof Minion && isAllyMinion(((Minion) unit))) ||
+                (unit instanceof Wizard && isAllyWizard((Wizard) unit));
     }
 
     public Faction opposingFaction() {

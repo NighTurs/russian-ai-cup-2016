@@ -8,6 +8,7 @@ import java.util.Map;
 
 public class UnitLocationType {
 
+    private final static double EDGLE_LINE_WIDTH_MULTIPLIER = 2.1;
     private final Map<Long, LocationType> store;
     private final double allyBaseXRight;
     private final double allyBaseYTop;
@@ -24,7 +25,7 @@ public class UnitLocationType {
         Building allyBase = world.allyBase();
         this.allyBaseXRight = allyBase.getX() * 2;
         this.allyBaseYTop = world.getHeight() - (world.getHeight() - allyBase.getY()) * 2;
-        this.enemyBaseXLeft = world.getWidth() -  allyBaseXRight;
+        this.enemyBaseXLeft = world.getWidth() - allyBaseXRight;
         this.enemyBaseYBottom = (world.getHeight() - allyBase.getY()) * 2;
         this.laneWidth = allyBaseXRight * 1 / 2;
         this.worldWidth = world.getWidth();
@@ -49,9 +50,10 @@ public class UnitLocationType {
             return LocationType.ALLY_BASE;
         } else if (x >= enemyBaseXLeft && y <= enemyBaseYBottom) {
             return LocationType.ENEMY_BASE;
-        } else if (worldHeight - y <= laneWidth || worldWidth - x <= laneWidth) {
+        } else if (worldHeight - y <= laneWidth || worldWidth - x <= laneWidth ||
+                Math.hypot(x - worldWidth, y - worldHeight) < laneWidth * EDGLE_LINE_WIDTH_MULTIPLIER) {
             return LocationType.BOTTOM_LANE;
-        } else if (y <= laneWidth || x <= laneWidth) {
+        } else if (y <= laneWidth || x <= laneWidth || Math.hypot(x, y) < laneWidth * EDGLE_LINE_WIDTH_MULTIPLIER) {
             return LocationType.TOP_LANE;
         } else if (Math.abs((worldHeight - y) - x) <= laneWidth) {
             return LocationType.MIDDLE_LANE;

@@ -1,13 +1,12 @@
 import model.Faction;
-import model.Minion;
 import model.Unit;
 import model.Wizard;
 
 import java.util.Optional;
 
 public class PushLaneTacticBuilder implements TacticBuilder {
-    private static final int SAFE_DISTANCE_MIN = 200;
-    private static final int SAFE_DISTANCE_MAX = 300;
+    private static final int SAFE_DISTANCE_MIN = 100;
+    private static final int SAFE_DISTANCE_MAX = 200;
 
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
@@ -27,6 +26,16 @@ public class PushLaneTacticBuilder implements TacticBuilder {
 
         double retreatX = world.allyBase().getX();
         double retreatY = world.allyBase().getY();
+        double measureUnit = world.allyBase().getX();
+        if (lane == LocationType.BOTTOM_LANE && self.getY() < 4 * measureUnit) {
+            retreatX = world.getWidth() - measureUnit;
+            retreatY = world.getHeight() - measureUnit;
+        }
+
+        if (lane == LocationType.TOP_LANE && self.getX() > world.getWidth() - 4 * measureUnit) {
+            retreatX = measureUnit;
+            retreatY = measureUnit;
+        }
 
         double distWizard = dist(self.getX(), self.getY(), retreatX, retreatY);
         double distEnemy = dist(offensivePoint.getX(), offensivePoint.getY(), retreatX, retreatY);
@@ -73,8 +82,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             if (curLane != lane && curLane != LocationType.ALLY_BASE && curLane != LocationType.ENEMY_BASE) {
                 continue;
             }
-            if (unit.getFaction() != opposingFaction &&
-                    !(unit instanceof Minion && turnContainer.isOffensiveMinion((Minion) unit))) {
+            if (!turnContainer.isOffensiveUnit(unit)) {
                 continue;
             }
 
@@ -100,7 +108,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             if (curLane != lane && curLane != LocationType.ALLY_BASE && curLane != LocationType.ENEMY_BASE) {
                 continue;
             }
-            if (unit.getFaction() != allyFaction) {
+            if (!turnContainer.isAllyUnit(unit)) {
                 continue;
             }
 
