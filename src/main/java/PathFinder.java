@@ -5,17 +5,21 @@ import java.util.*;
 import static java.lang.StrictMath.hypot;
 
 public class PathFinder {
+
     private static final int DEFAULT_CELL_WIDTH = 100;
     private static final int STATIC_OBJECTS_BOOSTED_RADIUS = DEFAULT_CELL_WIDTH * 2;
-    private static final double UNSTATIC_OBJECTS_RADIUS_ADJUST = 2.9;
+    private static final double UNSTATIC_OBJECTS_RADIUS_ADJUST = 3.0;
     private static final double E = 1e-9;
-
+    private static final int SHORT_SEARCH_GRID_CELL = 10;
+    private static final int SHORT_SEARCH_GRID_SPAN = 250;
     private final WorldProxy world;
     private final Game game;
     private final boolean[][] isPassable;
     private final int cellWidth;
     private final int gridN;
     private final int gridM;
+    private PathPoint[][] shortSearchGrid;
+    private int shortSearchGridDim;
 
     public PathFinder(Wizard self, WorldProxy world, Game game, UnitLocationType unitLocationType) {
         this.world = world;
@@ -25,6 +29,7 @@ public class PathFinder {
         this.gridM = (int) (world.getHeight() / cellWidth + 1);
         this.isPassable = new boolean[gridN][gridM];
 
+        initShortSearchGrid(self, world);
         double wizardRadius = game.getWizardRadius();
 
         for (int i = 0; i * cellWidth <= world.getWidth(); i++) {
@@ -65,8 +70,9 @@ public class PathFinder {
     }
 
     public Movement findPath(Wizard wizard, double x, double y) {
-        Point straightPoint = straightPoint(wizard.getX(), wizard.getY(), x, y);
-        return findOptimalMovement(wizard, straightPoint.getX(), straightPoint.getY());
+        Point longDistPoint = longSearchNextPoint(wizard.getX(), wizard.getY(), x, y);
+        Point shortDistPoint = shortSearchNextPoint(longDistPoint.getX(), longDistPoint.getY());
+        return findOptimalMovement(wizard, shortDistPoint.getX(), shortDistPoint.getY());
     }
 
     private double toRealAxis(int index) {
@@ -150,7 +156,11 @@ public class PathFinder {
         return new Movement(optimalSpeed, optimalStrafe, optimalTurn);
     }
 
-    private Point straightPoint(double fromX, double fromY, double toX, double toY) {
+    private Point longSearchNextPoint(double fromX, double fromY, double toX, double toY) {
+        if (hypot(fromX - toX, fromY - toY) <= SHORT_SEARCH_GRID_SPAN) {
+            return new Point(toX, toY);
+        }
+
         int fromI = (int) Math.round(fromX / cellWidth);
         int fromH = (int) Math.round(fromY / cellWidth);
         @SuppressWarnings("SuspiciousNameCombination")
@@ -183,7 +193,6 @@ public class PathFinder {
                     if (firstMoveI == -1) {
                         firstMoveI = nextI;
                         firstMoveH = nextH;
-                        dist = hypot(fromX - toRealAxis(nextI), fromY - toRealAxis(nextH));
                     }
                     BfsPoint nextPoint = new BfsPoint(nextI, nextH, firstMoveI, firstMoveH, dist);
                     if (nextI < 0 || nextI >= gridN || nextH < 0 || nextH >= gridM ||
@@ -206,7 +215,151 @@ public class PathFinder {
         return new Point(bestX, bestY);
     }
 
+    private Point shortSearchNextPoint(double x, double y) {
+        int dim = shortSearchGridDim;
+
+        int selfInd = dim / 2 - 1;
+        Queue<BfsPoint> bfs = new PriorityQueue<>((a, b) -> Double.compare(a.getDist(), b.getDist()));
+        bfs.add(new BfsPoint(selfInd, selfInd, -1, -1, 0));
+        Map<BfsPoint, Double> visitedPoints = new HashMap<>();
+        visitedPoints.put(bfs.peek(), 0D);
+
+        double bestDist = hypot(shortSearchGrid[selfInd][selfInd].getPoint().getX() - x,
+                shortSearchGrid[selfInd][selfInd].getPoint().getY() - y);
+        double bestX = x;
+        double bestY = y;
+
+        while (!bfs.isEmpty()) {
+            BfsPoint cur = bfs.poll();
+            if (Math.abs(visitedPoints.get(cur) - cur.getDist()) > E) {
+                continue;
+            }
+            PathPoint p = shortSearchGrid[cur.getI()][cur.getH()];
+            for (Map.Entry<PathPoint, Double> entry : p.getNeighbors().entrySet()) {
+                BfsPoint next = new BfsPoint(entry.getKey().getI(),
+                        entry.getKey().getH(),
+                        cur.getFirstMoveI() == -1 ? entry.getKey().getI() : cur.getFirstMoveI(),
+                        cur.getFirstMoveH() == -1 ? entry.getKey().getH() : cur.getFirstMoveH(),
+                        cur.getDist() + entry.getValue());
+                if (!visitedPoints.containsKey(next) || visitedPoints.get(next) > next.getDist()) {
+                    visitedPoints.put(next, next.getDist());
+                    bfs.add(next);
+                    double curDist = hypot(x - entry.getKey().getPoint().getX(), y - entry.getKey().getPoint().getY());
+                    if (curDist < bestDist) {
+                        bestDist = curDist;
+                        bestX = shortSearchGrid[next.getFirstMoveI()][next.getFirstMoveH()].getPoint().getX();
+                        bestY = shortSearchGrid[next.getFirstMoveI()][next.getFirstMoveH()].getPoint().getY();
+                    }
+                }
+            }
+        }
+        return new Point(bestX, bestY);
+    }
+
+    private void initShortSearchGrid(Wizard self, WorldProxy world) {
+        int dim = SHORT_SEARCH_GRID_SPAN * 2 / SHORT_SEARCH_GRID_CELL + 2;
+        this.shortSearchGridDim = dim;
+        this.shortSearchGrid = new PathPoint[dim][dim];
+        double startX = self.getX() - SHORT_SEARCH_GRID_SPAN;
+        double startY = self.getY() - SHORT_SEARCH_GRID_SPAN;
+        double wizardRadius = self.getRadius();
+        for (int i = 0; i < dim; i++) {
+            for (int h = 0; h < dim; h++) {
+                double x = startX + i * SHORT_SEARCH_GRID_CELL;
+                double y = startY + h * SHORT_SEARCH_GRID_CELL;
+                shortSearchGrid[i][h] = new PathPoint(i, h, x, y);
+                if (x < wizardRadius || x > world.getWidth() - wizardRadius || y < wizardRadius ||
+                        y > world.getHeight() - wizardRadius) {
+                    shortSearchGrid[i][h].setReachable(false);
+                }
+            }
+        }
+        for (Unit unit : world.allUnits()) {
+            if (unit instanceof Bonus || unit instanceof Projectile) {
+                continue;
+            }
+            if (unit.getId() == self.getId()) {
+                continue;
+            }
+            CircularUnit cunit = (CircularUnit) unit;
+            if (hypot(self.getX() - cunit.getX(), self.getY() - cunit.getY()) >
+                    SHORT_SEARCH_GRID_SPAN * Math.sqrt(2) + cunit.getRadius()) {
+                continue;
+            }
+            for (int i = 0; i < dim; i++) {
+                for (int h = 0; h < dim; h++) {
+                    if (!shortSearchGrid[i][h].isReachable()) {
+                        continue;
+                    }
+                    Point p = shortSearchGrid[i][h].getPoint();
+                    if (hypot(p.getX() - cunit.getX(), p.getY() - cunit.getY()) <= cunit.getRadius() + wizardRadius) {
+                        shortSearchGrid[i][h].setReachable(false);
+                        shortSearchGrid[i][h].setIntersectsWith(cunit);
+                    }
+                }
+            }
+        }
+        for (int i = 0; i < dim; i++) {
+            for (int h = 0; h < dim; h++) {
+                PathPoint pFrom = shortSearchGrid[i][h];
+                if (!pFrom.isReachable()) {
+                    continue;
+                }
+                List<CircularUnit> units = new ArrayList<>();
+                for (int j1 = -1; j1 <= 1; j1++) {
+                    for (int j2 = -1; j2 <= 1; j2++) {
+                        int curI = i + j1;
+                        int curH = h + j2;
+                        if (curI < 0 || curH < 0 || curI >= dim || curH >= dim) {
+                            continue;
+                        }
+                        if (shortSearchGrid[curI][curH].getIntersectsWith() != null) {
+                            units.add(shortSearchGrid[curI][curH].getIntersectsWith());
+                        }
+                    }
+                }
+                for (int j1 = 0; j1 <= 1; j1++) {
+                    for (int j2 = -1; j2 <= 1; j2++) {
+                        if ((j1 == 0 && j2 == 0) || (j1 == 0 && j2 == -1)) {
+                            continue;
+                        }
+                        int curI = i + j1;
+                        int curH = h + j2;
+                        if (curI < 0 || curH < 0 || curI >= dim || curH >= dim) {
+                            continue;
+                        }
+                        PathPoint pTo = shortSearchGrid[curI][curH];
+                        if (!pTo.isReachable()) {
+                            continue;
+                        }
+                        boolean foundIntersect = false;
+                        for (CircularUnit unit : units) {
+                            if (isLineIntersectsCircle(pFrom.getPoint().getX(),
+                                    pTo.getPoint().getX(),
+                                    pFrom.getPoint().getY(),
+                                    pTo.getPoint().getY(), unit.getX(), unit.getY(), unit.getRadius() + wizardRadius)) {
+                                foundIntersect = true;
+                            }
+                        }
+                        if (!foundIntersect) {
+                            double dist = hypot(pFrom.getPoint().getX() - pTo.getPoint().getX(),
+                                    pFrom.getPoint().getY() - pTo.getPoint().getY());
+                            pFrom.getNeighbors().put(pTo, dist);
+                            pTo.getNeighbors().put(pFrom, dist);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean isLineIntersectsCircle(double x1, double x2, double y1, double y2, double cx, double cy, double r) {
+        return Math.abs((x2 - x1) * cx + (y1 - y2) * cy + (x1 - x2) * y1 + (y2 - y1) * x1) /
+                Math.sqrt((x2 - x1) * (x2 - x1) + (y1 - y2) * (y1 - y2)) <= r;
+    }
+
     private static class BfsPoint {
+
         private final int i;
         private final int h;
         private final int firstMoveI;
@@ -256,6 +409,56 @@ public class PathFinder {
         @Override
         public int hashCode() {
             return Objects.hash(i, h);
+        }
+    }
+
+    private static class PathPoint {
+
+        private int i;
+        private int h;
+        private Point point;
+        private boolean isReachable;
+        private Map<PathPoint, Double> neighbors;
+        private CircularUnit intersectsWith;
+
+        public PathPoint(int i, int h, double x, double y) {
+            this.i = i;
+            this.h = h;
+            this.point = new Point(x, y);
+            this.isReachable = true;
+            this.neighbors = new HashMap<>();
+        }
+
+        public int getI() {
+            return i;
+        }
+
+        public int getH() {
+            return h;
+        }
+
+        public Point getPoint() {
+            return point;
+        }
+
+        public boolean isReachable() {
+            return isReachable;
+        }
+
+        public Map<PathPoint, Double> getNeighbors() {
+            return neighbors;
+        }
+
+        public CircularUnit getIntersectsWith() {
+            return intersectsWith;
+        }
+
+        public void setReachable(boolean reachable) {
+            isReachable = reachable;
+        }
+
+        public void setIntersectsWith(CircularUnit intersectsWith) {
+            this.intersectsWith = intersectsWith;
         }
     }
 }
