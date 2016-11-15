@@ -27,7 +27,7 @@ public class UnitLocationType {
         this.allyBaseYTop = world.getHeight() - (world.getHeight() - allyBase.getY()) * 2;
         this.enemyBaseXLeft = world.getWidth() - allyBaseXRight;
         this.enemyBaseYBottom = (world.getHeight() - allyBase.getY()) * 2;
-        this.laneWidth = allyBaseXRight * 1 / 2;
+        this.laneWidth = allyBaseXRight * 2 / 3;
         this.worldWidth = world.getWidth();
         this.worldHeight = world.getHeight();
 
