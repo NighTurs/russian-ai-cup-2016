@@ -9,15 +9,17 @@ public class TurnContainer {
     private final UnitLocationType unitLocationType;
     private final PathFinder pathFinder;
     private final LanePicker lanePicker;
+    private final Memory memory;
 
-    public TurnContainer(Wizard self, World world, Game game) {
+    public TurnContainer(Wizard self, World world, Game game, Memory memory) {
         this.self = self;
         this.world = world;
         this.game = game;
+        this.memory = memory;
         this.worldProxy = new WorldProxy(world);
         this.unitLocationType = new UnitLocationType(worldProxy, game);
         this.pathFinder = new PathFinder(self, worldProxy, game, unitLocationType);
-        this.lanePicker = new LanePicker(worldProxy, self, unitLocationType);
+        this.lanePicker = new LanePicker(worldProxy, self, unitLocationType, this.memory);
     }
 
     public Wizard getSelf() {
