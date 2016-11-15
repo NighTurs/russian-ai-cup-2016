@@ -6,9 +6,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class UnitLocationType {
+public class MapUtils {
 
-    private final static double EDGLE_LINE_WIDTH_MULTIPLIER = 2.1;
+    private static final double EDGLE_LINE_WIDTH_MULTIPLIER = 2.1;
     private final Map<Long, LocationType> store;
     private final double allyBaseXRight;
     private final double allyBaseYTop;
@@ -18,7 +18,7 @@ public class UnitLocationType {
     private final double worldWidth;
     private final double worldHeight;
 
-    public UnitLocationType(WorldProxy world, Game game) {
+    public MapUtils(WorldProxy world, Game game) {
         this.store = new HashMap<>();
         List<Unit> units = world.allUnits();
 

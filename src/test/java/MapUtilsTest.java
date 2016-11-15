@@ -9,9 +9,9 @@ import java.util.Map;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public final class UnitLocationTypeTest {
+public final class MapUtilsTest {
 
-    private UnitLocationTypeTest() {
+    private MapUtilsTest() {
     }
 
     public static void test(MyStrategy myStrategy) {
@@ -23,7 +23,7 @@ public final class UnitLocationTypeTest {
             towerCounter.put(type, 0);
         }
         for (Unit unit : turnContainer.getWorldProxy().allUnits()) {
-            LocationType type = turnContainer.getUnitLocationType().getLocationType(unit.getId());
+            LocationType type = turnContainer.getMapUtils().getLocationType(unit.getId());
             assertNotNull(type);
             counter.put(type, counter.get(type) + 1);
             if (unit instanceof Building && ((Building) unit).getType() == BuildingType.FACTION_BASE) {

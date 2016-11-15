@@ -5,13 +5,13 @@ public class LanePicker {
     private static final int UNFIXED_LANE_TICK_THRESHOLD = 500;
     private final WorldProxy world;
     private final Wizard self;
-    private final UnitLocationType unitLocationType;
+    private final MapUtils mapUtils;
     private final Memory memory;
 
-    public LanePicker(WorldProxy world, Wizard self, UnitLocationType unitLocationType, Memory memory) {
+    public LanePicker(WorldProxy world, Wizard self, MapUtils mapUtils, Memory memory) {
         this.world = world;
         this.self = self;
-        this.unitLocationType = unitLocationType;
+        this.mapUtils = mapUtils;
         this.memory = memory;
     }
 
@@ -33,7 +33,7 @@ public class LanePicker {
             if (wizard.getId() == self.getId()) {
                 continue;
             }
-            LocationType curType = unitLocationType.getLocationType(wizard.getId());
+            LocationType curType = mapUtils.getLocationType(wizard.getId());
             switch (curType) {
                 case TOP_LANE:
                     top++;

@@ -21,7 +21,7 @@ public class PathFinder {
     private PathPoint[][] shortSearchGrid;
     private int shortSearchGridDim;
 
-    public PathFinder(Wizard self, WorldProxy world, Game game, UnitLocationType unitLocationType) {
+    public PathFinder(Wizard self, WorldProxy world, Game game, MapUtils mapUtils) {
         this.world = world;
         this.game = game;
         this.cellWidth = DEFAULT_CELL_WIDTH;
@@ -37,7 +37,7 @@ public class PathFinder {
                 isPassable[i][h] = true;
                 double x = toRealAxis(i);
                 double y = toRealAxis(h);
-                if (unitLocationType.getLocationType(x, y) == LocationType.FOREST) {
+                if (mapUtils.getLocationType(x, y) == LocationType.FOREST) {
                     isPassable[i][h] = false;
                 }
                 if (x < wizardRadius || y < wizardRadius || world.getHeight() - y < wizardRadius ||

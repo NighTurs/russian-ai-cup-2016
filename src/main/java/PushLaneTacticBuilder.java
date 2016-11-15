@@ -72,13 +72,12 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     private Optional<Unit> findClosestOffensiveUnit(LocationType lane, TurnContainer turnContainer) {
         WorldProxy world = turnContainer.getWorldProxy();
         Wizard self = turnContainer.getSelf();
-        UnitLocationType unitLocationType = turnContainer.getUnitLocationType();
-        Faction opposingFaction = turnContainer.opposingFaction();
+        MapUtils mapUtils = turnContainer.getMapUtils();
 
         double bestDist = Double.MAX_VALUE;
         Unit bestUnit = null;
         for (Unit unit : world.allUnitsWoTrees()) {
-            LocationType curLane = unitLocationType.getLocationType(unit.getId());
+            LocationType curLane = mapUtils.getLocationType(unit.getId());
             if (curLane != lane && curLane != LocationType.ALLY_BASE && curLane != LocationType.ENEMY_BASE) {
                 continue;
             }
@@ -98,13 +97,13 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     private Optional<Unit> findClosestAllyUnit(Point toPoint, LocationType lane, TurnContainer turnContainer) {
         WorldProxy world = turnContainer.getWorldProxy();
         Wizard self = turnContainer.getSelf();
-        UnitLocationType unitLocationType = turnContainer.getUnitLocationType();
+        MapUtils mapUtils = turnContainer.getMapUtils();
         Faction allyFaction = self.getFaction();
 
         double bestDist = Double.MAX_VALUE;
         Unit bestUnit = null;
         for (Unit unit : world.allUnitsWoTrees()) {
-            LocationType curLane = unitLocationType.getLocationType(unit.getId());
+            LocationType curLane = mapUtils.getLocationType(unit.getId());
             if (curLane != lane && curLane != LocationType.ALLY_BASE && curLane != LocationType.ENEMY_BASE) {
                 continue;
             }
