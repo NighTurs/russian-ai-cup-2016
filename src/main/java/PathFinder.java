@@ -122,6 +122,11 @@ public class PathFinder {
                     double resX = wizard.getX() + speed * cos - strafe * sin;
                     double resY = wizard.getY() + speed * sin + strafe * cos;
                     boolean foundIntersection = false;
+                    if (resX < wizard.getRadius() || resY < wizard.getRadius() ||
+                            resX > world.getWidth() - wizard.getRadius() ||
+                            resY > world.getHeight() - wizard.getRadius()) {
+                        continue;
+                    }
                     for (Unit unit : world.allUnits()) {
                         if (unit.getId() == wizard.getId()) {
                             continue;
