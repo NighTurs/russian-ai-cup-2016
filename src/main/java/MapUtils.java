@@ -55,12 +55,12 @@ public class MapUtils {
         LocationType curLocationType = getLocationType(x, y);
         switch (lane) {
             case MIDDLE_LANE:
-                if (curLocationType != lane) {
+                if (curLocationType != lane && curLocationType != LocationType.ENEMY_BASE) {
                     return midLaneMidWaypoint;
                 }
                 return laneEnemyWaypoint;
             case TOP_LANE:
-                if (curLocationType != lane) {
+                if (curLocationType != lane && curLocationType != LocationType.ENEMY_BASE) {
                     return topLaneMidWaypoint;
                 }
                 if (y > laneWidth) {
@@ -69,7 +69,7 @@ public class MapUtils {
                     return laneEnemyWaypoint;
                 }
             case BOTTOM_LANE:
-                if (curLocationType != lane) {
+                if (curLocationType != lane && curLocationType != LocationType.ENEMY_BASE) {
                     return bottomLaneMidWaypoint;
                 }
                 if (x < worldWidth - laneWidth) {
