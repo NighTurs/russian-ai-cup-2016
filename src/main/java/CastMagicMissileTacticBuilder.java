@@ -1,7 +1,4 @@
-import model.ActionType;
-import model.CircularUnit;
-import model.Unit;
-import model.Wizard;
+import model.*;
 
 import java.util.Optional;
 
@@ -22,16 +19,8 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
             return assembleTactic(moveBuilder);
         } else {
             moveBuilder.setTurn(self.getAngleTo(bestTarget));
-        }
-
-        Optional<Unit> immediateTargetOpt = findImmediateTraget(turnContainer);
-        if (!immediateTargetOpt.isPresent()) {
             return assembleTactic(moveBuilder);
         }
-        Unit immediateTarget = immediateTargetOpt.get();
-        castWithMove(moveBuilder, immediateTarget, turnContainer);
-
-        return assembleTactic(moveBuilder);
     }
 
     private Optional<Tactic> assembleTactic(MoveBuilder moveBuilder) {
@@ -52,36 +41,44 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
         WorldProxy world = turnContainer.getWorldProxy();
         Wizard self = turnContainer.getSelf();
 
-        double bestDist = Double.MAX_VALUE;
         Unit bestUnit = null;
-        for (Unit unit : world.allUnitsWoTrees()) {
-            if (!turnContainer.isOffensiveUnit(unit)) {
+        int lowestLife = Integer.MAX_VALUE;
+        for (Wizard wizard : world.getWizards()) {
+            if (!turnContainer.isOffensiveWizard(wizard)) {
                 continue;
             }
-            double dist = unit.getDistanceTo(self);
-            if (dist <= WizardTraits.getWizardCastRange(self, turnContainer.getGame()) && bestDist > dist) {
-                bestDist = dist;
-                bestUnit = unit;
+            double dist = wizard.getDistanceTo(self);
+            if (dist <= WizardTraits.getWizardCastRange(self, turnContainer.getGame()) && lowestLife > wizard.getLife()) {
+                lowestLife = wizard.getLife();
+                bestUnit = wizard;
+            }
+        }
+        if (bestUnit != null) {
+            return Optional.of(bestUnit);
+        }
+
+        for (Building building : world.getBuildings()) {
+            if (!turnContainer.isOffensiveBuilding(building)) {
+                continue;
+            }
+            double dist = building.getDistanceTo(self);
+            if (dist <= WizardTraits.getWizardCastRange(self, turnContainer.getGame())) {
+                return Optional.of(building);
+            }
+        }
+
+        for (Minion minion : world.getMinions()) {
+            if (!turnContainer.isOffensiveMinion(minion)) {
+                continue;
+            }
+            double dist = minion.getDistanceTo(self);
+            if (dist <= WizardTraits.getWizardCastRange(self, turnContainer.getGame()) &&
+                    lowestLife > minion.getLife()) {
+                lowestLife = minion.getLife();
+                bestUnit = minion;
             }
         }
         return Optional.ofNullable(bestUnit);
-    }
-
-    private Optional<Unit> findImmediateTraget(TurnContainer turnContainer) {
-        WorldProxy world = turnContainer.getWorldProxy();
-        Wizard self = turnContainer.getSelf();
-
-        for (Unit unit : world.allUnitsWoTrees()) {
-            if (!turnContainer.isOffensiveUnit(unit)) {
-                continue;
-            }
-            double dist = unit.getDistanceTo(self);
-            if (dist <= WizardTraits.getWizardCastRange(self, turnContainer.getGame()) &&
-                    inCastSector(turnContainer, unit)) {
-                return Optional.of(unit);
-            }
-        }
-        return Optional.empty();
     }
 
     private boolean inCastSector(TurnContainer turnContainer, Unit unit) {
