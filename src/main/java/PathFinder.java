@@ -294,7 +294,7 @@ public class PathFinder {
             }
             CircularUnit cunit = (CircularUnit) unit;
             if (hypot(self.getX() - cunit.getX(), self.getY() - cunit.getY()) >
-                    SHORT_SEARCH_GRID_SPAN * Math.sqrt(2) + cunit.getRadius()) {
+                    SHORT_SEARCH_GRID_SPAN * Math.sqrt(2) + cunit.getRadius() + wizardRadius) {
                 continue;
             }
             for (int i = 0; i < dim; i++) {
@@ -303,7 +303,9 @@ public class PathFinder {
                         continue;
                     }
                     Point p = shortSearchGrid[i][h].getPoint();
-                    if (hypot(p.getX() - cunit.getX(), p.getY() - cunit.getY()) <= cunit.getRadius() + wizardRadius) {
+                    double radius = cunit.getRadius() +
+                            (cunit instanceof Minion || cunit instanceof Building ? UNSTATIC_OBJECTS_RADIUS_ADJUST : 0);
+                    if (hypot(p.getX() - cunit.getX(), p.getY() - cunit.getY()) <= radius + wizardRadius) {
                         shortSearchGrid[i][h].setReachable(false);
                         shortSearchGrid[i][h].setIntersectsWith(cunit);
                     }
@@ -348,7 +350,12 @@ public class PathFinder {
                             if (isLineIntersectsCircle(pFrom.getPoint().getX(),
                                     pTo.getPoint().getX(),
                                     pFrom.getPoint().getY(),
-                                    pTo.getPoint().getY(), unit.getX(), unit.getY(), unit.getRadius() + wizardRadius)) {
+                                    pTo.getPoint().getY(),
+                                    unit.getX(),
+                                    unit.getY(),
+                                    unit.getRadius() + (unit instanceof Minion || unit instanceof Building ?
+                                            UNSTATIC_OBJECTS_RADIUS_ADJUST :
+                                            0) + wizardRadius)) {
                                 foundIntersect = true;
                             }
                         }
