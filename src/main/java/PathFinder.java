@@ -14,7 +14,7 @@ public class PathFinder {
     private static final int SHORT_SEARCH_GRID_SPAN = 250;
     private final WorldProxy world;
     private final Game game;
-    private final boolean[][] isPassable;
+    private final boolean[][] longSearchGrid;
     private final int cellWidth;
     private final int gridN;
     private final int gridM;
@@ -27,22 +27,22 @@ public class PathFinder {
         this.cellWidth = DEFAULT_CELL_WIDTH;
         this.gridN = (int) (world.getWidth() / cellWidth + 1);
         this.gridM = (int) (world.getHeight() / cellWidth + 1);
-        this.isPassable = new boolean[gridN][gridM];
+        this.longSearchGrid = new boolean[gridN][gridM];
 
-        initShortSearchGrid(self, world);
+        initShortSearchGrid(self);
         double wizardRadius = game.getWizardRadius();
 
         for (int i = 0; i * cellWidth <= world.getWidth(); i++) {
             for (int h = 0; h * cellWidth <= world.getHeight(); h++) {
-                isPassable[i][h] = true;
+                longSearchGrid[i][h] = true;
                 double x = toRealAxis(i);
                 double y = toRealAxis(h);
                 if (mapUtils.getLocationType(x, y) == LocationType.FOREST) {
-                    isPassable[i][h] = false;
+                    longSearchGrid[i][h] = false;
                 }
                 if (x < wizardRadius || y < wizardRadius || world.getHeight() - y < wizardRadius ||
                         world.getWidth() - x < wizardRadius) {
-                    isPassable[i][h] = false;
+                    longSearchGrid[i][h] = false;
                 }
             }
         }
@@ -62,7 +62,7 @@ public class PathFinder {
                         continue;
                     }
                     if (unit.getDistanceTo(i * cellWidth, h * cellWidth) <= unitR) {
-                        isPassable[i][h] = false;
+                        longSearchGrid[i][h] = false;
                     }
                 }
             }
@@ -202,7 +202,7 @@ public class PathFinder {
                     BfsPoint nextPoint = new BfsPoint(nextI, nextH, firstMoveI, firstMoveH, dist);
                     if (nextI < 0 || nextI >= gridN || nextH < 0 || nextH >= gridM ||
                             (visitedPoints.containsKey(nextPoint) && visitedPoints.get(nextPoint) <= dist) ||
-                            !isPassable[nextI][nextH]) {
+                            !longSearchGrid[nextI][nextH]) {
                         continue;
                     }
                     double curDist = hypot(toX - toRealAxis(nextI), toY - toRealAxis(nextH));
@@ -267,7 +267,7 @@ public class PathFinder {
         return new Point(bestX, bestY);
     }
 
-    private void initShortSearchGrid(Wizard self, WorldProxy world) {
+    private void initShortSearchGrid(Wizard self) {
         int dim = SHORT_SEARCH_GRID_SPAN * 2 / SHORT_SEARCH_GRID_CELL + 2;
         this.shortSearchGridDim = dim;
         this.shortSearchGrid = new PathPoint[dim][dim];
