@@ -146,6 +146,16 @@ public class PathFinder {
                             foundIntersection = true;
                             break;
                         }
+                        if (isLineIntersectsCircle(wizard.getX(),
+                                resX,
+                                wizard.getY(),
+                                resY,
+                                unit.getX(),
+                                unit.getY(),
+                                wizard.getRadius())) {
+                            foundIntersection = true;
+                            break;
+                        }
                     }
                     if (foundIntersection) {
                         continue;
@@ -374,8 +384,22 @@ public class PathFinder {
     }
 
     private boolean isLineIntersectsCircle(double x1, double x2, double y1, double y2, double cx, double cy, double r) {
-        return Math.abs((x2 - x1) * cx + (y1 - y2) * cy + (x1 - x2) * y1 + (y2 - y1) * x1) /
-                Math.sqrt((x2 - x1) * (x2 - x1) + (y1 - y2) * (y1 - y2)) <= r;
+        double a = x2 - x1;
+        double b = y1 - y2;
+        double c = (x1 - x2) * y1 + (y2 - y1) * x1;
+        double xi = (b * (b * cx - a * cy) - a * c) / (a * a + b * b);
+        double yi = (a * (-b * cx + a * cy) - b * c) / (a * a + b * b);
+        return isBetween(xi, x1, x2) && isBetween(yi, y1, y2) && hypot(cx - xi, cy - yi) <= r;
+    }
+
+    @SuppressWarnings("AssignmentToMethodParameter")
+    private boolean isBetween(double v, double v1, double v2) {
+        if (v1 > v2) {
+            double z = v1;
+            v1 = v2;
+            v2 = z;
+        }
+        return v >= v1 && v <= v2;
     }
 
     private static class BfsPoint {
