@@ -224,10 +224,13 @@ public class PathFinder {
         int dim = shortSearchGridDim;
 
         int selfInd = dim / 2 - 1;
+        double[][] visitedPoints = new double[dim][dim];
+        for (int i = 0; i < dim; i++) {
+            Arrays.fill(visitedPoints[i], -1);
+        }
         Queue<BfsPoint> bfs = new PriorityQueue<>((a, b) -> Double.compare(a.getDist(), b.getDist()));
         bfs.add(new BfsPoint(selfInd, selfInd, -1, -1, 0));
-        Map<BfsPoint, Double> visitedPoints = new HashMap<>();
-        visitedPoints.put(bfs.peek(), 0D);
+        visitedPoints[selfInd][selfInd] = 0;
 
         double bestDist = hypot(shortSearchGrid[selfInd][selfInd].getPoint().getX() - x,
                 shortSearchGrid[selfInd][selfInd].getPoint().getY() - y);
@@ -236,18 +239,21 @@ public class PathFinder {
 
         while (!bfs.isEmpty()) {
             BfsPoint cur = bfs.poll();
-            if (Math.abs(visitedPoints.get(cur) - cur.getDist()) > E) {
+            if (Math.abs(visitedPoints[cur.getI()][cur.getH()] - cur.getDist()) > E) {
                 continue;
             }
             PathPoint p = shortSearchGrid[cur.getI()][cur.getH()];
             for (Map.Entry<PathPoint, Double> entry : p.getNeighbors().entrySet()) {
-                BfsPoint next = new BfsPoint(entry.getKey().getI(),
-                        entry.getKey().getH(),
-                        cur.getFirstMoveI() == -1 ? entry.getKey().getI() : cur.getFirstMoveI(),
-                        cur.getFirstMoveH() == -1 ? entry.getKey().getH() : cur.getFirstMoveH(),
-                        cur.getDist() + entry.getValue());
-                if (!visitedPoints.containsKey(next) || visitedPoints.get(next) > next.getDist()) {
-                    visitedPoints.put(next, next.getDist());
+                int newI = entry.getKey().getI();
+                int newH = entry.getKey().getH();
+                double newDist = cur.getDist() + entry.getValue();
+                if (Math.abs(visitedPoints[newI][newH] + 1) < E || visitedPoints[newI][newH] > newDist) {
+                    BfsPoint next = new BfsPoint(newI,
+                            newH,
+                            cur.getFirstMoveI() == -1 ? entry.getKey().getI() : cur.getFirstMoveI(),
+                            cur.getFirstMoveH() == -1 ? entry.getKey().getH() : cur.getFirstMoveH(),
+                            newDist);
+                    visitedPoints[newI][newH] = newDist;
                     bfs.add(next);
                     double curDist = hypot(x - entry.getKey().getPoint().getX(), y - entry.getKey().getPoint().getY());
                     if (curDist < bestDist) {
