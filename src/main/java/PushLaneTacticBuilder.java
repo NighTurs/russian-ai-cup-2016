@@ -3,6 +3,7 @@ import model.*;
 import java.util.Optional;
 
 public class PushLaneTacticBuilder implements TacticBuilder {
+
     private static final int ENEMY_MINION_MAX_DIST = 350;
     private static final int ENEMY_MIN_DIST_VS_XP_RANGE = 200;
     private static final int TOWER_DANGER_RANGE_INC = 20;
@@ -25,13 +26,17 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                 action = Action.PUSH;
             }
         } else {
-            Unit avantgard = findAllyAvantgardMinionOrBuilding(lane, turnContainer);
-            Point waypointAvant = mapUtils.pushWaypoint(avantgard.getX(), avantgard.getY(), lane);
-            if (avantgard.getDistanceTo(waypointAvant.getX(), waypointAvant.getY()) >
-                    self.getDistanceTo(waypointAvant.getX(), waypointAvant.getY())) {
+            if (shouldRetreatBecauseOfBuildings(lane, turnContainer)) {
                 action = Action.RETREAT;
             } else {
-                action = Action.PUSH;
+                Unit avantgard = findAllyAvantgardMinionOrBuilding(lane, turnContainer);
+                Point waypointAvant = mapUtils.pushWaypoint(avantgard.getX(), avantgard.getY(), lane);
+                if (avantgard.getDistanceTo(waypointAvant.getX(), waypointAvant.getY()) >
+                        self.getDistanceTo(waypointAvant.getX(), waypointAvant.getY())) {
+                    action = Action.RETREAT;
+                } else {
+                    action = Action.PUSH;
+                }
             }
         }
 
@@ -90,14 +95,13 @@ public class PushLaneTacticBuilder implements TacticBuilder {
 
     private boolean shouldRetreatBecauseOfBuildings(LocationType lane, TurnContainer turnContainer) {
         Building building = null;
-        for (Unit unit : turnContainer.getWorldProxy().allUnitsWoTrees()) {
-            if (!(unit instanceof Building) || !turnContainer.isOffensiveUnit(unit)) {
+        for (Building unit : turnContainer.getWorldProxy().getBuildings()) {
+            if (!turnContainer.isOffensiveBuilding(unit)) {
                 continue;
             }
             double dist = turnContainer.getSelf().getDistanceTo(unit);
-            if (dist <=
-                    ((Building) unit).getAttackRange() - turnContainer.getSelf().getRadius() + TOWER_DANGER_RANGE_INC) {
-                building = (Building) unit;
+            if (dist <= unit.getAttackRange() + turnContainer.getSelf().getRadius() + TOWER_DANGER_RANGE_INC) {
+                building = unit;
             }
         }
         if (building == null) {
@@ -106,7 +110,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         int c = 0;
         for (Unit unit : turnContainer.getWorldProxy().allUnitsWoTrees()) {
             if (turnContainer.isAllyUnit(unit) && building.getDistanceTo(unit) <=
-                    building.getAttackRange() - ((CircularUnit) unit).getRadius() + TOWER_DANGER_RANGE_INC) {
+                    building.getAttackRange() + ((CircularUnit) unit).getRadius()) {
                 c++;
             }
         }
@@ -165,7 +169,6 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     private boolean hasEnemyInVisibilityRange(TurnContainer turnContainer) {
         return hasEnemyInRange(turnContainer, turnContainer.getSelf().getVisionRange());
     }
-
 
     private boolean hasEnemyInAttackRange(TurnContainer turnContainer) {
         return hasEnemyInRange(turnContainer,
