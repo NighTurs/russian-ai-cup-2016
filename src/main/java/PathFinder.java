@@ -11,7 +11,7 @@ public class PathFinder {
     private static final double E = 1e-9;
     private static final int SHORT_SEARCH_GRID_CELL = 10;
     private static final int SHORT_SEARCH_GRID_SPAN = 250;
-    private static final int LONG_DISTANCE_MIN_FIRST_MOVE = 500;
+    private static final int LONG_DISTANCE_MIN_FIRST_MOVE = 1000;
     private static final int MAX_ANGLE_RADIUS = 500;
     private final WorldProxy world;
     private final Game game;
@@ -176,8 +176,7 @@ public class PathFinder {
                     int firstMoveI = cur.getFirstMoveI();
                     int firstMoveH = cur.getFirstMoveH();
                     double dist = cur.getDist() + (j1 == 0 || j2 == 0 ? cellWidth : diagDist);
-                    if (firstMoveI == -1 || hypot(fromX - toRealAxis(firstMoveI), fromY - toRealAxis(firstMoveH)) <
-                            LONG_DISTANCE_MIN_FIRST_MOVE) {
+                    if (firstMoveI == -1 || dist < LONG_DISTANCE_MIN_FIRST_MOVE) {
                         firstMoveI = nextI;
                         firstMoveH = nextH;
                     }
