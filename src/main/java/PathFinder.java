@@ -7,7 +7,6 @@ import static java.lang.StrictMath.hypot;
 public class PathFinder {
 
     private static final int DEFAULT_CELL_WIDTH = 100;
-    private static final int STATIC_OBJECTS_BOOSTED_RADIUS = DEFAULT_CELL_WIDTH * 2;
     private static final double UNSTATIC_OBJECTS_RADIUS_ADJUST = 2.9;
     private static final double E = 1e-9;
     private static final int SHORT_SEARCH_GRID_CELL = 10;
@@ -50,27 +49,6 @@ public class PathFinder {
                 }
             }
         }
-
-        for (Unit unit : world.allUnits()) {
-            if (!(unit instanceof Tree) && !(unit instanceof Building)) {
-                continue;
-            }
-            double unitR = STATIC_OBJECTS_BOOSTED_RADIUS;
-            for (int i = rightCell(unit.getX() - unitR, cellWidth);
-                    i <= leftCell(unit.getX() + unitR, cellWidth);
-                    i++) {
-                for (int h = rightCell(unit.getY() - unitR, cellWidth);
-                        h <= leftCell(unit.getY() + unitR, cellWidth);
-                        h++) {
-                    if (i < 0 || h < 0 || i >= gridN || h >= gridM) {
-                        continue;
-                    }
-                    if (unit.getDistanceTo(i * cellWidth, h * cellWidth) <= unitR) {
-                        longSearchGrid[i][h] = false;
-                    }
-                }
-            }
-        }
     }
 
     public Movement findPath(Wizard wizard, double x, double y) {
@@ -81,24 +59,6 @@ public class PathFinder {
 
     private double toRealAxis(int index) {
         return index * cellWidth;
-    }
-
-    private static int rightCell(double value, int cellWidth) {
-        int ceil = (int) Math.ceil(value);
-        if (ceil % cellWidth == 0) {
-            return ceil / cellWidth;
-        } else {
-            return ceil / cellWidth + 1;
-        }
-    }
-
-    private static int leftCell(double value, int cellWidth) {
-        int floor = (int) Math.floor(value);
-        if (floor % cellWidth == 0) {
-            return floor / cellWidth;
-        } else {
-            return floor / cellWidth - 1;
-        }
     }
 
     private Movement findOptimalMovement(Wizard wizard, double x, double y) {
