@@ -73,7 +73,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                 continue;
             }
             double dist = turnContainer.getSelf().getDistanceTo(unit);
-            if (dist < ENEMY_MIN_DIST_VS_XP_RANGE) {
+            if (dist < turnContainer.getSelf().getVisionRange() - ENEMY_MIN_DIST_VS_XP_RANGE) {
                 return false;
             }
         }
