@@ -15,22 +15,25 @@ public class PathFinder {
     private static final int LONG_DISTANCE_MIN_FIRST_MOVE = 500;
     private final WorldProxy world;
     private final Game game;
+    private final Wizard self;
     private final boolean[][] longSearchGrid;
     private final int cellWidth;
     private final int gridN;
     private final int gridM;
+    private boolean shortSearchGridInitialized;
     private PathPoint[][] shortSearchGrid;
     private int shortSearchGridDim;
 
     public PathFinder(Wizard self, WorldProxy world, Game game, MapUtils mapUtils) {
         this.world = world;
         this.game = game;
+        this.self = self;
         this.cellWidth = DEFAULT_CELL_WIDTH;
         this.gridN = (int) (world.getWidth() / cellWidth + 1);
         this.gridM = (int) (world.getHeight() / cellWidth + 1);
         this.longSearchGrid = new boolean[gridN][gridM];
+        shortSearchGridInitialized = false;
 
-        initShortSearchGrid(self);
         double wizardRadius = game.getWizardRadius();
 
         for (int i = 0; i * cellWidth <= world.getWidth(); i++) {
@@ -233,6 +236,10 @@ public class PathFinder {
     }
 
     private Point shortSearchNextPoint(double x, double y) {
+        if (!shortSearchGridInitialized) {
+            initShortSearchGrid();
+        }
+
         int dim = shortSearchGridDim;
 
         int selfInd = dim / 2 - 1;
@@ -279,7 +286,7 @@ public class PathFinder {
         return new Point(bestX, bestY);
     }
 
-    private void initShortSearchGrid(Wizard self) {
+    private void initShortSearchGrid() {
         int dim = SHORT_SEARCH_GRID_SPAN * 2 / SHORT_SEARCH_GRID_CELL + 2;
         this.shortSearchGridDim = dim;
         this.shortSearchGrid = new PathPoint[dim][dim];
@@ -381,6 +388,7 @@ public class PathFinder {
                 }
             }
         }
+        shortSearchGridInitialized = true;
     }
 
     private boolean isLineIntersectsCircle(double x1, double x2, double y1, double y2, double cx, double cy, double r) {
