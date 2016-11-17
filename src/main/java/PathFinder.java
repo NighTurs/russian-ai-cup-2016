@@ -12,6 +12,7 @@ public class PathFinder {
     private static final int SHORT_SEARCH_GRID_CELL = 10;
     private static final int SHORT_SEARCH_GRID_SPAN = 250;
     private static final int LONG_DISTANCE_MIN_FIRST_MOVE = 500;
+    public static final int MAX_ANGLE_RADIUS = 500;
     private final WorldProxy world;
     private final Game game;
     private final Wizard self;
@@ -53,8 +54,14 @@ public class PathFinder {
 
     public Movement findPath(Wizard wizard, double x, double y) {
         Point longDistPoint = longSearchNextPoint(wizard.getX(), wizard.getY(), x, y);
-        Point shortDistPoint = shortSearchNextPoint(longDistPoint.getX(), longDistPoint.getY());
-        return findOptimalMovement(wizard, shortDistPoint.getX(), shortDistPoint.getY());
+        Optional<Point> straightLinePoint =
+                straightLinePath(wizard.getX(), wizard.getY(), longDistPoint.getX(), longDistPoint.getY());
+        if (straightLinePoint.isPresent()) {
+            return findOptimalMovement(wizard, straightLinePoint.get().getX(), straightLinePoint.get().getY());
+        } else {
+            Point shortDistPoint = shortSearchNextPoint(longDistPoint.getX(), longDistPoint.getY());
+            return findOptimalMovement(wizard, shortDistPoint.getX(), shortDistPoint.getY());
+        }
     }
 
     private double toRealAxis(int index) {
@@ -115,7 +122,7 @@ public class PathFinder {
                                 resY,
                                 unit.getX(),
                                 unit.getY(),
-                                wizard.getRadius())) {
+                                wizard.getRadius() + ((CircularUnit) unit).getRadius())) {
                             foundIntersection = true;
                             break;
                         }
@@ -351,9 +358,146 @@ public class PathFinder {
         shortSearchGridInitialized = true;
     }
 
+    private Optional<Point> straightLinePath(double fromX, double fromY, double toX, double toY) {
+        for (Point shortTo : Arrays.asList(distPoint(fromX, fromY, toX, toY, SHORT_SEARCH_GRID_SPAN),
+                distPoint(fromX, fromY, toX, toY, 2 * SHORT_SEARCH_GRID_SPAN))) {
+            Unit intersectsWith = findIntersectUnit(fromX, fromY, shortTo.getX(), shortTo.getY());
+            if (intersectsWith == null) {
+                return Optional.of(shortTo);
+            }
+            Point intersectPoint = lineCircleIntersection(fromX,
+                    shortTo.getX(),
+                    fromY,
+                    shortTo.getY(),
+                    intersectsWith.getX(),
+                    intersectsWith.getY());
+
+            double leftRadius = findAroundRadius(0,
+                    MAX_ANGLE_RADIUS,
+                    intersectsWith,
+                    intersectPoint,
+                    fromX,
+                    fromY,
+                    shortTo.getX(),
+                    shortTo.getY());
+            Point leftSide = distPoint(intersectsWith.getX(),
+                    intersectsWith.getY(),
+                    intersectPoint.getX(),
+                    intersectPoint.getY(),
+                    leftRadius);
+
+            if (findIntersectUnit(fromX, fromY, leftSide.getX(), leftSide.getY()) == null &&
+                    findIntersectUnit(leftSide.getX(), leftSide.getY(), shortTo.getX(), shortTo.getY()) == null) {
+                return Optional.of(leftSide);
+            }
+
+            double rightRadius = findAroundRadius(0,
+                    -MAX_ANGLE_RADIUS,
+                    intersectsWith,
+                    intersectPoint,
+                    fromX,
+                    fromY,
+                    shortTo.getX(),
+                    shortTo.getY());
+            Point rightSide = distPoint(intersectsWith.getX(),
+                    intersectsWith.getY(),
+                    intersectPoint.getX(),
+                    intersectPoint.getY(),
+                    rightRadius);
+            if (findIntersectUnit(fromX, fromY, rightSide.getX(), rightSide.getY()) == null &&
+                    findIntersectUnit(rightSide.getX(), rightSide.getY(), shortTo.getX(), shortTo.getY()) == null) {
+                return Optional.of(rightSide);
+            }
+        }
+        return Optional.empty();
+    }
+
+    private double findAroundRadius(double rFrom,
+                                    double rTo,
+                                    Unit intersectsWith,
+                                    Point intersectPoint,
+                                    double fromX,
+                                    double fromY,
+                                    double toX,
+                                    double toY) {
+        double unitR = ((CircularUnit) intersectsWith).getRadius();
+        if (intersectsWith instanceof Wizard || intersectsWith instanceof Minion) {
+            unitR += UNSTATIC_OBJECTS_RADIUS_ADJUST;
+        }
+        double r0 = rFrom;
+        double r1 = rTo;
+        while (Math.abs(r1 - r0) > 1) {
+            double rm = (r0 + r1) / 2;
+            Point p = distPoint(intersectsWith.getX(),
+                    intersectsWith.getY(),
+                    intersectPoint.getX(),
+                    intersectPoint.getY(),
+                    rm);
+            boolean firstLineIntersect = isLineIntersectsCircle(fromX,
+                    p.getX(),
+                    fromY,
+                    p.getY(),
+                    intersectsWith.getX(),
+                    intersectsWith.getY(),
+                    unitR + self.getRadius());
+            boolean secondLineIntersect = isLineIntersectsCircle(p.getX(),
+                    toX,
+                    p.getY(),
+                    toY,
+                    intersectsWith.getX(),
+                    intersectsWith.getY(),
+                    unitR + self.getRadius());
+            if (p.getX() < 0 || p.getY() < 0 || p.getX() > world.getWidth() || p.getY() > world.getHeight() ||
+                    firstLineIntersect || secondLineIntersect ||
+                    intersectsWith.getDistanceTo(p.getX(), p.getY()) <= unitR + self.getRadius()) {
+                r0 = rm;
+            } else {
+                r1 = rm;
+            }
+        }
+        return r1;
+    }
+
+    private Unit findIntersectUnit(double fromX, double fromY, double toX, double toY) {
+        for (Unit unit : world.allUnits()) {
+            if (unit.getId() == self.getId()) {
+                continue;
+            }
+            if (unit instanceof Projectile || unit instanceof Bonus) {
+                continue;
+            }
+            double unitR = ((CircularUnit) unit).getRadius();
+            if (unit instanceof Wizard || unit instanceof Minion) {
+                unitR += UNSTATIC_OBJECTS_RADIUS_ADJUST;
+            }
+            if (isLineIntersectsCircle(fromX, toX, fromY, toY, unit.getX(), unit.getY(), unitR + self.getRadius()) ||
+                    unit.getDistanceTo(toX, toY) <= unitR + self.getRadius()) {
+                return unit;
+            }
+        }
+        return null;
+    }
+
+    private Point distPoint(double fromX, double fromY, double toX, double toY, double dist) {
+        double curDist = hypot(fromX - toX, fromY - toY);
+        double proportion = dist / curDist;
+        double deltaX = (toX - fromX) * proportion;
+        double deltaY = (toY - fromY) * proportion;
+        return new Point(fromX + deltaX, fromY + deltaY);
+    }
+
+    private Point lineCircleIntersection(double x1, double x2, double y1, double y2, double cx, double cy) {
+        double a = y1 - y2;
+        double b = x2 - x1;
+        double c = (x1 - x2) * y1 + (y2 - y1) * x1;
+        double xi = (b * (b * cx - a * cy) - a * c) / (a * a + b * b);
+        double yi = (a * (-b * cx + a * cy) - b * c) / (a * a + b * b);
+        return new Point(xi, yi);
+    }
+
     private boolean isLineIntersectsCircle(double x1, double x2, double y1, double y2, double cx, double cy, double r) {
-        double a = x2 - x1;
-        double b = y1 - y2;
+        double a = y1 - y2;
+        double b = x2 - x1;
         double c = (x1 - x2) * y1 + (y2 - y1) * x1;
         double xi = (b * (b * cx - a * cy) - a * c) / (a * a + b * b);
         double yi = (a * (-b * cx + a * cy) - b * c) / (a * a + b * b);
