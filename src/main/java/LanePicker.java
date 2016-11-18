@@ -16,7 +16,6 @@ public class LanePicker {
     }
 
     public LocationType myLane() {
-
         if (world.getTickIndex() < UNFIXED_LANE_TICK_THRESHOLD || memory.getLane() == null) {
             memory.setLane(vacantLane());
             return memory.getLane();
