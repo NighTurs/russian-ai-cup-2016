@@ -19,24 +19,17 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         Action action = Action.NONE;
 
         if (enemiesNearby) {
-            if (shouldRetreatBecauseOfMinions(lane, turnContainer) ||
-                    shouldRetreatBecauseOfBuildings(lane, turnContainer)) {
+            if (shouldRetreatBecauseOfMinions(turnContainer) ||
+                    shouldRetreatBecauseOfBuildings(turnContainer)) {
                 action = Action.RETREAT;
-            } else if (shouldPushBecauseTooFarAway(lane, turnContainer)) {
+            } else if (shouldPushBecauseTooFarAway(turnContainer)) {
                 action = Action.PUSH;
             }
         } else {
-            if (shouldRetreatBecauseOfBuildings(lane, turnContainer)) {
+            if (shouldRetreatBecauseOfBuildings(turnContainer)) {
                 action = Action.RETREAT;
             } else {
-                Unit avantgard = findAllyAvantgardMinionOrBuilding(lane, turnContainer);
-                Point waypointAvant = mapUtils.pushWaypoint(avantgard.getX(), avantgard.getY(), lane);
-                if (avantgard.getDistanceTo(waypointAvant.getX(), waypointAvant.getY()) >
-                        self.getDistanceTo(waypointAvant.getX(), waypointAvant.getY())) {
-                    action = Action.RETREAT;
-                } else {
-                    action = Action.PUSH;
-                }
+                action = Action.PUSH;
             }
         }
 
@@ -67,7 +60,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         return Optional.of(new TacticImpl("PushLane", moveBuilder, Tactics.PUSH_LANE_TACTIC_PRIORITY));
     }
 
-    private boolean shouldPushBecauseTooFarAway(LocationType lane, TurnContainer turnContainer) {
+    private boolean shouldPushBecauseTooFarAway(TurnContainer turnContainer) {
         for (Unit unit : turnContainer.getWorldProxy().allUnitsWoTrees()) {
             if (!(unit instanceof Minion || unit instanceof Building) || !turnContainer.isOffensiveUnit(unit)) {
                 continue;
@@ -80,7 +73,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         return true;
     }
 
-    private boolean shouldRetreatBecauseOfMinions(LocationType lane, TurnContainer turnContainer) {
+    private boolean shouldRetreatBecauseOfMinions(TurnContainer turnContainer) {
         for (Unit unit : turnContainer.getWorldProxy().allUnitsWoTrees()) {
             if (!(unit instanceof Minion) || !turnContainer.isOffensiveUnit(unit)) {
                 continue;
@@ -93,7 +86,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         return false;
     }
 
-    private boolean shouldRetreatBecauseOfBuildings(LocationType lane, TurnContainer turnContainer) {
+    private boolean shouldRetreatBecauseOfBuildings(TurnContainer turnContainer) {
         Building building = null;
         for (Building unit : turnContainer.getWorldProxy().getBuildings()) {
             if (!turnContainer.isOffensiveBuilding(unit)) {
@@ -115,55 +108,6 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             }
         }
         return c <= TOWER_TARGETS_THRESHOLD;
-    }
-
-    private Unit findAllyAvantgardMinionOrBuilding(LocationType lane, TurnContainer turnContainer) {
-        WorldProxy world = turnContainer.getWorldProxy();
-        MapUtils mapUtils = turnContainer.getMapUtils();
-        Point allyPoint = mapUtils.getLaneAllyWaypoint();
-
-        Optional<Unit> avantgardEnemy = findEnemyAvantgardMinionOrBuilding(lane, turnContainer);
-
-        double bestDist = Double.MAX_VALUE;
-        Unit bestUnit = null;
-        for (Unit unit : world.allUnitsWoTrees()) {
-            LocationType curLane = mapUtils.getLocationType(unit.getId());
-            if (!(curLane == lane || curLane == LocationType.ALLY_BASE || curLane == LocationType.ENEMY_BASE) ||
-                    !(unit instanceof Building || unit instanceof Minion) || !turnContainer.isAllyUnit(unit)) {
-                continue;
-            }
-            double dist =
-                    unit.getDistanceTo(mapUtils.getLaneEnemyWaypoint().getX(), mapUtils.getLaneEnemyWaypoint().getY());
-            if (dist < bestDist && (!avantgardEnemy.isPresent() ||
-                    unit.getDistanceTo(allyPoint.getX(), allyPoint.getY()) <
-                            avantgardEnemy.get().getDistanceTo(allyPoint.getX(), allyPoint.getY()))) {
-                bestDist = dist;
-                bestUnit = unit;
-            }
-        }
-        return bestUnit == null ? world.allyBase() : bestUnit;
-    }
-
-    private Optional<Unit> findEnemyAvantgardMinionOrBuilding(LocationType lane, TurnContainer turnContainer) {
-        WorldProxy world = turnContainer.getWorldProxy();
-        MapUtils mapUtils = turnContainer.getMapUtils();
-
-        double bestDist = Double.MAX_VALUE;
-        Unit bestUnit = null;
-        for (Unit unit : world.allUnitsWoTrees()) {
-            LocationType curLane = mapUtils.getLocationType(unit.getId());
-            if (curLane != lane || !(unit instanceof Building || unit instanceof Minion) ||
-                    !turnContainer.isOffensiveUnit(unit)) {
-                continue;
-            }
-            double dist =
-                    unit.getDistanceTo(mapUtils.getLaneAllyWaypoint().getX(), mapUtils.getLaneAllyWaypoint().getY());
-            if (dist < bestDist) {
-                bestDist = dist;
-                bestUnit = unit;
-            }
-        }
-        return Optional.ofNullable(bestUnit);
     }
 
     private boolean hasEnemyInVisibilityRange(TurnContainer turnContainer) {
