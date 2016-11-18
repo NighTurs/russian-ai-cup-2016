@@ -41,7 +41,7 @@ public class PathFinder {
                 longSearchGrid[i][h] = true;
                 double x = toRealAxis(i);
                 double y = toRealAxis(h);
-                if (mapUtils.getLocationType(x, y) == LocationType.FOREST) {
+                if (mapUtils.isForest(x, y)) {
                     longSearchGrid[i][h] = false;
                 }
                 if (x < wizardRadius || y < wizardRadius || world.getHeight() - y < wizardRadius ||
