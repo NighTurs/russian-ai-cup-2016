@@ -8,6 +8,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     private static final int ENEMY_MIN_DIST_VS_XP_RANGE = 200;
     private static final int TOWER_DANGER_RANGE_INC = 20;
     private static final int TOWER_TARGETS_THRESHOLD = 1;
+    private static final int COOLDOWN_THRESHOLD_TO_STAY_IN_WIZARD_RANGE = 15;
 
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
@@ -19,10 +20,10 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         Action action = Action.NONE;
 
         if (enemiesNearby) {
-            if (shouldRetreatBecauseOfMinions(turnContainer) ||
-                    shouldRetreatBecauseOfBuildings(turnContainer)) {
+            if (shouldRetreatBecauseOfMinions(turnContainer) || shouldRetreatBecauseOfBuildings(turnContainer) ||
+                    shouldRetreatBecauseOfWizards(turnContainer)) {
                 action = Action.RETREAT;
-            } else if (shouldPushBecauseTooFarAway(turnContainer)) {
+            } else if (shouldPushBecauseTooFarAway(turnContainer) || shouldPushBecauseOfWizards(turnContainer)) {
                 action = Action.PUSH;
             }
         } else {
@@ -74,8 +75,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     }
 
     private boolean shouldRetreatBecauseOfMinions(TurnContainer turnContainer) {
-        for (Unit unit : turnContainer.getWorldProxy().allUnitsWoTrees()) {
-            if (!(unit instanceof Minion) || !turnContainer.isOffensiveUnit(unit)) {
+        for (Minion unit : turnContainer.getWorldProxy().getMinions()) {
+            if (!turnContainer.isOffensiveUnit(unit)) {
                 continue;
             }
             double dist = turnContainer.getSelf().getDistanceTo(unit);
@@ -102,12 +103,45 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         }
         int c = 0;
         for (Unit unit : turnContainer.getWorldProxy().allUnitsWoTrees()) {
-            if (turnContainer.isAllyUnit(unit) && building.getDistanceTo(unit) <=
-                    building.getAttackRange() + ((CircularUnit) unit).getRadius()) {
+            if (turnContainer.isAllyUnit(unit) &&
+                    building.getDistanceTo(unit) <= building.getAttackRange() + ((CircularUnit) unit).getRadius()) {
                 c++;
             }
         }
         return c <= TOWER_TARGETS_THRESHOLD;
+    }
+
+    private boolean shouldRetreatBecauseOfWizards(TurnContainer turnContainer) {
+        Wizard self = turnContainer.getSelf();
+        for (Wizard wizard : turnContainer.getWorldProxy().getWizards()) {
+            if (!turnContainer.isOffensiveWizard(wizard)) {
+                continue;
+            }
+            double dist = turnContainer.getSelf().getDistanceTo(wizard);
+            if (dist <= CastMagicMissileTacticBuilder.castRangeToWizard(wizard, turnContainer.getGame()) +
+                    wizard.getRadius() &&
+                    Math.max(self.getRemainingCooldownTicksByAction()[ActionType.MAGIC_MISSILE.ordinal()],
+                            self.getRemainingActionCooldownTicks()) > COOLDOWN_THRESHOLD_TO_STAY_IN_WIZARD_RANGE) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean shouldPushBecauseOfWizards(TurnContainer turnContainer) {
+        Wizard self = turnContainer.getSelf();
+        for (Wizard wizard : turnContainer.getWorldProxy().getWizards()) {
+            if (!turnContainer.isOffensiveWizard(wizard)) {
+                continue;
+            }
+            double dist = turnContainer.getSelf().getDistanceTo(wizard);
+            if (dist > CastMagicMissileTacticBuilder.castRangeToWizard(wizard, turnContainer.getGame()) &&
+                    Math.max(self.getRemainingCooldownTicksByAction()[ActionType.MAGIC_MISSILE.ordinal()],
+                            self.getRemainingActionCooldownTicks()) <= COOLDOWN_THRESHOLD_TO_STAY_IN_WIZARD_RANGE) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean hasEnemyInVisibilityRange(TurnContainer turnContainer) {

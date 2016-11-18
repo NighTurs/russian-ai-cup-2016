@@ -17,7 +17,7 @@ public class TurnContainer {
         this.game = game;
         this.memory = memory;
         this.worldProxy = new WorldProxy(world, memory);
-        this.mapUtils = new MapUtils(worldProxy, game);
+        this.mapUtils = new MapUtils(worldProxy);
         this.pathFinder = new PathFinder(self, worldProxy, game, mapUtils);
         this.lanePicker = new LanePicker(worldProxy, self, mapUtils, this.memory);
     }

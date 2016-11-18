@@ -49,8 +49,7 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
                 continue;
             }
             double dist = wizard.getDistanceTo(self);
-            if (dist <= WizardTraits.getWizardCastRange(self, turnContainer.getGame()) + self.getRadius() / 2 &&
-                    lowestLife > wizard.getLife()) {
+            if (dist <= castRangeToWizard(self, turnContainer.getGame()) && lowestLife > wizard.getLife()) {
                 lowestLife = wizard.getLife();
                 bestUnit = wizard;
             }
@@ -88,5 +87,9 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
         Wizard self = turnContainer.getSelf();
         double angle = self.getAngleTo(unit);
         return WizardTraits.getWizardCastSector(turnContainer.getGame()) > Math.abs(angle);
+    }
+
+    public static double castRangeToWizard(Wizard self, Game game) {
+        return WizardTraits.getWizardCastRange(self, game) + self.getRadius() / 2;
     }
 }
