@@ -79,6 +79,10 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
                 lowestLife = minion.getLife();
                 bestUnit = minion;
             }
+            if (dist <= turnContainer.getGame().getStaffRange() + minion.getRadius()) {
+                bestUnit = minion;
+                break;
+            }
         }
         return Optional.ofNullable(bestUnit);
     }
