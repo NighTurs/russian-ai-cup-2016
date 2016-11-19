@@ -7,7 +7,8 @@ public class TurnStrategy {
     private static final List<TacticBuilder> tacticBuilders = Arrays.asList(new PushLaneTacticBuilder(),
             new CastMagicMissileTacticBuilder(),
             new SurviveTacticBuilder(),
-            new GoForBonusTacticBuilder());
+            new GoForBonusTacticBuilder(),
+            new StaffHitTacticBuilder());
     private final TurnContainer turnContainer;
     private final Move move;
 

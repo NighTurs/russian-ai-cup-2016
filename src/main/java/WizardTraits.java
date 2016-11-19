@@ -33,6 +33,10 @@ public final class WizardTraits {
         return game.getStaffSector() / 2;
     }
 
+    public static double getWizardStaffSector(Game game) {
+        return game.getStaffSector() / 2;
+    }
+
     private static double movementFactor(Wizard wizard, Game game) {
         return hasHasteBonus(wizard) ? 1 + game.getHastenedMovementBonusFactor() : 1;
     }
