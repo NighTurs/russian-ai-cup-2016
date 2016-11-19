@@ -24,21 +24,19 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
         Point topBonus = bonusControl.topBonusPosition();
         Point bottomBonus = bonusControl.bottomBonusPosition();
         Point goForBonus;
+        double ticksUntilBonus;
         if (self.getDistanceTo(topBonus.getX(), topBonus.getY()) >
-                self.getDistanceTo(bottomBonus.getX(), bottomBonus.getY()) &&
-                roughDistToBonus(self, pathFinder, bottomBonus) /
-                        WizardTraits.getWizardForwardSpeed(self, turnContainer.getGame()) >=
-                        bonusControl.ticksUntilBottomBonus()) {
+                self.getDistanceTo(bottomBonus.getX(), bottomBonus.getY())) {
             goForBonus = bottomBonus;
-        } else if (roughDistToBonus(self, pathFinder, topBonus) /
-                WizardTraits.getWizardForwardSpeed(self, turnContainer.getGame()) >=
-                bonusControl.ticksUntilTopBonus()) {
+            ticksUntilBonus = bonusControl.ticksUntilBottomBonus();
+        } else  {
             goForBonus = topBonus;
-        } else if (roughDistToBonus(self, pathFinder, bottomBonus) /
-                WizardTraits.getWizardForwardSpeed(self, turnContainer.getGame()) >=
-                bonusControl.ticksUntilBottomBonus()) {
-            goForBonus = bottomBonus;
-        } else {
+            ticksUntilBonus = bonusControl.ticksUntilTopBonus();
+        }
+
+        if (roughDistToBonus(self, pathFinder, goForBonus) /
+                WizardTraits.getWizardForwardSpeed(self, turnContainer.getGame()) <
+                ticksUntilBonus) {
             return Optional.empty();
         }
 
