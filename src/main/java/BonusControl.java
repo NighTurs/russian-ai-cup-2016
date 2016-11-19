@@ -38,6 +38,12 @@ public class BonusControl {
                                                   WorldProxy world,
                                                   Game game,
                                                   Memory memory) {
+        for (Map<StatusType, Integer> cooldowns : memory.getPastBonusCooldowns().values()) {
+            //noinspection KeySetIterationMayUseEntrySet
+            for (StatusType type : cooldowns.keySet()) {
+                cooldowns.put(type, cooldowns.get(type) - 1);
+            }
+        }
         for (Wizard wizard : world.getWizards()) {
             if (!memory.getPastBonusCooldowns().containsKey(wizard.getId())) {
                 Map<StatusType, Integer> cooldowns = new EnumMap<>(StatusType.class);
@@ -51,7 +57,7 @@ public class BonusControl {
             for (Status status : wizard.getStatuses()) {
                 switch (status.getType()) {
                     case EMPOWERED:
-                        if (memory.getPastBonusCooldowns().get(wizard.getId()).get(StatusType.EMPOWERED) <=
+                        if (memory.getPastBonusCooldowns().get(wizard.getId()).get(StatusType.EMPOWERED) <
                                 status.getRemainingDurationTicks()) {
                             tookBonus = true;
                             memory.getPastBonusCooldowns()
@@ -59,9 +65,10 @@ public class BonusControl {
                                     .put(StatusType.EMPOWERED, status.getRemainingDurationTicks());
                             break outer_loop;
                         }
+                        break;
                     case HASTENED:
                         if (status.getRemainingDurationTicks() > game.getHastenedDurationTicks() &&
-                                memory.getPastBonusCooldowns().get(wizard.getId()).get(StatusType.HASTENED) <=
+                                memory.getPastBonusCooldowns().get(wizard.getId()).get(StatusType.HASTENED) <
                                         status.getRemainingDurationTicks()) {
                             tookBonus = true;
                             memory.getPastBonusCooldowns()
@@ -72,7 +79,7 @@ public class BonusControl {
                         break;
                     case SHIELDED:
                         if (status.getRemainingDurationTicks() > game.getShieldedDurationTicks() &&
-                                memory.getPastBonusCooldowns().get(wizard.getId()).get(StatusType.SHIELDED) <=
+                                memory.getPastBonusCooldowns().get(wizard.getId()).get(StatusType.SHIELDED) <
                                         status.getRemainingDurationTicks()) {
                             tookBonus = true;
                             memory.getPastBonusCooldowns()
