@@ -9,6 +9,7 @@ public class TurnContainer {
     private final MapUtils mapUtils;
     private final PathFinder pathFinder;
     private final LanePicker lanePicker;
+    private final BonusControl bonusControl;
     private final Memory memory;
 
     public TurnContainer(Wizard self, World world, Game game, Memory memory) {
@@ -20,6 +21,7 @@ public class TurnContainer {
         this.mapUtils = new MapUtils(worldProxy);
         this.pathFinder = new PathFinder(self, worldProxy, game, mapUtils);
         this.lanePicker = new LanePicker(worldProxy, self, mapUtils, this.memory);
+        this.bonusControl = new BonusControl(self, worldProxy, game, memory);
     }
 
     public Wizard getSelf() {
@@ -48,6 +50,10 @@ public class TurnContainer {
 
     public LanePicker getLanePicker() {
         return lanePicker;
+    }
+
+    public BonusControl getBonusControl() {
+        return bonusControl;
     }
 
     public boolean isOffensiveMinion(Minion minion) {

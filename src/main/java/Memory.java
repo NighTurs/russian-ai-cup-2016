@@ -1,16 +1,26 @@
 import model.Building;
+import model.StatusType;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Memory {
     private LocationType lane;
     private List<Building> allyGuardianTowers;
     private List<Building> destroyedEnemyGuardianTowers;
+    private boolean isTopBonusTaken;
+    private boolean isBottomBonusTaken;
+    private Map<Long, Map<StatusType, Integer>> pastBonusCooldowns;
+
 
     public Memory() {
         this.allyGuardianTowers = new ArrayList<>();
         this.destroyedEnemyGuardianTowers = new ArrayList<>();
+        this.isTopBonusTaken = true;
+        this.isBottomBonusTaken = true;
+        this.pastBonusCooldowns = new HashMap<>();
     }
 
     public LocationType getLane() {
@@ -27,5 +37,25 @@ public class Memory {
 
     public List<Building> getDestroyedEnemyGuardianTowers() {
         return destroyedEnemyGuardianTowers;
+    }
+
+    public boolean isTopBonusTaken() {
+        return isTopBonusTaken;
+    }
+
+    public void setTopBonusTaken(boolean topBonusTaken) {
+        isTopBonusTaken = topBonusTaken;
+    }
+
+    public boolean isBottomBonusTaken() {
+        return isBottomBonusTaken;
+    }
+
+    public void setBottomBonusTaken(boolean bottomBonusTaken) {
+        isBottomBonusTaken = bottomBonusTaken;
+    }
+
+    public Map<Long, Map<StatusType, Integer>> getPastBonusCooldowns() {
+        return pastBonusCooldowns;
     }
 }

@@ -1,6 +1,7 @@
 import model.*;
 
 import java.util.*;
+import java.util.AbstractMap.SimpleEntry;
 
 import static java.lang.StrictMath.hypot;
 
@@ -53,7 +54,7 @@ public class PathFinder {
     }
 
     public Movement findPath(Wizard wizard, double x, double y) {
-        Point longDistPoint = longSearchNextPoint(wizard.getX(), wizard.getY(), x, y);
+        Point longDistPoint = longSearchNextPoint(wizard.getX(), wizard.getY(), x, y).getKey();
         Optional<Point> straightLinePoint =
                 straightLinePath(wizard.getX(), wizard.getY(), longDistPoint.getX(), longDistPoint.getY());
         if (straightLinePoint.isPresent()) {
@@ -62,6 +63,10 @@ public class PathFinder {
             Point shortDistPoint = shortSearchNextPoint(longDistPoint.getX(), longDistPoint.getY());
             return findOptimalMovement(wizard, shortDistPoint.getX(), shortDistPoint.getY());
         }
+    }
+
+    public double roughDistanceTo(Wizard wizard, double x, double y) {
+        return longSearchNextPoint(wizard.getX(), wizard.getY(), x, y).getValue();
     }
 
     private double toRealAxis(int index) {
@@ -142,9 +147,14 @@ public class PathFinder {
         return new Movement(optimalSpeed, optimalStrafe, optimalTurn);
     }
 
-    private Point longSearchNextPoint(double fromX, double fromY, double toX, double toY) {
+    private Map.Entry<Point, Double> longSearchNextPoint(double fromX, double fromY, double toX, double toY) {
+        double bestDist = hypot(fromX - toX, fromY - toY);
+        double bestPathDist = bestDist;
+        double bestX = toX;
+        double bestY = toY;
+
         if (hypot(fromX - toX, fromY - toY) <= SHORT_SEARCH_GRID_SPAN) {
-            return new Point(toX, toY);
+            return new SimpleEntry<>(new Point(toX, toY), bestDist);
         }
 
         int fromI = (int) Math.round(fromX / cellWidth);
@@ -157,9 +167,7 @@ public class PathFinder {
         Map<BfsPoint, Double> visitedPoints = new HashMap<>();
         visitedPoints.put(bfs.peek(), 0D);
 
-        double bestDist = hypot(fromX - toX, fromY - toY);
-        double bestX = toX;
-        double bestY = toY;
+
 
         while (!bfs.isEmpty()) {
             BfsPoint cur = bfs.poll();
@@ -189,6 +197,7 @@ public class PathFinder {
                     double curDist = hypot(toX - toRealAxis(nextI), toY - toRealAxis(nextH));
                     if (curDist < bestDist) {
                         bestDist = curDist;
+                        bestPathDist = nextPoint.getDist();
                         bestX = toRealAxis(firstMoveI);
                         bestY = toRealAxis(firstMoveH);
                     }
@@ -198,7 +207,7 @@ public class PathFinder {
             }
         }
 
-        return new Point(bestX, bestY);
+        return new SimpleEntry<>(new Point(bestX, bestY), bestPathDist);
     }
 
     private Point shortSearchNextPoint(double x, double y) {
