@@ -2,7 +2,7 @@ import model.Wizard;
 
 public class LanePicker {
 
-    private static final int UNFIXED_LANE_TICK_THRESHOLD = 500;
+    private static final int UNFIXED_LANE_TICK_THRESHOLD = 800;
     private final WorldProxy world;
     private final Wizard self;
     private final MapUtils mapUtils;
