@@ -54,7 +54,9 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
             MoveBuilder moveBuilder = new MoveBuilder();
             moveBuilder.setSpeed(mov.getSpeed());
             moveBuilder.setStrafeSpeed(mov.getStrafeSpeed());
-            moveBuilder.setTurn(mov.getTurn());
+            if (!PushLaneTacticBuilder.hasEnemyInAttackRange(turnContainer)) {
+                moveBuilder.setTurn(mov.getTurn());
+            }
             return tactic(moveBuilder);
         } else {
             MoveBuilder moveBuilder = new MoveBuilder();

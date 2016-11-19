@@ -144,16 +144,16 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         return false;
     }
 
-    private boolean hasEnemyInVisibilityRange(TurnContainer turnContainer) {
+    private static boolean hasEnemyInVisibilityRange(TurnContainer turnContainer) {
         return hasEnemyInRange(turnContainer, turnContainer.getSelf().getVisionRange());
     }
 
-    private boolean hasEnemyInAttackRange(TurnContainer turnContainer) {
+    public static boolean hasEnemyInAttackRange(TurnContainer turnContainer) {
         return hasEnemyInRange(turnContainer,
                 WizardTraits.getWizardCastRange(turnContainer.getSelf(), turnContainer.getGame()));
     }
 
-    private boolean hasEnemyInRange(TurnContainer turnContainer, double range) {
+    private static boolean hasEnemyInRange(TurnContainer turnContainer, double range) {
         Wizard self = turnContainer.getSelf();
         Faction opposingFaction = turnContainer.opposingFaction();
         for (Unit unit : turnContainer.getWorldProxy().allUnitsWoTrees()) {
