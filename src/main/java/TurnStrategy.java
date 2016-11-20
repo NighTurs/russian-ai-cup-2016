@@ -8,7 +8,8 @@ public class TurnStrategy {
             new CastMagicMissileTacticBuilder(),
             new SurviveTacticBuilder(),
             new GoForBonusTacticBuilder(),
-            new StaffHitTacticBuilder());
+            new StaffHitTacticBuilder(),
+            new DodgeProjectileTacticBuilder());
     private final TurnContainer turnContainer;
     private final Move move;
 

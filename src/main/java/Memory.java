@@ -13,6 +13,8 @@ public class Memory {
     private boolean isTopBonusTaken;
     private boolean isBottomBonusTaken;
     private Map<Long, Map<StatusType, Integer>> pastBonusCooldowns;
+    private Map<Long, Point> wizardPreviousPosition;
+    private Map<Long, ProjectileControl.ProjectileMeta> projectileMeta;
 
 
     public Memory() {
@@ -21,6 +23,8 @@ public class Memory {
         this.isTopBonusTaken = true;
         this.isBottomBonusTaken = true;
         this.pastBonusCooldowns = new HashMap<>();
+        this.wizardPreviousPosition = new HashMap<>();
+        this.projectileMeta = new HashMap<>();
     }
 
     public LocationType getLane() {
@@ -57,5 +61,13 @@ public class Memory {
 
     public Map<Long, Map<StatusType, Integer>> getPastBonusCooldowns() {
         return pastBonusCooldowns;
+    }
+
+    public Map<Long, Point> getWizardPreviousPosition() {
+        return wizardPreviousPosition;
+    }
+
+    public Map<Long, ProjectileControl.ProjectileMeta> getProjectileMeta() {
+        return projectileMeta;
     }
 }

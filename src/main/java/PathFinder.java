@@ -1,7 +1,7 @@
 import model.*;
 
-import java.util.*;
 import java.util.AbstractMap.SimpleEntry;
+import java.util.*;
 
 import static java.lang.StrictMath.hypot;
 
@@ -121,7 +121,7 @@ public class PathFinder {
                             foundIntersection = true;
                             break;
                         }
-                        if (isLineIntersectsCircle(wizard.getX(),
+                        if (MathMethods.isLineIntersectsCircle(wizard.getX(),
                                 resX,
                                 wizard.getY(),
                                 resY,
@@ -166,8 +166,6 @@ public class PathFinder {
         bfs.add(new BfsPoint(fromI, fromH, -1, -1, 0));
         Map<BfsPoint, Double> visitedPoints = new HashMap<>();
         visitedPoints.put(bfs.peek(), 0D);
-
-
 
         while (!bfs.isEmpty()) {
             BfsPoint cur = bfs.poll();
@@ -341,7 +339,7 @@ public class PathFinder {
                         }
                         boolean foundIntersect = false;
                         for (CircularUnit unit : units) {
-                            if (isLineIntersectsCircle(pFrom.getPoint().getX(),
+                            if (MathMethods.isLineIntersectsCircle(pFrom.getPoint().getX(),
                                     pTo.getPoint().getX(),
                                     pFrom.getPoint().getY(),
                                     pTo.getPoint().getY(),
@@ -367,13 +365,13 @@ public class PathFinder {
     }
 
     private Optional<Point> straightLinePath(double fromX, double fromY, double toX, double toY) {
-        for (Point shortTo : Arrays.asList(distPoint(fromX, fromY, toX, toY, SHORT_SEARCH_GRID_SPAN),
-                distPoint(fromX, fromY, toX, toY, 2 * SHORT_SEARCH_GRID_SPAN))) {
+        for (Point shortTo : Arrays.asList(MathMethods.distPoint(fromX, fromY, toX, toY, SHORT_SEARCH_GRID_SPAN),
+                MathMethods.distPoint(fromX, fromY, toX, toY, 2 * SHORT_SEARCH_GRID_SPAN))) {
             Unit intersectsWith = findIntersectUnit(fromX, fromY, shortTo.getX(), shortTo.getY());
             if (intersectsWith == null) {
                 return Optional.of(shortTo);
             }
-            Point intersectPoint = lineCircleIntersection(fromX,
+            Point intersectPoint = MathMethods.lineCircleIntersection(fromX,
                     shortTo.getX(),
                     fromY,
                     shortTo.getY(),
@@ -388,7 +386,7 @@ public class PathFinder {
                     fromY,
                     shortTo.getX(),
                     shortTo.getY());
-            Point leftSide = distPoint(intersectsWith.getX(),
+            Point leftSide = MathMethods.distPoint(intersectsWith.getX(),
                     intersectsWith.getY(),
                     intersectPoint.getX(),
                     intersectPoint.getY(),
@@ -407,7 +405,7 @@ public class PathFinder {
                     fromY,
                     shortTo.getX(),
                     shortTo.getY());
-            Point rightSide = distPoint(intersectsWith.getX(),
+            Point rightSide = MathMethods.distPoint(intersectsWith.getX(),
                     intersectsWith.getY(),
                     intersectPoint.getX(),
                     intersectPoint.getY(),
@@ -436,19 +434,19 @@ public class PathFinder {
         double r1 = rTo;
         while (Math.abs(r1 - r0) > 1) {
             double rm = (r0 + r1) / 2;
-            Point p = distPoint(intersectsWith.getX(),
+            Point p = MathMethods.distPoint(intersectsWith.getX(),
                     intersectsWith.getY(),
                     intersectPoint.getX(),
                     intersectPoint.getY(),
                     rm);
-            boolean firstLineIntersect = isLineIntersectsCircle(fromX,
+            boolean firstLineIntersect = MathMethods.isLineIntersectsCircle(fromX,
                     p.getX(),
                     fromY,
                     p.getY(),
                     intersectsWith.getX(),
                     intersectsWith.getY(),
                     unitR + self.getRadius());
-            boolean secondLineIntersect = isLineIntersectsCircle(p.getX(),
+            boolean secondLineIntersect = MathMethods.isLineIntersectsCircle(p.getX(),
                     toX,
                     p.getY(),
                     toY,
@@ -478,48 +476,17 @@ public class PathFinder {
             if (unit instanceof Wizard || unit instanceof Minion) {
                 unitR += UNSTATIC_OBJECTS_RADIUS_ADJUST;
             }
-            if (isLineIntersectsCircle(fromX, toX, fromY, toY, unit.getX(), unit.getY(), unitR + self.getRadius()) ||
-                    unit.getDistanceTo(toX, toY) <= unitR + self.getRadius()) {
+            if (MathMethods.isLineIntersectsCircle(fromX,
+                    toX,
+                    fromY,
+                    toY,
+                    unit.getX(),
+                    unit.getY(),
+                    unitR + self.getRadius()) || unit.getDistanceTo(toX, toY) <= unitR + self.getRadius()) {
                 return unit;
             }
         }
         return null;
-    }
-
-    private Point distPoint(double fromX, double fromY, double toX, double toY, double dist) {
-        double curDist = hypot(fromX - toX, fromY - toY);
-        double proportion = dist / curDist;
-        double deltaX = (toX - fromX) * proportion;
-        double deltaY = (toY - fromY) * proportion;
-        return new Point(fromX + deltaX, fromY + deltaY);
-    }
-
-    private Point lineCircleIntersection(double x1, double x2, double y1, double y2, double cx, double cy) {
-        double a = y1 - y2;
-        double b = x2 - x1;
-        double c = (x1 - x2) * y1 + (y2 - y1) * x1;
-        double xi = (b * (b * cx - a * cy) - a * c) / (a * a + b * b);
-        double yi = (a * (-b * cx + a * cy) - b * c) / (a * a + b * b);
-        return new Point(xi, yi);
-    }
-
-    private boolean isLineIntersectsCircle(double x1, double x2, double y1, double y2, double cx, double cy, double r) {
-        double a = y1 - y2;
-        double b = x2 - x1;
-        double c = (x1 - x2) * y1 + (y2 - y1) * x1;
-        double xi = (b * (b * cx - a * cy) - a * c) / (a * a + b * b);
-        double yi = (a * (-b * cx + a * cy) - b * c) / (a * a + b * b);
-        return isBetween(xi, x1, x2) && isBetween(yi, y1, y2) && hypot(cx - xi, cy - yi) <= r;
-    }
-
-    @SuppressWarnings("AssignmentToMethodParameter")
-    private boolean isBetween(double v, double v1, double v2) {
-        if (v1 > v2) {
-            double z = v1;
-            v1 = v2;
-            v2 = z;
-        }
-        return v >= v1 && v <= v2;
     }
 
     private static class BfsPoint {
