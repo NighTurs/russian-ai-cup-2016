@@ -29,7 +29,7 @@ public class LanePicker {
         int bot = 0;
         int top = 0;
         for (Wizard wizard : world.getWizards()) {
-            if (wizard.getId() == self.getId()) {
+            if (wizard.getId() == self.getId() || wizard.getFaction() != self.getFaction()) {
                 continue;
             }
             LocationType curType = mapUtils.getLocationType(wizard.getId());
