@@ -79,7 +79,7 @@ public class PathFinder {
         double optimalStrafe = 0;
         double maxTurnAngle = WizardTraits.getWizardMaxTurnAngle(wizard, game);
         double optimalTurn = Math.min(maxTurnAngle, Math.max(-maxTurnAngle, wizard.getAngleTo(x, y)));
-        double wizardNextAngle = wizard.getAngle() + optimalTurn;
+        double wizardNextAngle = wizard.getAngle();
 
         double cos = Math.cos(wizardNextAngle);
         double sin = Math.sin(wizardNextAngle);
