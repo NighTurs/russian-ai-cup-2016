@@ -14,7 +14,6 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
         Game game = turnContainer.getGame();
         LocationType lane = turnContainer.getLanePicker().myLane();
         MapUtils mapUtils = turnContainer.getMapUtils();
-
         ProjectileControl projectileControl = turnContainer.getProjectileControl();
 
         for (Projectile projectile : world.getProjectiles()) {
@@ -48,8 +47,8 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
                 continue;
             }
 
-            int ticksLeft =
-                    (int) (projectile.getDistanceTo(travelsTo.getX(), travelsTo.getY()) / game.getMagicMissileSpeed());
+            int ticksLeft = (int) Math.ceil(
+                    projectile.getDistanceTo(travelsTo.getX(), travelsTo.getY()) / game.getMagicMissileSpeed());
             if (meta.getRange() + self.getRadius() <
                     self.getDistanceTo(meta.getInitialPoint().getX(), meta.getInitialPoint().getY()) +
                             ticksLeft * WizardTraits.getWizardBackwardSpeed(self, game)) {

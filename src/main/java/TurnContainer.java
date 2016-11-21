@@ -30,10 +30,6 @@ public class TurnContainer {
         return self;
     }
 
-    public World getWorld() {
-        return world;
-    }
-
     public Game getGame() {
         return game;
     }

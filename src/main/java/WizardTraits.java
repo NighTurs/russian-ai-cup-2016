@@ -37,13 +37,25 @@ public final class WizardTraits {
         return game.getStaffSector() / 2;
     }
 
+    public static double getMagicMissileDirectDamage(Wizard wizard, Game game) {
+        return (hasEmpowerBonus(wizard) ? 1 + game.getEmpoweredDamageFactor() : 1) * game.getMagicMissileDirectDamage();
+    }
+
     private static double movementFactor(Wizard wizard, Game game) {
         return hasHasteBonus(wizard) ? 1 + game.getHastenedMovementBonusFactor() : 1;
     }
 
+    private static boolean hasEmpowerBonus(Wizard wizard) {
+        return hasBonus(wizard, StatusType.EMPOWERED);
+    }
+
     private static boolean hasHasteBonus(Wizard wizard) {
+        return hasBonus(wizard, StatusType.HASTENED);
+    }
+
+    private static boolean hasBonus(Wizard wizard, StatusType bonusStatusType) {
         for (Status status : wizard.getStatuses()) {
-            if (status.getType() == StatusType.HASTENED) {
+            if (status.getType() == bonusStatusType) {
                 return true;
             }
         }

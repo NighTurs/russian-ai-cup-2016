@@ -1,14 +1,14 @@
 import model.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class PushLaneTacticBuilder implements TacticBuilder {
 
-    private static final int ENEMY_MINION_MAX_DIST = 350;
-    private static final int ENEMY_MIN_DIST_VS_XP_RANGE = 200;
-    private static final int TOWER_DANGER_RANGE_INC = 20;
     private static final int TOWER_TARGETS_THRESHOLD = 1;
-    private static final int COOLDOWN_THRESHOLD_TO_STAY_IN_WIZARD_RANGE = 15;
+    private static final int COOLDOWN_THRESHOLD_TO_STAY_IN_WIZARD_RANGE = 20;
+    private static final double TOWER_DANGER_LIFE_RATIO_THRESHOLD = 0.6;
 
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
@@ -17,19 +17,22 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         Wizard self = turnContainer.getSelf();
 
         boolean enemiesNearby = hasEnemyInVisibilityRange(turnContainer);
-        Action action = Action.NONE;
+        Action action;
 
         if (enemiesNearby) {
-            if (shouldRetreatBecauseOfMinions(turnContainer) || shouldRetreatBecauseOfBuildings(turnContainer) ||
-                    shouldRetreatBecauseOfWizards(turnContainer)) {
+            Action buildingAction = actionBecauseOfBuildings(turnContainer);
+            Action minionAction = actionBecauseOfMinions(turnContainer);
+            Action wizardsAction = actionBecauseOfWizards(turnContainer);
+            if (buildingAction == Action.RETREAT || minionAction == Action.RETREAT || wizardsAction == Action.RETREAT) {
                 action = Action.RETREAT;
-            } else if (shouldPushBecauseTooFarAway(turnContainer) || shouldPushBecauseOfWizards(turnContainer)) {
+            } else if (buildingAction == Action.STAY || minionAction == Action.STAY || wizardsAction == Action.STAY) {
+                action = Action.STAY;
+            } else {
                 action = Action.PUSH;
             }
         } else {
-            if (shouldRetreatBecauseOfBuildings(turnContainer)) {
-                action = Action.RETREAT;
-            } else {
+            action = actionBecauseOfBuildings(turnContainer);
+            if (action == Action.NONE) {
                 action = Action.PUSH;
             }
         }
@@ -39,7 +42,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         Movement mov;
 
         switch (action) {
-            case NONE:
+            case STAY:
                 return Optional.empty();
             case RETREAT:
                 mov = turnContainer.getPathFinder().findPath(self, retreatWaypoint.getX(), retreatWaypoint.getY());
@@ -61,46 +64,67 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         return Optional.of(new TacticImpl("PushLane", moveBuilder, Tactics.PUSH_LANE_TACTIC_PRIORITY));
     }
 
-    private boolean shouldPushBecauseTooFarAway(TurnContainer turnContainer) {
-        for (Unit unit : turnContainer.getWorldProxy().allUnitsWoTrees()) {
-            if (!(unit instanceof Minion || unit instanceof Building) || !turnContainer.isOffensiveUnit(unit)) {
+    private Action actionBecauseOfMinions(TurnContainer turnContainer) {
+        Wizard self = turnContainer.getSelf();
+        double minTriggerTargetDist = Double.MAX_VALUE;
+        for (Minion minion : turnContainer.getWorldProxy().getMinions()) {
+            if (!turnContainer.isOffensiveUnit(minion)) {
                 continue;
             }
-            double dist = turnContainer.getSelf().getDistanceTo(unit);
-            if (dist < turnContainer.getSelf().getVisionRange() - ENEMY_MIN_DIST_VS_XP_RANGE) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean shouldRetreatBecauseOfMinions(TurnContainer turnContainer) {
-        for (Minion unit : turnContainer.getWorldProxy().getMinions()) {
-            if (!turnContainer.isOffensiveUnit(unit)) {
+            double dist = turnContainer.getSelf().getDistanceTo(minion);
+            if (dist > self.getVisionRange()) {
                 continue;
             }
-            double dist = turnContainer.getSelf().getDistanceTo(unit);
-            if (dist < ENEMY_MINION_MAX_DIST) {
-                return true;
+            double minDist = Double.MAX_VALUE;
+            for (Unit unit : turnContainer.getWorldProxy().allUnitsWoTrees()) {
+                if (turnContainer.isAllyUnit(unit) && minion.getDistanceTo(unit) < minDist) {
+                    minDist = minion.getDistanceTo(unit);
+                }
+            }
+            if (minion.getDistanceTo(self) < minDist) {
+                return Action.RETREAT;
+            }
+            if (minTriggerTargetDist > minion.getDistanceTo(self) - minDist) {
+                minTriggerTargetDist = minion.getDistanceTo(self) - minDist;
             }
         }
-        return false;
+        if (minTriggerTargetDist < WizardTraits.getWizardForwardSpeed(self, turnContainer.getGame())) {
+            return Action.STAY;
+        } else {
+            return Action.NONE;
+        }
     }
 
-    private boolean shouldRetreatBecauseOfBuildings(TurnContainer turnContainer) {
-        Building building = null;
+    private Action actionBecauseOfBuildings(TurnContainer turnContainer) {
+        List<Building> buildings = new ArrayList<>();
+        List<Building> moveOutsideOfRange = new ArrayList<>();
         for (Building unit : turnContainer.getWorldProxy().getBuildings()) {
             if (!turnContainer.isOffensiveBuilding(unit)) {
                 continue;
             }
             double dist = turnContainer.getSelf().getDistanceTo(unit);
-            if (dist <= unit.getAttackRange() + turnContainer.getSelf().getRadius() + TOWER_DANGER_RANGE_INC) {
-                building = unit;
+            if (dist <= unit.getAttackRange() + turnContainer.getSelf().getRadius()) {
+                buildings.add(unit);
+            }
+            if (dist <= unit.getAttackRange() + turnContainer.getSelf().getRadius() +
+                    WizardTraits.getWizardForwardSpeed(turnContainer.getSelf(), turnContainer.getGame())) {
+                moveOutsideOfRange.add(unit);
             }
         }
-        if (building == null) {
-            return false;
+        for (Building building : buildings) {
+            if (actionBecauseOfBuilding(turnContainer, building) == Action.RETREAT) {
+                return Action.RETREAT;
+            }
         }
+        for (Building building : moveOutsideOfRange) {
+            if (actionBecauseOfBuilding(turnContainer, building) == Action.RETREAT) {
+                return Action.STAY;
+            }
+        }
+        return Action.NONE;
+    }
+
+    private Action actionBecauseOfBuilding(TurnContainer turnContainer, Building building) {
         int c = 0;
         for (Unit unit : turnContainer.getWorldProxy().allUnitsWoTrees()) {
             if (turnContainer.isAllyUnit(unit) &&
@@ -108,40 +132,60 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                 c++;
             }
         }
-        return c <= TOWER_TARGETS_THRESHOLD;
+        if ((c <= TOWER_TARGETS_THRESHOLD || turnContainer.getSelf().getLife() / turnContainer.getSelf().getMaxLife() <
+                TOWER_DANGER_LIFE_RATIO_THRESHOLD) && building.getRemainingActionCooldownTicks() <
+                turnContainer.getGame().getGuardianTowerCooldownTicks() / 2) {
+            return Action.RETREAT;
+        }
+        return Action.NONE;
     }
 
-    private boolean shouldRetreatBecauseOfWizards(TurnContainer turnContainer) {
+    private Action actionBecauseOfWizards(TurnContainer turnContainer) {
         Wizard self = turnContainer.getSelf();
+        Game game = turnContainer.getGame();
+        double minDistToWizard = Double.MAX_VALUE;
+        Wizard minDistWizard = null;
+        int enemyWizardCount = 0;
         for (Wizard wizard : turnContainer.getWorldProxy().getWizards()) {
-            if (!turnContainer.isOffensiveWizard(wizard)) {
+            if (!turnContainer.isOffensiveWizard(wizard) || self.getDistanceTo(wizard) > self.getVisionRange()) {
                 continue;
             }
+            enemyWizardCount++;
             double dist = turnContainer.getSelf().getDistanceTo(wizard);
-            if (dist <= CastMagicMissileTacticBuilder.castRangeToWizard(wizard, turnContainer.getGame()) +
-                    wizard.getRadius() &&
-                    Math.max(self.getRemainingCooldownTicksByAction()[ActionType.MAGIC_MISSILE.ordinal()],
-                            self.getRemainingActionCooldownTicks()) > COOLDOWN_THRESHOLD_TO_STAY_IN_WIZARD_RANGE) {
-                return true;
+            if (minDistToWizard > dist) {
+                minDistToWizard = dist;
+                minDistWizard = wizard;
             }
         }
-        return false;
-    }
+        if (minDistWizard == null) {
+            return Action.NONE;
+        }
 
-    private boolean shouldPushBecauseOfWizards(TurnContainer turnContainer) {
-        Wizard self = turnContainer.getSelf();
-        for (Wizard wizard : turnContainer.getWorldProxy().getWizards()) {
-            if (!turnContainer.isOffensiveWizard(wizard)) {
-                continue;
-            }
-            double dist = turnContainer.getSelf().getDistanceTo(wizard);
-            if (dist > CastMagicMissileTacticBuilder.castRangeToWizard(wizard, turnContainer.getGame()) &&
-                    Math.max(self.getRemainingCooldownTicksByAction()[ActionType.MAGIC_MISSILE.ordinal()],
-                            self.getRemainingActionCooldownTicks()) <= COOLDOWN_THRESHOLD_TO_STAY_IN_WIZARD_RANGE) {
-                return true;
-            }
+        if (enemyWizardCount == 1 &&
+                minDistWizard.getLife() + WizardTraits.getMagicMissileDirectDamage(minDistWizard, game) * 3 <
+                        self.getLife()) {
+            return Action.PUSH;
         }
-        return false;
+
+        double untilNextMissile = Math.max(self.getRemainingCooldownTicksByAction()[ActionType.MAGIC_MISSILE.ordinal()],
+                self.getRemainingActionCooldownTicks());
+        double enemyCastRange = CastMagicMissileTacticBuilder.castRangeToWizard(minDistWizard, turnContainer.getGame());
+
+        if (minDistToWizard <= enemyCastRange + minDistWizard.getRadius() &&
+                untilNextMissile > COOLDOWN_THRESHOLD_TO_STAY_IN_WIZARD_RANGE) {
+            return Action.RETREAT;
+        }
+        if (minDistToWizard > enemyCastRange && untilNextMissile <= COOLDOWN_THRESHOLD_TO_STAY_IN_WIZARD_RANGE) {
+            return Action.PUSH;
+        } else if (untilNextMissile <= COOLDOWN_THRESHOLD_TO_STAY_IN_WIZARD_RANGE &&
+                minDistToWizard >= enemyCastRange - WizardTraits.getWizardBackwardSpeed(self, game)) {
+            return Action.STAY;
+        } else if (untilNextMissile <= COOLDOWN_THRESHOLD_TO_STAY_IN_WIZARD_RANGE &&
+                minDistToWizard < enemyCastRange - WizardTraits.getWizardBackwardSpeed(self, game)) {
+            return Action.RETREAT;
+        } else {
+            return Action.NONE;
+        }
     }
 
     private static boolean hasEnemyInVisibilityRange(TurnContainer turnContainer) {
@@ -171,6 +215,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     private enum Action {
         RETREAT,
         PUSH,
+        STAY,
         NONE
     }
 }
