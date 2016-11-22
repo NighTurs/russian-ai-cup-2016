@@ -3,7 +3,6 @@ import model.*;
 import java.util.Optional;
 
 public class CastMagicMissileTacticBuilder implements TacticBuilder {
-    private static final int CAST_RANGE_TO_BUILDING_DEC = 3;
 
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
@@ -73,8 +72,8 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
                 continue;
             }
             double dist = building.getDistanceTo(self);
-            if (dist <= WizardTraits.getWizardCastRange(self, turnContainer.getGame()) + building.getRadius() -
-                    CAST_RANGE_TO_BUILDING_DEC) {
+            if (dist <= WizardTraits.getWizardCastRange(self, turnContainer.getGame()) + building.getRadius() +
+                    turnContainer.getGame().getMagicMissileRadius()) {
                 return Optional.of(building);
             }
         }
