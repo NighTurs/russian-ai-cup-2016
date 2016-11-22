@@ -69,11 +69,7 @@ public class PathFinder {
         return longSearchNextPoint(wizard.getX(), wizard.getY(), x, y).getValue();
     }
 
-    private double toRealAxis(int index) {
-        return index * cellWidth;
-    }
-
-    private Movement findOptimalMovement(Wizard wizard, double x, double y) {
+    public Movement findOptimalMovement(Wizard wizard, double x, double y) {
         double bestDistance = Double.MAX_VALUE;
         double optimalSpeed = 0;
         double optimalStrafe = 0;
@@ -145,6 +141,10 @@ public class PathFinder {
             }
         }
         return new Movement(optimalSpeed, optimalStrafe, optimalTurn);
+    }
+
+    private double toRealAxis(int index) {
+        return index * cellWidth;
     }
 
     private Map.Entry<Point, Double> longSearchNextPoint(double fromX, double fromY, double toX, double toY) {

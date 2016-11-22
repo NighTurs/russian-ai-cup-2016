@@ -12,8 +12,6 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
         WorldProxy world = turnContainer.getWorldProxy();
         Wizard self = turnContainer.getSelf();
         Game game = turnContainer.getGame();
-        LocationType lane = turnContainer.getLanePicker().myLane();
-        MapUtils mapUtils = turnContainer.getMapUtils();
         ProjectileControl projectileControl = turnContainer.getProjectileControl();
 
         for (Projectile projectile : world.getProjectiles()) {
@@ -49,12 +47,16 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
 
             int ticksLeft = (int) Math.ceil(
                     projectile.getDistanceTo(travelsTo.getX(), travelsTo.getY()) / game.getMagicMissileSpeed());
-            if (meta.getRange() + self.getRadius() <
+            if (meta.getRange() + self.getRadius() + projectile.getRadius() <
                     self.getDistanceTo(meta.getInitialPoint().getX(), meta.getInitialPoint().getY()) +
                             ticksLeft * WizardTraits.getWizardBackwardSpeed(self, game)) {
-                Point retreatWaypoint = mapUtils.retreatWaypoint(self.getX(), self.getY(), lane);
-                Movement mov =
-                        turnContainer.getPathFinder().findPath(self, retreatWaypoint.getX(), retreatWaypoint.getY());
+                Point retreatTo = MathMethods.distPoint(meta.getInitialPoint().getX(),
+                        meta.getInitialPoint().getY(),
+                        projectile.getX(),
+                        projectile.getY(),
+                        meta.getRange() + self.getRadius() + projectile.getRadius() + 1);
+                Movement mov = turnContainer.getPathFinder()
+                        .findOptimalMovement(self, retreatTo.getX(), retreatTo.getY());
                 MoveBuilder moveBuilder = new MoveBuilder();
                 moveBuilder.setSpeed(mov.getSpeed());
                 moveBuilder.setStrafeSpeed(mov.getStrafeSpeed());
