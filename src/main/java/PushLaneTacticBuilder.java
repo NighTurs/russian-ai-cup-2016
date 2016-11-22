@@ -169,7 +169,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
 
         double untilNextMissile = Math.max(self.getRemainingCooldownTicksByAction()[ActionType.MAGIC_MISSILE.ordinal()],
                 self.getRemainingActionCooldownTicks());
-        double enemyCastRange = CastMagicMissileTacticBuilder.castRangeToWizard(minDistWizard, turnContainer.getGame());
+        double enemyCastRange =
+                CastMagicMissileTacticBuilder.castRangeToWizard(minDistWizard, self, turnContainer.getGame());
 
         if (minDistToWizard <= enemyCastRange + minDistWizard.getRadius() &&
                 untilNextMissile > COOLDOWN_THRESHOLD_TO_STAY_IN_WIZARD_RANGE) {
