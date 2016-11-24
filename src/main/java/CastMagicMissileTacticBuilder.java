@@ -100,7 +100,7 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
 
     public static double castRangeToWizard(Wizard self, Wizard wizard, Game game) {
         double undodgebaleDistance = game.getWizardRadius() + game.getMagicMissileRadius() -
-                ((int) Math.ceil(self.getCastRange() / game.getMagicMissileSpeed()) - 1) *
+                (int) Math.ceil(self.getCastRange() / game.getMagicMissileSpeed()) *
                         WizardTraits.getWizardBackwardSpeed(wizard, game);
         return WizardTraits.getWizardCastRange(self, game) + undodgebaleDistance;
     }
