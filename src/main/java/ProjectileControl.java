@@ -25,7 +25,10 @@ public class ProjectileControl {
             for (Wizard wizard : world.getWizards()) {
                 if (wizard.getOwnerPlayerId() == projectile.getOwnerPlayerId()) {
                     Point p = memory.getWizardPreviousPosition().get(wizard.getId());
-                    memory.getProjectileMeta().put(projectile.getId(), new ProjectileMeta(p, wizard.getCastRange()));
+                    if (p != null) {
+                        memory.getProjectileMeta()
+                                .put(projectile.getId(), new ProjectileMeta(p, wizard.getCastRange()));
+                    }
                 }
             }
         }
@@ -40,6 +43,7 @@ public class ProjectileControl {
     }
 
     public static class ProjectileMeta {
+
         private final Point initialPoint;
         private final double range;
 
