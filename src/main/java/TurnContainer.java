@@ -58,6 +58,10 @@ public class TurnContainer {
         return projectileControl;
     }
 
+    public Memory getMemory() {
+        return memory;
+    }
+
     public boolean isOffensiveMinion(Minion minion) {
         return minion.getFaction() == opposingFaction() || (minion.getFaction() == Faction.NEUTRAL &&
                 (Math.abs(minion.getSpeedX()) + Math.abs(minion.getSpeedY()) != 0));

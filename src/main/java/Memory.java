@@ -15,6 +15,7 @@ public class Memory {
     private Map<Long, Map<StatusType, Integer>> pastBonusCooldowns;
     private Map<Long, Point> wizardPreviousPosition;
     private Map<Long, ProjectileControl.ProjectileMeta> projectileMeta;
+    private boolean wentForBonusPrevTurn;
 
 
     public Memory() {
@@ -25,6 +26,7 @@ public class Memory {
         this.pastBonusCooldowns = new HashMap<>();
         this.wizardPreviousPosition = new HashMap<>();
         this.projectileMeta = new HashMap<>();
+        this.wentForBonusPrevTurn = false;
     }
 
     public LocationType getLane() {
@@ -69,5 +71,13 @@ public class Memory {
 
     public Map<Long, ProjectileControl.ProjectileMeta> getProjectileMeta() {
         return projectileMeta;
+    }
+
+    public boolean isWentForBonusPrevTurn() {
+        return wentForBonusPrevTurn;
+    }
+
+    public void setWentForBonusPrevTurn(boolean wentForBonusPrevTurn) {
+        this.wentForBonusPrevTurn = wentForBonusPrevTurn;
     }
 }

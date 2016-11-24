@@ -7,6 +7,7 @@ import java.util.Optional;
 public class GoForBonusTacticBuilder implements TacticBuilder {
 
     private static final int ALLY_HALF_MANHATTAN_BASES = 9;
+    private static final int EXPECTED_TICKS_TO_BONUS_ERROR = 400;
 
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
@@ -18,6 +19,7 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
 
         if (self.getX() + world.getHeight() - self.getY() <=
                 turnContainer.getWorldProxy().allyBase().getX() * ALLY_HALF_MANHATTAN_BASES) {
+            turnContainer.getMemory().setWentForBonusPrevTurn(false);
             return Optional.empty();
         }
 
@@ -29,16 +31,19 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
                 self.getDistanceTo(bottomBonus.getX(), bottomBonus.getY())) {
             goForBonus = bottomBonus;
             ticksUntilBonus = bonusControl.ticksUntilBottomBonus();
-        } else  {
+        } else {
             goForBonus = topBonus;
             ticksUntilBonus = bonusControl.ticksUntilTopBonus();
         }
 
-        if (roughDistToBonus(self, pathFinder, goForBonus) /
-                WizardTraits.getWizardForwardSpeed(self, turnContainer.getGame()) <
-                ticksUntilBonus) {
+        double ticksToBonus = roughDistToBonus(self, pathFinder, goForBonus) /
+                WizardTraits.getWizardForwardSpeed(self, turnContainer.getGame());
+        if (ticksToBonus < ticksUntilBonus && (!turnContainer.getMemory().isWentForBonusPrevTurn() ||
+                ticksToBonus + EXPECTED_TICKS_TO_BONUS_ERROR < ticksUntilBonus)) {
+            turnContainer.getMemory().setWentForBonusPrevTurn(false);
             return Optional.empty();
         }
+        turnContainer.getMemory().setWentForBonusPrevTurn(true);
 
         boolean haveBonusInVisibilityRange = false;
         for (Bonus bonus : world.getBonuses()) {
