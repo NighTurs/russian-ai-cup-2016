@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("WeakerAccess")
 public final class WorldProxy {
@@ -19,10 +20,11 @@ public final class WorldProxy {
     private final List<Tree> trees;
     private final List<Unit> allUnits;
     private final List<Unit> allUnitsWoTrees;
+    private final List<Unit> allUnitsNearby;
     private final Building allyBase;
     private List<Building> buildings;
 
-    public WorldProxy(World world, Memory memory) {
+    public WorldProxy(World world, Wizard self, Memory memory) {
         this.world = world;
         this.players = unmodifiableList(world.getPlayers());
         this.wizards = unmodifiableList(world.getWizards());
@@ -43,6 +45,10 @@ public final class WorldProxy {
         this.allUnitsWoTrees = Collections.unmodifiableList(units);
         units.addAll(getTrees());
         this.allUnits = Collections.unmodifiableList(units);
+
+        this.allUnitsNearby = Collections.unmodifiableList(units.stream()
+                .filter(x -> self.getDistanceTo(x) <= self.getVisionRange())
+                .collect(Collectors.toList()));
     }
 
     private static List<Building> buildingsIncludingEnemy(Memory memory, World world) {
@@ -233,6 +239,10 @@ public final class WorldProxy {
 
     public List<Unit> allUnitsWoTrees() {
         return this.allUnitsWoTrees;
+    }
+
+    public List<Unit> getAllUnitsNearby() {
+        return this.allUnitsNearby;
     }
 
     public Building allyBase() {

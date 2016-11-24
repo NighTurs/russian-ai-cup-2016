@@ -80,7 +80,7 @@ public class PathFinder {
         double cos = Math.cos(wizardNextAngle);
         double sin = Math.sin(wizardNextAngle);
 
-        for (double speedOffset = 0.0; speedOffset <= 1.0; speedOffset++) {
+        for (double speedOffset = 0.0; speedOffset <= 1.0; speedOffset += 0.1) {
             for (int speedSign = -1; speedSign <= 1; speedSign += 2) {
                 for (int strafeSign = -1; strafeSign <= 1; strafeSign += 2) {
                     double strafeOffset = Math.sqrt(1 - speedOffset * speedOffset);
@@ -99,7 +99,7 @@ public class PathFinder {
                             resY > world.getHeight() - wizard.getRadius()) {
                         continue;
                     }
-                    for (Unit unit : world.allUnits()) {
+                    for (Unit unit : world.getAllUnitsNearby()) {
                         if (unit.getId() == wizard.getId()) {
                             continue;
                         }
