@@ -9,6 +9,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     private static final int TOWER_TARGETS_THRESHOLD = 3;
     private static final double TOWER_DANGER_LIFE_RATIO_THRESHOLD = 0.7;
     private static final double RETREAT_BACKWARD_SPEED_MULTIPLIER = 0.7;
+    private static final int EXPECT_STEPS_FORWARD_FROM_ENEMY = 5;
 
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
@@ -170,11 +171,12 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             double distToKeep = (distToEnemy +
                     (untilNextMissile - 1) * WizardTraits.getWizardBackwardSpeed(self, game) *
                             RETREAT_BACKWARD_SPEED_MULTIPLIER -
-                    Math.min(untilNextMissile, 3) * WizardTraits.getWizardForwardSpeed(enemy, game)) - enemyCastRange;
+                    Math.min(untilNextMissile + 1, EXPECT_STEPS_FORWARD_FROM_ENEMY) *
+                            WizardTraits.getWizardForwardSpeed(enemy, game)) - enemyCastRange;
 
             if (distToKeep <= 0) {
                 return Action.RETREAT;
-            } else if (distToEnemy <= WizardTraits.getWizardForwardSpeed(self, game)) {
+            } else if (distToKeep <= WizardTraits.getWizardForwardSpeed(self, game)) {
                 return Action.STAY;
             }
         }
