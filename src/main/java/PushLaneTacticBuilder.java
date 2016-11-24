@@ -6,9 +6,9 @@ import java.util.Optional;
 
 public class PushLaneTacticBuilder implements TacticBuilder {
 
-    private static final int TOWER_TARGETS_THRESHOLD = 1;
-    private static final int COOLDOWN_THRESHOLD_TO_STAY_IN_WIZARD_RANGE = 20;
-    private static final double TOWER_DANGER_LIFE_RATIO_THRESHOLD = 0.6;
+    private static final int TOWER_TARGETS_THRESHOLD = 3;
+    private static final double TOWER_DANGER_LIFE_RATIO_THRESHOLD = 0.7;
+    private static final double RETREAT_BACKWARD_SPEED_MULTIPLIER = 0.7;
 
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
@@ -125,6 +125,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     }
 
     private Action actionBecauseOfBuilding(TurnContainer turnContainer, Building building) {
+        Wizard self = turnContainer.getSelf();
         int c = 0;
         for (Unit unit : turnContainer.getWorldProxy().allUnitsWoTrees()) {
             if (turnContainer.isAllyUnit(unit) &&
@@ -132,9 +133,12 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                 c++;
             }
         }
-        if ((c <= TOWER_TARGETS_THRESHOLD || turnContainer.getSelf().getLife() / turnContainer.getSelf().getMaxLife() <
-                TOWER_DANGER_LIFE_RATIO_THRESHOLD) && building.getRemainingActionCooldownTicks() <
-                turnContainer.getGame().getGuardianTowerCooldownTicks() / 2) {
+        if ((c <= TOWER_TARGETS_THRESHOLD ||
+                (double) turnContainer.getSelf().getLife() / turnContainer.getSelf().getMaxLife() <
+                        TOWER_DANGER_LIFE_RATIO_THRESHOLD) && self.getDistanceTo(building) +
+                (building.getRemainingActionCooldownTicks() - 2) *
+                        WizardTraits.getWizardBackwardSpeed(self, turnContainer.getGame()) *
+                        RETREAT_BACKWARD_SPEED_MULTIPLIER <= building.getAttackRange() + self.getRadius()) {
             return Action.RETREAT;
         }
         return Action.NONE;
@@ -143,50 +147,38 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     private Action actionBecauseOfWizards(TurnContainer turnContainer) {
         Wizard self = turnContainer.getSelf();
         Game game = turnContainer.getGame();
-        double minDistToWizard = Double.MAX_VALUE;
-        Wizard minDistWizard = null;
-        int enemyWizardCount = 0;
+        List<Wizard> enemies = new ArrayList<>();
         for (Wizard wizard : turnContainer.getWorldProxy().getWizards()) {
             if (!turnContainer.isOffensiveWizard(wizard) || self.getDistanceTo(wizard) > self.getVisionRange()) {
                 continue;
             }
-            enemyWizardCount++;
-            double dist = turnContainer.getSelf().getDistanceTo(wizard);
-            if (minDistToWizard > dist) {
-                minDistToWizard = dist;
-                minDistWizard = wizard;
+            enemies.add(wizard);
+        }
+
+        for (Wizard enemy : enemies) {
+            if (enemies.size() == 1 &&
+                    enemy.getLife() + WizardTraits.getMagicMissileDirectDamage(enemy, game) * 3 < self.getLife()) {
+                return Action.PUSH;
+            }
+            double distToEnemy = self.getDistanceTo(enemy);
+            double untilNextMissile =
+                    Math.max(enemy.getRemainingCooldownTicksByAction()[ActionType.MAGIC_MISSILE.ordinal()],
+                            enemy.getRemainingActionCooldownTicks());
+            double enemyCastRange =
+                    CastMagicMissileTacticBuilder.castRangeToWizard(enemy, self, turnContainer.getGame());
+
+            double distToKeep = (distToEnemy +
+                    (untilNextMissile - 1) * WizardTraits.getWizardBackwardSpeed(self, game) *
+                            RETREAT_BACKWARD_SPEED_MULTIPLIER -
+                    Math.min(untilNextMissile, 3) * WizardTraits.getWizardForwardSpeed(enemy, game)) - enemyCastRange;
+
+            if (distToKeep <= 0) {
+                return Action.RETREAT;
+            } else if (distToEnemy <= WizardTraits.getWizardForwardSpeed(self, game)) {
+                return Action.STAY;
             }
         }
-        if (minDistWizard == null) {
-            return Action.NONE;
-        }
-
-        if (enemyWizardCount == 1 &&
-                minDistWizard.getLife() + WizardTraits.getMagicMissileDirectDamage(minDistWizard, game) * 3 <
-                        self.getLife()) {
-            return Action.PUSH;
-        }
-
-        double untilNextMissile = Math.max(self.getRemainingCooldownTicksByAction()[ActionType.MAGIC_MISSILE.ordinal()],
-                self.getRemainingActionCooldownTicks());
-        double enemyCastRange =
-                CastMagicMissileTacticBuilder.castRangeToWizard(minDistWizard, self, turnContainer.getGame());
-
-        if (minDistToWizard <= enemyCastRange + minDistWizard.getRadius() &&
-                untilNextMissile > COOLDOWN_THRESHOLD_TO_STAY_IN_WIZARD_RANGE) {
-            return Action.RETREAT;
-        }
-        if (minDistToWizard > enemyCastRange && untilNextMissile <= COOLDOWN_THRESHOLD_TO_STAY_IN_WIZARD_RANGE) {
-            return Action.PUSH;
-        } else if (untilNextMissile <= COOLDOWN_THRESHOLD_TO_STAY_IN_WIZARD_RANGE &&
-                minDistToWizard >= enemyCastRange - WizardTraits.getWizardBackwardSpeed(self, game)) {
-            return Action.STAY;
-        } else if (untilNextMissile <= COOLDOWN_THRESHOLD_TO_STAY_IN_WIZARD_RANGE &&
-                minDistToWizard < enemyCastRange - WizardTraits.getWizardBackwardSpeed(self, game)) {
-            return Action.RETREAT;
-        } else {
-            return Action.NONE;
-        }
+        return Action.NONE;
     }
 
     private static boolean hasEnemyInVisibilityRange(TurnContainer turnContainer) {
