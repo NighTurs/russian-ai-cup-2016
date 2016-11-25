@@ -12,42 +12,58 @@ public class SurviveTacticBuilder implements TacticBuilder {
         LocationType lane = turnContainer.getLanePicker().myLane();
         MapUtils mapUtils = turnContainer.getMapUtils();
         Wizard self = turnContainer.getSelf();
-        if (shouldRunFromTower(turnContainer) || shouldRunFromWizards(turnContainer)) {
+        Action towerAction = shouldRunFromTower(turnContainer);
+        Action wizardsAction = shouldRunFromWizards(turnContainer);
+        if (towerAction == Action.RUN || wizardsAction == Action.RUN) {
             Point retreatWaypoint = mapUtils.retreatWaypoint(self.getX(), self.getY(), lane);
             Movement mov = turnContainer.getPathFinder().findPath(self, retreatWaypoint.getX(), retreatWaypoint.getY());
             MoveBuilder moveBuilder = new MoveBuilder();
             moveBuilder.setSpeed(mov.getSpeed());
             moveBuilder.setStrafeSpeed(mov.getStrafeSpeed());
             moveBuilder.setTurn(mov.getTurn());
-            return Optional.of(new TacticImpl("Survive", moveBuilder, Tactics.SURVIVE_TACTIC_PRIORITY));
+            return buildTactic(moveBuilder);
+        } else if (towerAction == Action.STAY || wizardsAction == Action.STAY) {
+            MoveBuilder moveBuilder = new MoveBuilder();
+            moveBuilder.setSpeed(0);
+            moveBuilder.setStrafeSpeed(0);
+            return buildTactic(moveBuilder);
         } else {
             return Optional.empty();
         }
     }
 
-    private boolean shouldRunFromTower(TurnContainer turnContainer) {
-        Building building = null;
+    private Optional<Tactic> buildTactic(MoveBuilder moveBuilder) {
+        return Optional.of(new TacticImpl("Survive", moveBuilder, Tactics.SURVIVE_TACTIC_PRIORITY));
+    }
+
+    private Action shouldRunFromTower(TurnContainer turnContainer) {
         Wizard self = turnContainer.getSelf();
+        Action action = Action.NONE;
         for (Building unit : turnContainer.getWorldProxy().getBuildings()) {
-            if (!turnContainer.isOffensiveBuilding(unit)) {
+            if (!turnContainer.isOffensiveBuilding(unit) || self.getLife() > unit.getDamage()) {
                 continue;
             }
             double dist = self.getDistanceTo(unit);
             if (dist <= unit.getAttackRange() + self.getRadius()) {
-                building = unit;
+                return Action.RUN;
+            } else if (dist - WizardTraits.getWizardForwardSpeed(self, turnContainer.getGame()) <=
+                    unit.getAttackRange() + self.getRadius()) {
+                action = Action.STAY;
             }
         }
-        return building != null && self.getLife() <= building.getDamage();
+        return action;
     }
 
     @SuppressWarnings("SimplifiableIfStatement")
-    private boolean shouldRunFromWizards(TurnContainer turnContainer) {
+    private Action shouldRunFromWizards(TurnContainer turnContainer) {
         Wizard self = turnContainer.getSelf();
         if ((double) self.getLife() / self.getMaxLife() >= LIFE_HAZZARD_THRESHOLD) {
-            return false;
+            return Action.NONE;
         }
         int counter = 0;
+        int stepInCounter = 0;
         double enemyLife = 0;
+        double stepInEnemyLife = 0;
         for (Wizard wizard : turnContainer.getWorldProxy().getWizards()) {
             if (!turnContainer.isOffensiveWizard(wizard)) {
                 continue;
@@ -55,17 +71,32 @@ public class SurviveTacticBuilder implements TacticBuilder {
             double dist = turnContainer.getSelf().getDistanceTo(wizard);
             if (dist <= CastMagicMissileTacticBuilder.castRangeToWizard(wizard, self, turnContainer.getGame()) +
                     self.getRadius()) {
-                counter++;
                 enemyLife = wizard.getLife();
+                counter++;
+            }
+            if (dist - WizardTraits.getWizardForwardSpeed(self, turnContainer.getGame()) <=
+                    CastMagicMissileTacticBuilder.castRangeToWizard(wizard, self, turnContainer.getGame()) +
+                            self.getRadius()) {
+                stepInEnemyLife = wizard.getLife();
+                stepInCounter++;
             }
         }
-        if (counter == 0) {
-            return false;
-        } else if (counter > 1) {
-            return true;
+        boolean loosingTrade = self.getLife() - enemyLife < turnContainer.getGame().getMagicMissileDirectDamage();
+        boolean stepInLoosingTrade =
+                self.getLife() - stepInEnemyLife < turnContainer.getGame().getMagicMissileDirectDamage();
+
+        if (counter > 1 || (counter == 1 && loosingTrade)) {
+            return Action.RUN;
+        } else if (stepInCounter > 1 || (stepInCounter == 1 && stepInLoosingTrade)) {
+            return Action.STAY;
         } else {
-            return self.getLife() - enemyLife < turnContainer.getGame().getMagicMissileDirectDamage();
+            return Action.NONE;
         }
     }
 
+    private enum Action {
+        STAY,
+        RUN,
+        NONE,
+    }
 }
