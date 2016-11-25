@@ -5,6 +5,7 @@ import java.util.Map;
 
 public class BonusControl {
 
+    private static final int WILL_NEVER_HAPPEN_TICKS = 10000;
     private static final double E = 1e-6;
     private final WorldProxy world;
     private final Memory memory;
@@ -151,8 +152,12 @@ public class BonusControl {
     }
 
     private int nextBonusSpawnTick() {
-        return ((world.getTickIndex() - 1) / game.getBonusAppearanceIntervalTicks() + 1) *
-                game.getBonusAppearanceIntervalTicks() - world.getTickIndex() + 1;
+        int bonusCycleNumber = ((world.getTickIndex() - 1) / game.getBonusAppearanceIntervalTicks() + 1);
+        if (bonusCycleNumber == game.getTickCount() / game.getBonusAppearanceIntervalTicks()) {
+            return WILL_NEVER_HAPPEN_TICKS;
+        } else {
+            return bonusCycleNumber * game.getBonusAppearanceIntervalTicks() - world.getTickIndex() + 1;
+        }
     }
 
     public Point topBonusPosition() {
