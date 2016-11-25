@@ -7,7 +7,7 @@ import java.util.Optional;
 public class GoForBonusTacticBuilder implements TacticBuilder {
 
     private static final int ALLY_HALF_MANHATTAN_BASES = 9;
-    private static final int ARRIVE_BEFORE_TICKS = 120;
+    private static final int ARRIVE_BEFORE_TICKS = 80;
     private static final int EXPECTED_TICKS_TO_BONUS_ERROR = 400;
 
     @Override
