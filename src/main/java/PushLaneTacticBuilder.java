@@ -8,8 +8,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
 
     private static final int TOWER_TARGETS_THRESHOLD = 3;
     private static final double TOWER_DANGER_LIFE_RATIO_THRESHOLD = 0.7;
-    private static final double RETREAT_BACKWARD_SPEED_MULTIPLIER = 0.7;
-    private static final int EXPECT_STEPS_FORWARD_FROM_ENEMY = 10;
+    private static final double RETREAT_BACKWARD_SPEED_MULTIPLIER = 0.9;
+    private static final int EXPECT_STEPS_FORWARD_FROM_ENEMY = 60;
 
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
