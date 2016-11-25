@@ -106,6 +106,7 @@ public class MapUtils {
     }
 
     public Point retreatWaypoint(double x, double y, LocationType lane) {
+        LocationType curLocationType = getLocationType(x, y);
         if (Math.hypot(x, y - worldHeight) < waypointBaseInfluence) {
             return laneAllyWaypoint;
         }
@@ -114,14 +115,23 @@ public class MapUtils {
         }
         switch (lane) {
             case MIDDLE_LANE:
+                if (curLocationType != lane) {
+                    return midLaneMidWaypoint;
+                }
                 return laneAllyWaypoint;
             case TOP_LANE:
+                if (curLocationType != lane) {
+                    return topLaneMidWaypoint;
+                }
                 if (x < laneWidth * 2) {
                     return laneAllyWaypoint;
                 } else {
                     return topLaneMidWaypoint;
                 }
             case BOTTOM_LANE:
+                if (curLocationType != lane) {
+                    return bottomLaneMidWaypoint;
+                }
                 if (y > worldHeight - laneWidth * 2) {
                     return laneAllyWaypoint;
                 } else {
