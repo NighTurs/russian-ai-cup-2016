@@ -151,7 +151,7 @@ public class BonusControl {
     }
 
     private int nextBonusSpawnTick() {
-        return (world.getTickIndex() / game.getBonusAppearanceIntervalTicks() + 1) *
+        return ((world.getTickIndex() - 1) / game.getBonusAppearanceIntervalTicks() + 1) *
                 game.getBonusAppearanceIntervalTicks() - world.getTickIndex() + 1;
     }
 
