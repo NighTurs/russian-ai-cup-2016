@@ -167,7 +167,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                     Math.max(enemy.getRemainingCooldownTicksByAction()[ActionType.MAGIC_MISSILE.ordinal()],
                             enemy.getRemainingActionCooldownTicks());
             double enemyCastRange =
-                    CastMagicMissileTacticBuilder.castRangeToWizard(enemy, self, turnContainer.getGame());
+                    CastMagicMissileTacticBuilder.castRangeToWizardOptimistic(enemy, self, turnContainer.getGame());
 
             double distToKeep = (distToEnemy +
                     (untilNextMissile - 1) * WizardTraits.getWizardBackwardSpeed(self, game) *
@@ -202,7 +202,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             } else if (unit instanceof Minion) {
                 range = CastMagicMissileTacticBuilder.castRangeToMinion(self, (Minion) unit, game);
             } else if (unit instanceof Wizard) {
-                range = CastMagicMissileTacticBuilder.castRangeToWizard(self, (Wizard) unit, game);
+                range = CastMagicMissileTacticBuilder.castRangeToWizardPessimistic(self, (Wizard) unit, game);
             }
             if (dist <= range) {
                 return true;
