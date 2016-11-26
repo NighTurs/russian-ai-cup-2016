@@ -66,7 +66,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         return Optional.of(new TacticImpl("PushLane", moveBuilder, Tactics.PUSH_LANE_TACTIC_PRIORITY));
     }
 
-    private Action actionBecauseOfMinions(TurnContainer turnContainer) {
+    public static Action actionBecauseOfMinions(TurnContainer turnContainer) {
         Wizard self = turnContainer.getSelf();
         double minTriggerTargetDist = Double.MAX_VALUE;
         for (Minion minion : turnContainer.getWorldProxy().getMinions()) {
@@ -208,7 +208,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         return false;
     }
 
-    private enum Action {
+    public enum Action {
         RETREAT,
         PUSH,
         STAY,

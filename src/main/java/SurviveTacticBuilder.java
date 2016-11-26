@@ -22,7 +22,8 @@ public class SurviveTacticBuilder implements TacticBuilder {
             moveBuilder.setStrafeSpeed(mov.getStrafeSpeed());
             moveBuilder.setTurn(mov.getTurn());
             return buildTactic(moveBuilder);
-        } else if (towerAction == Action.STAY || wizardsAction == Action.STAY) {
+        } else if ((towerAction == Action.STAY || wizardsAction == Action.STAY) &&
+                PushLaneTacticBuilder.actionBecauseOfMinions(turnContainer) != PushLaneTacticBuilder.Action.RETREAT) {
             MoveBuilder moveBuilder = new MoveBuilder();
             moveBuilder.setSpeed(0);
             moveBuilder.setStrafeSpeed(0);
