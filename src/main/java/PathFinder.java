@@ -54,6 +54,9 @@ public class PathFinder {
     }
 
     public Movement findPath(Wizard wizard, double x, double y) {
+        if (wizard.getDistanceTo(x, y) <= SHORT_SEARCH_GRID_SPAN) {
+            return findOptimalMovement(wizard, x, y);
+        }
         Point longDistPoint = longSearchNextPoint(wizard.getX(), wizard.getY(), x, y).getKey();
         Optional<Point> straightLinePoint =
                 straightLinePath(wizard.getX(), wizard.getY(), longDistPoint.getX(), longDistPoint.getY());
