@@ -42,7 +42,7 @@ public class MapUtils {
         this.worldWidth = world.getWidth();
         this.worldHeight = world.getHeight();
 
-        this.waypointBaseInfluence = base * 2;
+        this.waypointBaseInfluence = base * 2.2;
         this.laneAllyWaypoint = new Point(halfBase, worldHeight - halfBase);
         this.laneEnemyWaypoint = new Point(worldWidth - halfBase, halfBase);
         this.bottomLaneMidWaypoint = new Point(worldWidth - halfBase, worldHeight - halfBase);
