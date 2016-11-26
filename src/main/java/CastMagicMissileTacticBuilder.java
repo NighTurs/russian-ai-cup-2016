@@ -41,16 +41,6 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
         WorldProxy world = turnContainer.getWorldProxy();
         Wizard self = turnContainer.getSelf();
 
-        for (Minion minion : world.getMinions()) {
-            if (!turnContainer.isOffensiveMinion(minion)) {
-                continue;
-            }
-            double dist = minion.getDistanceTo(self);
-            if (dist <= turnContainer.getGame().getStaffRange() + minion.getRadius()) {
-                return Optional.of(minion);
-            }
-        }
-
         Unit bestUnit = null;
         int lowestLife = Integer.MAX_VALUE;
         for (Wizard wizard : world.getWizards()) {
@@ -65,6 +55,16 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
         }
         if (bestUnit != null) {
             return Optional.of(bestUnit);
+        }
+
+        for (Minion minion : world.getMinions()) {
+            if (!turnContainer.isOffensiveMinion(minion)) {
+                continue;
+            }
+            double dist = minion.getDistanceTo(self);
+            if (dist <= turnContainer.getGame().getStaffRange() + minion.getRadius()) {
+                return Optional.of(minion);
+            }
         }
 
         for (Building building : world.getBuildings()) {
