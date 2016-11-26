@@ -54,7 +54,8 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
                         meta.getInitialPoint().getY(),
                         projectile.getX(),
                         projectile.getY(),
-                        meta.getRange() + self.getRadius() + projectile.getRadius() + 1);
+                        meta.getRange() + self.getRadius() + projectile.getRadius() +
+                                WizardTraits.getWizardForwardSpeed(self, game));
                 Movement mov =
                         turnContainer.getPathFinder().findOptimalMovement(self, retreatTo.getX(), retreatTo.getY());
                 MoveBuilder moveBuilder = new MoveBuilder();
