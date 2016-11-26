@@ -195,9 +195,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
 
     private static boolean hasEnemyInRange(TurnContainer turnContainer, double range) {
         Wizard self = turnContainer.getSelf();
-        Faction opposingFaction = turnContainer.opposingFaction();
         for (Unit unit : turnContainer.getWorldProxy().allUnitsWoTrees()) {
-            if (unit.getFaction() != opposingFaction) {
+            if (!turnContainer.isOffensiveUnit(unit)) {
                 continue;
             }
             double dist = unit.getDistanceTo(self);
