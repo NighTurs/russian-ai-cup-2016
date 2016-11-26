@@ -189,8 +189,26 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     }
 
     public static boolean hasEnemyInAttackRange(TurnContainer turnContainer) {
-        return hasEnemyInRange(turnContainer,
-                WizardTraits.getWizardCastRange(turnContainer.getSelf(), turnContainer.getGame()));
+        Wizard self = turnContainer.getSelf();
+        Game game = turnContainer.getGame();
+        for (Unit unit : turnContainer.getWorldProxy().allUnitsWoTrees()) {
+            if (!turnContainer.isOffensiveUnit(unit)) {
+                continue;
+            }
+            double dist = unit.getDistanceTo(self);
+            double range = 0;
+            if (unit instanceof Building) {
+                range = CastMagicMissileTacticBuilder.castRangeToBuilding(self, (Building) unit, game);
+            } else if (unit instanceof Minion) {
+                range = CastMagicMissileTacticBuilder.castRangeToMinion(self, (Minion) unit, game);
+            } else if (unit instanceof Wizard) {
+                range = CastMagicMissileTacticBuilder.castRangeToWizard(self, (Wizard) unit, game);
+            }
+            if (dist <= range) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean hasEnemyInRange(TurnContainer turnContainer, double range) {
@@ -200,7 +218,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                 continue;
             }
             double dist = unit.getDistanceTo(self);
-            if (dist < range) {
+            if (dist <= range) {
                 return true;
             }
         }
