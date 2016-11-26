@@ -115,9 +115,6 @@ public class MapUtils {
         }
         switch (lane) {
             case MIDDLE_LANE:
-                if (curLocationType != lane) {
-                    return midLaneMidWaypoint;
-                }
                 return laneAllyWaypoint;
             case TOP_LANE:
                 if (curLocationType != lane) {
