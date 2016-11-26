@@ -74,7 +74,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                 continue;
             }
             double dist = turnContainer.getSelf().getDistanceTo(minion);
-            if (dist > self.getVisionRange()) {
+            if (dist > CastMagicMissileTacticBuilder.castRangeToMinion(self, minion, turnContainer.getGame())) {
                 continue;
             }
             double minDist = Double.MAX_VALUE;
@@ -83,11 +83,11 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                     minDist = minion.getDistanceTo(unit);
                 }
             }
-            if (minion.getDistanceTo(self) < minDist) {
+            if (dist < minDist) {
                 return Action.RETREAT;
             }
-            if (minTriggerTargetDist > minion.getDistanceTo(self) - minDist) {
-                minTriggerTargetDist = minion.getDistanceTo(self) - minDist;
+            if (minTriggerTargetDist > dist - minDist) {
+                minTriggerTargetDist = dist - minDist;
             }
         }
         if (minTriggerTargetDist < WizardTraits.getWizardForwardSpeed(self, turnContainer.getGame())) {
