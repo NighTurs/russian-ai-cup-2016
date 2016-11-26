@@ -95,12 +95,13 @@ public final class WorldProxy {
                 }
 
                 if (unit.getDistanceTo(enemyGuardianTower) <= visionRange - VISION_RANGE_DEC_TO_BE_SURE) {
-                    memory.getDestroyedEnemyGuardianTowers().add(enemyGuardianTower);
                     shouldBeSeen = true;
                 }
             }
             if (!shouldBeSeen) {
                 allBuildings.add(enemyGuardianTower);
+            } else {
+                memory.getDestroyedEnemyGuardianTowers().add(enemyGuardianTower);
             }
         }
         Building enemyBase = enemyMirrorStructure(world, allyBase(world.getBuildings(), world.getMyPlayer()));
