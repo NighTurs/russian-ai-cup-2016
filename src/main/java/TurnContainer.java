@@ -11,6 +11,7 @@ public class TurnContainer {
     private final LanePicker lanePicker;
     private final BonusControl bonusControl;
     private final ProjectileControl projectileControl;
+    private final BuildingControl buildingControl;
     private final Memory memory;
 
     public TurnContainer(Wizard self, World world, Game game, Memory memory) {
@@ -18,7 +19,8 @@ public class TurnContainer {
         this.world = world;
         this.game = game;
         this.memory = memory;
-        this.worldProxy = new WorldProxy(world, self, memory);
+        this.buildingControl = new BuildingControl(memory, world);
+        this.worldProxy = new WorldProxy(world, self, buildingControl);
         this.mapUtils = new MapUtils(worldProxy);
         this.pathFinder = new PathFinder(self, worldProxy, game, mapUtils);
         this.lanePicker = new LanePicker(worldProxy, self, mapUtils, this.memory);

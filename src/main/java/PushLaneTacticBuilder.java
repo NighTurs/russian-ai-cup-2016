@@ -7,10 +7,11 @@ import java.util.Optional;
 public class PushLaneTacticBuilder implements TacticBuilder {
 
     private static final int TOWER_TARGETS_THRESHOLD = 3;
-    private static final double TOWER_DANGER_LIFE_RATIO_THRESHOLD = 0.7;
+    private static final double TOWER_DANGER_LIFE_RATIO_THRESHOLD = 0.8;
     private static final double RETREAT_BACKWARD_SPEED_MULTIPLIER = 0.9;
     private static final double TOWER_RETREAT_BACKWARD_SPEED_MULTIPLIER = 0.7;
     private static final int EXPECT_STEPS_FORWARD_FROM_ENEMY = 15;
+    private static final int TOWER_RETREAT_SPARE_TICKS = 2;
 
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
@@ -105,10 +106,10 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                 continue;
             }
             double dist = turnContainer.getSelf().getDistanceTo(unit);
-            if (dist <= unit.getAttackRange() + turnContainer.getSelf().getRadius()) {
+            if (dist <= unit.getAttackRange()) {
                 buildings.add(unit);
             }
-            if (dist <= unit.getAttackRange() + turnContainer.getSelf().getRadius() +
+            if (dist <= unit.getAttackRange() +
                     WizardTraits.getWizardForwardSpeed(turnContainer.getSelf(), turnContainer.getGame())) {
                 moveOutsideOfRange.add(unit);
             }
@@ -130,17 +131,17 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         Wizard self = turnContainer.getSelf();
         int c = 0;
         for (Unit unit : turnContainer.getWorldProxy().allUnitsWoTrees()) {
-            if (turnContainer.isAllyUnit(unit) &&
-                    building.getDistanceTo(unit) <= building.getAttackRange() + ((CircularUnit) unit).getRadius()) {
+            if (turnContainer.isAllyUnit(unit) && building.getDistanceTo(unit) <= building.getAttackRange()) {
                 c++;
             }
         }
         if ((c <= TOWER_TARGETS_THRESHOLD ||
                 (double) turnContainer.getSelf().getLife() / turnContainer.getSelf().getMaxLife() <
-                        TOWER_DANGER_LIFE_RATIO_THRESHOLD) && self.getDistanceTo(building) +
-                (building.getRemainingActionCooldownTicks() - 2) *
-                        WizardTraits.getWizardBackwardSpeed(self, turnContainer.getGame()) *
-                        TOWER_RETREAT_BACKWARD_SPEED_MULTIPLIER <= building.getAttackRange() + self.getRadius()) {
+                        TOWER_DANGER_LIFE_RATIO_THRESHOLD) &&
+                self.getDistanceTo(building) - WizardTraits.getWizardForwardSpeed(self, turnContainer.getGame()) +
+                        Math.max((building.getRemainingActionCooldownTicks() - TOWER_RETREAT_SPARE_TICKS), 0) *
+                                WizardTraits.getWizardBackwardSpeed(self, turnContainer.getGame()) *
+                                TOWER_RETREAT_BACKWARD_SPEED_MULTIPLIER <= building.getAttackRange()) {
             return Action.RETREAT;
         }
         return Action.NONE;

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Memory {
+
     private LocationType lane;
     private List<Building> allyGuardianTowers;
     private List<Building> destroyedEnemyGuardianTowers;
@@ -16,7 +17,6 @@ public class Memory {
     private Map<Long, Point> wizardPreviousPosition;
     private Map<Long, ProjectileControl.ProjectileMeta> projectileMeta;
     private boolean wentForBonusPrevTurn;
-
 
     public Memory() {
         this.allyGuardianTowers = new ArrayList<>();
