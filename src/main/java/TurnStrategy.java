@@ -9,7 +9,8 @@ public class TurnStrategy {
             new SurviveTacticBuilder(),
             new GoForBonusTacticBuilder(),
             new StaffHitTacticBuilder(),
-            new DodgeProjectileTacticBuilder());
+            new DodgeProjectileTacticBuilder(),
+            new LearnSkillsTacticBuilder());
     private final TurnContainer turnContainer;
     private final Move move;
 

@@ -10,4 +10,5 @@ public final class Tactics {
     public static final int GO_FOR_BONUS_TACTIC_PRIORITY = 30;
     public static final int STAFF_HIT_TACTIC_PRIORITY = 13;
     public static final int DODGE_PROJECTILE_TACTIC_PRIORITY = 17;
+    public static final int LEARN_SKILLS_TACTIC_BUILDER = 200;
 }
