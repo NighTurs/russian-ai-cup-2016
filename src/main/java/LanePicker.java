@@ -1,14 +1,12 @@
-import model.Wizard;
-
 public class LanePicker {
 
     private static final int UNFIXED_LANE_TICK_THRESHOLD = 800;
     private final WorldProxy world;
-    private final Wizard self;
+    private final WizardProxy self;
     private final MapUtils mapUtils;
     private final Memory memory;
 
-    public LanePicker(WorldProxy world, Wizard self, MapUtils mapUtils, Memory memory) {
+    public LanePicker(WorldProxy world, WizardProxy self, MapUtils mapUtils, Memory memory) {
         this.world = world;
         this.self = self;
         this.mapUtils = mapUtils;
@@ -28,7 +26,7 @@ public class LanePicker {
         int mid = 0;
         int bot = 0;
         int top = 0;
-        for (Wizard wizard : world.getWizards()) {
+        for (WizardProxy wizard : world.getWizards()) {
             if (wizard.getId() == self.getId() || wizard.getFaction() != self.getFaction()) {
                 continue;
             }

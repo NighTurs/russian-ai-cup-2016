@@ -1,7 +1,6 @@
 import model.Game;
 import model.Projectile;
 import model.ProjectileType;
-import model.Wizard;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -22,7 +21,7 @@ public class ProjectileControl {
             if (memory.getProjectileMeta().containsKey(projectile.getId())) {
                 continue;
             }
-            for (Wizard wizard : world.getWizards()) {
+            for (WizardProxy wizard : world.getWizards()) {
                 if (wizard.getOwnerPlayerId() == projectile.getOwnerPlayerId()) {
                     Point p = memory.getWizardPreviousPosition().get(wizard.getId());
                     if (p != null) {
@@ -32,7 +31,7 @@ public class ProjectileControl {
                 }
             }
         }
-        for (Wizard wizard : world.getWizards()) {
+        for (WizardProxy wizard : world.getWizards()) {
             memory.getWizardPreviousPosition().put(wizard.getId(), new Point(wizard.getX(), wizard.getY()));
         }
         dissapearedProjectiles.forEach(x -> memory.getProjectileMeta().remove(x));

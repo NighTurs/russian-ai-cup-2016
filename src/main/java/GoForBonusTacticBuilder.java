@@ -1,6 +1,5 @@
 import model.Bonus;
 import model.Game;
-import model.Wizard;
 
 import java.util.Optional;
 
@@ -13,7 +12,7 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
         BonusControl bonusControl = turnContainer.getBonusControl();
-        Wizard self = turnContainer.getSelf();
+        WizardProxy self = turnContainer.getSelf();
         PathFinder pathFinder = turnContainer.getPathFinder();
         WorldProxy world = turnContainer.getWorldProxy();
         Game game = turnContainer.getGame();
@@ -38,7 +37,7 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
         }
 
         double ticksToBonus = roughDistToBonus(self, pathFinder, goForBonus) /
-                WizardTraits.getWizardForwardSpeed(self, turnContainer.getGame()) + ARRIVE_BEFORE_TICKS;
+                self.getWizardForwardSpeed(turnContainer.getGame()) + ARRIVE_BEFORE_TICKS;
         if (ticksToBonus < ticksUntilBonus && (!turnContainer.getMemory().isWentForBonusPrevTurn() ||
                 ticksToBonus + EXPECTED_TICKS_TO_BONUS_ERROR < ticksUntilBonus)) {
             turnContainer.getMemory().setWentForBonusPrevTurn(false);
@@ -53,7 +52,7 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
             }
         }
         if (haveBonusInVisibilityRange || self.getDistanceTo(goForBonus.getX(), goForBonus.getY()) >
-                game.getBonusRadius() + self.getRadius() + WizardTraits.getWizardForwardSpeed(self, game)) {
+                game.getBonusRadius() + self.getRadius() + self.getWizardForwardSpeed(game)) {
             Movement mov = pathFinder.findPath(self, goForBonus.getX(), goForBonus.getY());
             MoveBuilder moveBuilder = new MoveBuilder();
             moveBuilder.setSpeed(mov.getSpeed());
@@ -74,7 +73,7 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
         return Optional.of(new TacticImpl("GoForBonus", moveBuilder, Tactics.GO_FOR_BONUS_TACTIC_PRIORITY));
     }
 
-    private double roughDistToBonus(Wizard self, PathFinder pathFinder, Point goForBonus) {
+    private double roughDistToBonus(WizardProxy self, PathFinder pathFinder, Point goForBonus) {
         return pathFinder.roughDistanceTo(self, goForBonus.getX(), goForBonus.getY());
     }
 }

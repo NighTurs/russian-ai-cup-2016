@@ -11,7 +11,7 @@ public final class WorldProxy {
 
     private final World world;
     private final List<Player> players;
-    private final List<Wizard> wizards;
+    private final List<WizardProxy> wizards;
     private final List<Minion> minions;
     private final List<Projectile> projectiles;
     private final List<Bonus> bonuses;
@@ -22,10 +22,12 @@ public final class WorldProxy {
     private final Building allyBase;
     private List<Building> buildings;
 
-    public WorldProxy(World world, Wizard self, BuildingControl buildingControl) {
+    public WorldProxy(World world, Wizard self, BuildingControl buildingControl, Game game) {
         this.world = world;
         this.players = unmodifiableList(world.getPlayers());
-        this.wizards = unmodifiableList(world.getWizards());
+        this.wizards = unmodifiableList(world.getWizards()).stream()
+                .map(x -> new WizardProxy(x, world, game))
+                .collect(Collectors.toList());
         this.minions = unmodifiableList(world.getMinions());
         this.projectiles = unmodifiableList(world.getProjectiles());
         this.bonuses = unmodifiableList(world.getBonuses());
@@ -94,7 +96,7 @@ public final class WorldProxy {
      * @return Возвращает список видимых волшебников (в случайном порядке).
      * После каждого тика объекты, задающие волшебников, пересоздаются.
      */
-    public List<Wizard> getWizards() {
+    public List<WizardProxy> getWizards() {
         return wizards;
     }
 

@@ -1,5 +1,4 @@
 import model.Building;
-import model.Wizard;
 
 import java.util.Optional;
 
@@ -11,7 +10,7 @@ public class SurviveTacticBuilder implements TacticBuilder {
     public Optional<Tactic> build(TurnContainer turnContainer) {
         LocationType lane = turnContainer.getLanePicker().myLane();
         MapUtils mapUtils = turnContainer.getMapUtils();
-        Wizard self = turnContainer.getSelf();
+        WizardProxy self = turnContainer.getSelf();
         Action towerAction = shouldRunFromTower(turnContainer);
         Action wizardsAction = shouldRunFromWizards(turnContainer);
         if (towerAction == Action.RUN || wizardsAction == Action.RUN) {
@@ -38,7 +37,7 @@ public class SurviveTacticBuilder implements TacticBuilder {
     }
 
     private Action shouldRunFromTower(TurnContainer turnContainer) {
-        Wizard self = turnContainer.getSelf();
+        WizardProxy self = turnContainer.getSelf();
         Action action = Action.NONE;
         for (Building unit : turnContainer.getWorldProxy().getBuildings()) {
             if (!turnContainer.isOffensiveBuilding(unit) || self.getLife() > unit.getDamage()) {
@@ -47,7 +46,7 @@ public class SurviveTacticBuilder implements TacticBuilder {
             double dist = self.getDistanceTo(unit);
             if (dist <= unit.getAttackRange() + self.getRadius()) {
                 return Action.RUN;
-            } else if (dist - WizardTraits.getWizardForwardSpeed(self, turnContainer.getGame()) <=
+            } else if (dist - self.getWizardForwardSpeed(turnContainer.getGame()) <=
                     unit.getAttackRange() + self.getRadius()) {
                 action = Action.STAY;
             }
@@ -57,7 +56,7 @@ public class SurviveTacticBuilder implements TacticBuilder {
 
     @SuppressWarnings("SimplifiableIfStatement")
     private Action shouldRunFromWizards(TurnContainer turnContainer) {
-        Wizard self = turnContainer.getSelf();
+        WizardProxy self = turnContainer.getSelf();
         if ((double) self.getLife() / self.getMaxLife() >= LIFE_HAZZARD_THRESHOLD) {
             return Action.NONE;
         }
@@ -65,7 +64,7 @@ public class SurviveTacticBuilder implements TacticBuilder {
         int stepInCounter = 0;
         double enemyLife = 0;
         double stepInEnemyLife = 0;
-        for (Wizard wizard : turnContainer.getWorldProxy().getWizards()) {
+        for (WizardProxy wizard : turnContainer.getWorldProxy().getWizards()) {
             if (!turnContainer.isOffensiveWizard(wizard)) {
                 continue;
             }
@@ -76,7 +75,7 @@ public class SurviveTacticBuilder implements TacticBuilder {
                 enemyLife = wizard.getLife();
                 counter++;
             }
-            if (dist - WizardTraits.getWizardForwardSpeed(self, turnContainer.getGame()) <=
+            if (dist - self.getWizardForwardSpeed(turnContainer.getGame()) <=
                     CastProjectileTacticBuilders.castRangeToWizardPessimistic(wizard, self, turnContainer.getGame()) +
                             self.getRadius()) {
                 stepInEnemyLife = wizard.getLife();

@@ -16,7 +16,7 @@ public class PathFinder {
     private static final int MAX_ANGLE_RADIUS = 500;
     private final WorldProxy world;
     private final Game game;
-    private final Wizard self;
+    private final WizardProxy self;
     private final boolean[][] longSearchGrid;
     private final int cellWidth;
     private final int gridN;
@@ -25,7 +25,7 @@ public class PathFinder {
     private PathPoint[][] shortSearchGrid;
     private int shortSearchGridDim;
 
-    public PathFinder(Wizard self, WorldProxy world, Game game, MapUtils mapUtils) {
+    public PathFinder(WizardProxy self, WorldProxy world, Game game, MapUtils mapUtils) {
         this.world = world;
         this.game = game;
         this.self = self;
@@ -53,7 +53,7 @@ public class PathFinder {
         }
     }
 
-    public Movement findPath(Wizard wizard, double x, double y) {
+    public Movement findPath(WizardProxy wizard, double x, double y) {
         if (wizard.getDistanceTo(x, y) <= SHORT_SEARCH_GRID_SPAN) {
             return findOptimalMovement(wizard, x, y);
         }
@@ -68,15 +68,15 @@ public class PathFinder {
         }
     }
 
-    public double roughDistanceTo(Wizard wizard, double x, double y) {
+    public double roughDistanceTo(WizardProxy wizard, double x, double y) {
         return longSearchNextPoint(wizard.getX(), wizard.getY(), x, y).getValue();
     }
 
-    public Movement findOptimalMovement(Wizard wizard, double x, double y) {
+    public Movement findOptimalMovement(WizardProxy wizard, double x, double y) {
         double bestDistance = Double.MAX_VALUE;
         double optimalSpeed = 0;
         double optimalStrafe = 0;
-        double maxTurnAngle = WizardTraits.getWizardMaxTurnAngle(wizard, game);
+        double maxTurnAngle = wizard.getWizardMaxTurnAngle(game);
         double optimalTurn = Math.min(maxTurnAngle, Math.max(-maxTurnAngle, wizard.getAngleTo(x, y)));
         double wizardNextAngle = wizard.getAngle();
 
@@ -89,11 +89,11 @@ public class PathFinder {
                     double strafeOffset = Math.sqrt(1 - speedOffset * speedOffset);
                     double speed;
                     if (speedSign == -1) {
-                        speed = -WizardTraits.getWizardBackwardSpeed(wizard, game) * speedOffset;
+                        speed = -wizard.getWizardBackwardSpeed(game) * speedOffset;
                     } else {
-                        speed = WizardTraits.getWizardForwardSpeed(wizard, game) * speedOffset;
+                        speed = wizard.getWizardForwardSpeed(game) * speedOffset;
                     }
-                    double strafe = strafeSign * WizardTraits.getWizardStrafeSpeed(wizard, game) * strafeOffset;
+                    double strafe = strafeSign * wizard.getWizardStrafeSpeed(game) * strafeOffset;
                     double resX = wizard.getX() + speed * cos - strafe * sin;
                     double resY = wizard.getY() + speed * sin + strafe * cos;
                     boolean foundIntersection = false;
@@ -113,7 +113,7 @@ public class PathFinder {
                             continue;
                         }
                         double unitR = ((CircularUnit) unit).getRadius();
-                        if (unit instanceof Wizard || unit instanceof Minion) {
+                        if (unit instanceof WizardProxy || unit instanceof Minion) {
                             unitR += UNSTATIC_OBJECTS_RADIUS_ADJUST;
                         }
                         if (unit.getDistanceTo(resX, resY) < wizard.getRadius() + unitR) {
@@ -430,7 +430,7 @@ public class PathFinder {
                                     double toX,
                                     double toY) {
         double unitR = ((CircularUnit) intersectsWith).getRadius();
-        if (intersectsWith instanceof Wizard || intersectsWith instanceof Minion) {
+        if (intersectsWith instanceof WizardProxy || intersectsWith instanceof Minion) {
             unitR += UNSTATIC_OBJECTS_RADIUS_ADJUST;
         }
         double r0 = rFrom;
@@ -476,7 +476,7 @@ public class PathFinder {
                 continue;
             }
             double unitR = ((CircularUnit) unit).getRadius();
-            if (unit instanceof Wizard || unit instanceof Minion) {
+            if (unit instanceof WizardProxy || unit instanceof Minion) {
                 unitR += UNSTATIC_OBJECTS_RADIUS_ADJUST;
             }
             if (MathMethods.isLineIntersectsCircle(fromX,

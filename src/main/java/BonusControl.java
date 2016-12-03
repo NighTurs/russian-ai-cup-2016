@@ -13,7 +13,7 @@ public class BonusControl {
     private final Point topBonusPosition;
     private final Point bottomBonusPosition;
 
-    public BonusControl(Wizard self, WorldProxy world, Game game, Memory memory) {
+    public BonusControl(WizardProxy self, WorldProxy world, Game game, Memory memory) {
         double base = world.allyBase().getX();
         this.topBonusPosition = new Point(base * 3, base * 3);
         this.bottomBonusPosition = new Point(world.getWidth() - base * 3, world.getHeight() - base * 3);
@@ -45,7 +45,7 @@ public class BonusControl {
                 cooldowns.put(type, cooldowns.get(type) - 1);
             }
         }
-        for (Wizard wizard : world.getWizards()) {
+        for (WizardProxy wizard : world.getWizards()) {
             if (!memory.getPastBonusCooldowns().containsKey(wizard.getId())) {
                 Map<StatusType, Integer> cooldowns = new EnumMap<>(StatusType.class);
                 cooldowns.put(StatusType.EMPOWERED, 0);
@@ -106,7 +106,7 @@ public class BonusControl {
     private static boolean detectIfBonusIsTaken(Point bonusPoint,
                                                 WorldProxy world,
                                                 Game game,
-                                                Wizard self,
+                                                WizardProxy self,
                                                 Memory memory) {
         for (Bonus bonus : world.getBonuses()) {
             if (Math.abs(bonus.getX() - bonusPoint.getX()) < E && Math.abs(bonus.getY() - bonusPoint.getY()) < E) {
@@ -122,8 +122,8 @@ public class BonusControl {
                 visionRange = ((Minion) unit).getVisionRange();
             } else if (unit instanceof Building) {
                 visionRange = ((Building) unit).getVisionRange();
-            } else if (unit instanceof Wizard) {
-                visionRange = ((Wizard) unit).getVisionRange();
+            } else if (unit instanceof WizardProxy) {
+                visionRange = ((WizardProxy) unit).getVisionRange();
             } else {
                 continue;
             }

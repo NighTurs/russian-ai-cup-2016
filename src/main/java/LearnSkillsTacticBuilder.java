@@ -1,5 +1,4 @@
 import model.SkillType;
-import model.Wizard;
 
 import java.util.*;
 
@@ -27,7 +26,7 @@ public class LearnSkillsTacticBuilder implements TacticBuilder {
             return Optional.empty();
         }
 
-        Wizard self = turnContainer.getSelf();
+        WizardProxy self = turnContainer.getSelf();
 
         Set<SkillType> learnedSkills = self.getSkills().length == 0 ?
                 EnumSet.noneOf(SkillType.class) :

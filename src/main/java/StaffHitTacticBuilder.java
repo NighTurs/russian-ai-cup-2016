@@ -1,4 +1,7 @@
-import model.*;
+import model.ActionType;
+import model.CircularUnit;
+import model.Tree;
+import model.Unit;
 
 import java.util.Optional;
 
@@ -6,7 +9,7 @@ public class StaffHitTacticBuilder implements TacticBuilder {
 
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
-        Wizard self = turnContainer.getSelf();
+        WizardProxy self = turnContainer.getSelf();
         if (self.getRemainingCooldownTicksByAction()[ActionType.STAFF.ordinal()] != 0 ||
                 self.getRemainingActionCooldownTicks() != 0) {
             return Optional.empty();
@@ -15,7 +18,7 @@ public class StaffHitTacticBuilder implements TacticBuilder {
             double dist = self.getDistanceTo(unit);
             double angle = self.getAngleTo(unit);
             if (dist <= turnContainer.getGame().getStaffRange() + ((CircularUnit) unit).getRadius() &&
-                    WizardTraits.getWizardStaffSector(turnContainer.getGame()) >= Math.abs(angle) &&
+                    WizardProxy.getWizardStaffSector(turnContainer.getGame()) >= Math.abs(angle) &&
                     (turnContainer.isOffensiveUnit(unit) || unit instanceof Tree)) {
                 MoveBuilder moveBuilder = new MoveBuilder();
                 moveBuilder.setAction(ActionType.STAFF);

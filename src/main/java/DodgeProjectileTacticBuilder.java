@@ -1,7 +1,6 @@
 import model.Game;
 import model.Projectile;
 import model.ProjectileType;
-import model.Wizard;
 
 import java.util.Optional;
 
@@ -10,7 +9,7 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
         WorldProxy world = turnContainer.getWorldProxy();
-        Wizard self = turnContainer.getSelf();
+        WizardProxy self = turnContainer.getSelf();
         Game game = turnContainer.getGame();
         ProjectileControl projectileControl = turnContainer.getProjectileControl();
 
@@ -41,7 +40,7 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
                     self.getY(),
                     self.getRadius() + projectile.getRadius()) &&
                     self.getDistanceTo(travelsTo.getX(), travelsTo.getY()) > self.getRadius() + projectile.getRadius() +
-                            WizardTraits.getWizardForwardSpeed(self, game)) {
+                            self.getWizardForwardSpeed(game)) {
                 continue;
             }
 
@@ -49,13 +48,13 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
                     projectile.getDistanceTo(travelsTo.getX(), travelsTo.getY()) / game.getMagicMissileSpeed());
             if (meta.getRange() + self.getRadius() + projectile.getRadius() <
                     self.getDistanceTo(meta.getInitialPoint().getX(), meta.getInitialPoint().getY()) +
-                            ticksLeft * WizardTraits.getWizardBackwardSpeed(self, game)) {
+                            ticksLeft * self.getWizardBackwardSpeed(game)) {
                 Point retreatTo = MathMethods.distPoint(meta.getInitialPoint().getX(),
                         meta.getInitialPoint().getY(),
                         projectile.getX(),
                         projectile.getY(),
                         meta.getRange() + self.getRadius() + projectile.getRadius() +
-                                WizardTraits.getWizardForwardSpeed(self, game));
+                                self.getWizardForwardSpeed(game));
                 Movement mov =
                         turnContainer.getPathFinder().findOptimalMovement(self, retreatTo.getX(), retreatTo.getY());
                 MoveBuilder moveBuilder = new MoveBuilder();

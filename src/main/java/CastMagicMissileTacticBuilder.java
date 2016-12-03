@@ -6,7 +6,7 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
 
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
-        Wizard self = turnContainer.getSelf();
+        WizardProxy self = turnContainer.getSelf();
 
         if (CastProjectileTacticBuilders.shouldSaveUpMana(turnContainer, ActionType.MAGIC_MISSILE)) {
             return Optional.empty();
@@ -31,7 +31,7 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
     }
 
     private void castWithMove(MoveBuilder moveBuilder, Unit unit, TurnContainer turnContainer) {
-        Wizard self = turnContainer.getSelf();
+        WizardProxy self = turnContainer.getSelf();
         if (self.getRemainingCooldownTicksByAction()[ActionType.MAGIC_MISSILE.ordinal()] == 0 &&
                 self.getRemainingActionCooldownTicks() == 0) {
             moveBuilder.setAction(ActionType.MAGIC_MISSILE);
@@ -42,11 +42,11 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
 
     private Optional<Unit> findBestTarget(TurnContainer turnContainer) {
         WorldProxy world = turnContainer.getWorldProxy();
-        Wizard self = turnContainer.getSelf();
+        WizardProxy self = turnContainer.getSelf();
 
         Unit bestUnit = null;
         int lowestLife = Integer.MAX_VALUE;
-        for (Wizard wizard : world.getWizards()) {
+        for (WizardProxy wizard : world.getWizards()) {
             if (!turnContainer.isOffensiveWizard(wizard)) {
                 continue;
             }

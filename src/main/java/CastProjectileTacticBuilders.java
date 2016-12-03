@@ -17,35 +17,35 @@ public final class CastProjectileTacticBuilders {
         throw new UnsupportedOperationException("Instance not supported");
     }
 
-    public static double castRangeToWizardPessimistic(Wizard self, Wizard wizard, Game game) {
+    public static double castRangeToWizardPessimistic(WizardProxy self, WizardProxy wizard, Game game) {
         double undodgebaleDistance = game.getWizardRadius() + game.getMagicMissileRadius() -
                 (int) Math.ceil(self.getCastRange() / game.getMagicMissileSpeed()) *
-                        WizardTraits.getWizardBackwardSpeed(wizard, game);
-        return WizardTraits.getWizardCastRange(self, game) + undodgebaleDistance;
+                        wizard.getWizardBackwardSpeed(game);
+        return wizard.getWizardCastRange(game) + undodgebaleDistance;
     }
 
-    public static double castRangeToWizardOptimistic(Wizard self, Wizard wizard, Game game) {
+    public static double castRangeToWizardOptimistic(WizardProxy self, WizardProxy wizard, Game game) {
         double undodgebaleDistance = game.getWizardRadius() + game.getMagicMissileRadius() -
                 (int) Math.ceil(self.getCastRange() / game.getMagicMissileSpeed() - 1) *
-                        WizardTraits.getWizardBackwardSpeed(wizard, game);
-        return WizardTraits.getWizardCastRange(self, game) + undodgebaleDistance;
+                        wizard.getWizardBackwardSpeed(game);
+        return self.getWizardCastRange(game) + undodgebaleDistance;
     }
 
-    public static double castRangeToBuilding(Wizard self, Building building, Game game) {
-        return WizardTraits.getWizardCastRange(self, game) + building.getRadius() + game.getMagicMissileRadius();
+    public static double castRangeToBuilding(WizardProxy self, Building building, Game game) {
+        return self.getWizardCastRange(game) + building.getRadius() + game.getMagicMissileRadius();
     }
 
-    public static double castRangeToMinion(Wizard self, Minion minion, Game game) {
-        return WizardTraits.getWizardCastRange(self, game);
+    public static double castRangeToMinion(WizardProxy self, Minion minion, Game game) {
+        return self.getWizardCastRange(game);
     }
 
     public static boolean inCastSector(TurnContainer turnContainer, Point point) {
-        Wizard self = turnContainer.getSelf();
+        WizardProxy self = turnContainer.getSelf();
         double angle = self.getAngleTo(point.getX(), point.getY());
-        return WizardTraits.getWizardCastSector(turnContainer.getGame()) > Math.abs(angle);
+        return WizardProxy.getWizardCastSector(turnContainer.getGame()) > Math.abs(angle);
     }
 
-    public static int untilProjectileCast(Wizard wizard, ActionType actionType) {
+    public static int untilProjectileCast(WizardProxy wizard, ActionType actionType) {
         return Math.max(wizard.getRemainingActionCooldownTicks(),
                 wizard.getRemainingCooldownTicksByAction()[actionType.ordinal()]);
     }
@@ -55,7 +55,7 @@ public final class CastProjectileTacticBuilders {
             throw new RuntimeException("Not supported action type");
         }
         Game game = turnContainer.getGame();
-        Wizard self = turnContainer.getSelf();
+        WizardProxy self = turnContainer.getSelf();
         if (!game.isSkillsEnabled()) {
             return false;
         }
@@ -64,7 +64,7 @@ public final class CastProjectileTacticBuilders {
         //noinspection RedundantIfStatement
         if (turnContainer.isSkillLearned(self, SkillType.FIREBALL) &&
                 manaPriorities.get(ActionType.FIREBALL) > priority && self.getMana() +
-                untilProjectileCast(self, ActionType.FIREBALL) * WizardTraits.getWizardManaPerTurn(self, game) -
+                untilProjectileCast(self, ActionType.FIREBALL) * self.getWizardManaPerTurn(game) -
                 manaCost < game.getFireballManacost()) {
             return true;
         }
