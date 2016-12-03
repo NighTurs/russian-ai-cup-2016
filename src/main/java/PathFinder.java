@@ -54,9 +54,6 @@ public class PathFinder {
     }
 
     public Movement findPath(WizardProxy wizard, double x, double y) {
-        if (wizard.getDistanceTo(x, y) <= SHORT_SEARCH_GRID_SPAN) {
-            return findOptimalMovement(wizard, x, y);
-        }
         Point longDistPoint = longSearchNextPoint(wizard.getX(), wizard.getY(), x, y).getKey();
         Optional<Point> straightLinePoint =
                 straightLinePath(wizard.getX(), wizard.getY(), longDistPoint.getX(), longDistPoint.getY());
@@ -368,9 +365,24 @@ public class PathFinder {
     }
 
     private Optional<Point> straightLinePath(double fromX, double fromY, double toX, double toY) {
-        for (Point shortTo : Arrays.asList(MathMethods.distPoint(fromX, fromY, toX, toY, SHORT_SEARCH_GRID_SPAN),
-                MathMethods.distPoint(fromX, fromY, toX, toY, 2 * SHORT_SEARCH_GRID_SPAN))) {
-            Unit intersectsWith = findIntersectUnit(fromX, fromY, shortTo.getX(), shortTo.getY());
+        List<Point> tryToPoints;
+        if (Math.hypot(fromX - toX, fromY - toY) <= SHORT_SEARCH_GRID_SPAN) {
+            tryToPoints = Collections.singletonList(new Point(toX, toY));
+        } else {
+            tryToPoints = Arrays.asList(MathMethods.distPoint(fromX, fromY, toX, toY, SHORT_SEARCH_GRID_SPAN),
+                    MathMethods.distPoint(fromX, fromY, toX, toY, 2 * SHORT_SEARCH_GRID_SPAN));
+        }
+        for (Point shortTo : tryToPoints) {
+            long ignoreId = Long.MAX_VALUE;
+            for (Unit unit : world.allUnits()) {
+                CircularUnit cunit = (CircularUnit) unit;
+                double dist = cunit.getDistanceTo(shortTo.getX(), shortTo.getY());
+                if (dist <= cunit.getRadius() + self.getRadius()) {
+                    ignoreId = cunit.getId();
+                }
+            }
+
+            Unit intersectsWith = findIntersectUnit(fromX, fromY, shortTo.getX(), shortTo.getY(), ignoreId);
             if (intersectsWith == null) {
                 return Optional.of(shortTo);
             }
@@ -395,8 +407,9 @@ public class PathFinder {
                     intersectPoint.getY(),
                     leftRadius);
 
-            if (findIntersectUnit(fromX, fromY, leftSide.getX(), leftSide.getY()) == null &&
-                    findIntersectUnit(leftSide.getX(), leftSide.getY(), shortTo.getX(), shortTo.getY()) == null) {
+            if (findIntersectUnit(fromX, fromY, leftSide.getX(), leftSide.getY(), Long.MAX_VALUE) == null &&
+                    findIntersectUnit(leftSide.getX(), leftSide.getY(), shortTo.getX(), shortTo.getY(), ignoreId) ==
+                            null) {
                 return Optional.of(leftSide);
             }
 
@@ -413,8 +426,9 @@ public class PathFinder {
                     intersectPoint.getX(),
                     intersectPoint.getY(),
                     rightRadius);
-            if (findIntersectUnit(fromX, fromY, rightSide.getX(), rightSide.getY()) == null &&
-                    findIntersectUnit(rightSide.getX(), rightSide.getY(), shortTo.getX(), shortTo.getY()) == null) {
+            if (findIntersectUnit(fromX, fromY, rightSide.getX(), rightSide.getY(), Long.MAX_VALUE) == null &&
+                    findIntersectUnit(rightSide.getX(), rightSide.getY(), shortTo.getX(), shortTo.getY(), ignoreId) ==
+                            null) {
                 return Optional.of(rightSide);
             }
         }
@@ -467,9 +481,9 @@ public class PathFinder {
         return r1;
     }
 
-    private Unit findIntersectUnit(double fromX, double fromY, double toX, double toY) {
+    private Unit findIntersectUnit(double fromX, double fromY, double toX, double toY, long ignoreId) {
         for (Unit unit : world.allUnits()) {
-            if (unit.getId() == self.getId()) {
+            if (unit.getId() == self.getId() || unit.getId() == ignoreId) {
                 continue;
             }
             if (unit instanceof Projectile || unit instanceof Bonus) {

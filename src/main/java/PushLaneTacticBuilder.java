@@ -51,7 +51,13 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                 mov = turnContainer.getPathFinder().findPath(self, retreatWaypoint.getX(), retreatWaypoint.getY());
                 break;
             case PUSH:
-                mov = turnContainer.getPathFinder().findPath(self, pushWaypoint.getX(), pushWaypoint.getY());
+                Optional<Unit> enemy = nearestEnemy(turnContainer);
+                //noinspection OptionalIsPresent
+                if (enemy.isPresent()) {
+                    mov = turnContainer.getPathFinder().findPath(self, enemy.get().getX(), enemy.get().getY());
+                } else {
+                    mov = turnContainer.getPathFinder().findPath(self, pushWaypoint.getX(), pushWaypoint.getY());
+                }
                 break;
             default:
                 throw new RuntimeException("Unexpected action " + action);
@@ -67,15 +73,34 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         return Optional.of(new TacticImpl("PushLane", moveBuilder, Tactics.PUSH_LANE_TACTIC_PRIORITY));
     }
 
+    private static Optional<Unit> nearestEnemy(TurnContainer turnContainer) {
+        double minDist = Double.MAX_VALUE;
+        Unit nearestEnemy = null;
+        for (Unit unit : turnContainer.getWorldProxy().getAllUnitsNearby()) {
+            if (!turnContainer.isOffensiveUnit(unit)) {
+                continue;
+            }
+            double dist = unit.getDistanceTo(turnContainer.getSelf());
+            if (minDist > dist) {
+                minDist = dist;
+                nearestEnemy = unit;
+            }
+        }
+        return Optional.ofNullable(nearestEnemy);
+    }
+
     public static Action actionBecauseOfMinions(TurnContainer turnContainer) {
         WizardProxy self = turnContainer.getSelf();
+        Game game = turnContainer.getGame();
         double minTriggerTargetDist = Double.MAX_VALUE;
         for (Minion minion : turnContainer.getWorldProxy().getMinions()) {
             if (!turnContainer.isOffensiveUnit(minion)) {
                 continue;
             }
             double dist = turnContainer.getSelf().getDistanceTo(minion);
-            if (dist > CastProjectileTacticBuilders.castRangeToMinion(self, minion, turnContainer.getGame())) {
+            if (dist > (minion.getType() == MinionType.FETISH_BLOWDART ?
+                    game.getFetishBlowdartAttackRange() :
+                    game.getOrcWoodcutterAttackRange()) + self.getWizardForwardSpeed(game) + self.getRadius()) {
                 continue;
             }
             double minDist = Double.MAX_VALUE;
@@ -109,8 +134,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             if (dist <= unit.getAttackRange()) {
                 buildings.add(unit);
             }
-            if (dist <= unit.getAttackRange() +
-                    turnContainer.getSelf().getWizardForwardSpeed(turnContainer.getGame())) {
+            if (dist <=
+                    unit.getAttackRange() + turnContainer.getSelf().getWizardForwardSpeed(turnContainer.getGame())) {
                 moveOutsideOfRange.add(unit);
             }
         }
@@ -159,8 +184,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         }
 
         for (WizardProxy enemy : enemies) {
-            if (enemies.size() == 1 &&
-                    enemy.getLife() + enemy.getMagicMissileDirectDamage(game) * 3 < self.getLife()) {
+            if (enemies.size() == 1 && enemy.getLife() + enemy.getMagicMissileDirectDamage(game) * 3 < self.getLife()) {
                 return Action.PUSH;
             }
             double distToEnemy = self.getDistanceTo(enemy);
@@ -171,8 +195,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                     CastProjectileTacticBuilders.castRangeToWizardOptimistic(enemy, self, turnContainer.getGame());
 
             double distToKeep = (distToEnemy +
-                    (untilNextMissile - 1) * self.getWizardBackwardSpeed(game) *
-                            RETREAT_BACKWARD_SPEED_MULTIPLIER -
+                    (untilNextMissile - 1) * self.getWizardBackwardSpeed(game) * RETREAT_BACKWARD_SPEED_MULTIPLIER -
                     Math.min(untilNextMissile + 1, EXPECT_STEPS_FORWARD_FROM_ENEMY) *
                             enemy.getWizardForwardSpeed(game)) - enemyCastRange;
 
