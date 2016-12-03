@@ -12,6 +12,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     private static final double TOWER_RETREAT_BACKWARD_SPEED_MULTIPLIER = 0.7;
     private static final int EXPECT_STEPS_FORWARD_FROM_ENEMY = 15;
     private static final int TOWER_RETREAT_SPARE_TICKS = 2;
+    private static final int IGNORE_RANGE = 800;
 
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
@@ -19,7 +20,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         MapUtils mapUtils = turnContainer.getMapUtils();
         WizardProxy self = turnContainer.getSelf();
 
-        boolean enemiesNearby = hasEnemyInVisibilityRange(turnContainer);
+        boolean enemiesNearby = hasEnemyInUnignorableRange(turnContainer);
         Action action;
 
         if (enemiesNearby) {
@@ -177,7 +178,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         Game game = turnContainer.getGame();
         List<WizardProxy> enemies = new ArrayList<>();
         for (WizardProxy wizard : turnContainer.getWorldProxy().getWizards()) {
-            if (!turnContainer.isOffensiveWizard(wizard) || self.getDistanceTo(wizard) > self.getVisionRange()) {
+            if (!turnContainer.isOffensiveWizard(wizard) || self.getDistanceTo(wizard) > IGNORE_RANGE) {
                 continue;
             }
             enemies.add(wizard);
@@ -208,8 +209,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         return Action.NONE;
     }
 
-    private static boolean hasEnemyInVisibilityRange(TurnContainer turnContainer) {
-        return hasEnemyInRange(turnContainer, turnContainer.getSelf().getVisionRange());
+    private static boolean hasEnemyInUnignorableRange(TurnContainer turnContainer) {
+        return hasEnemyInRange(turnContainer, IGNORE_RANGE);
     }
 
     public static boolean hasEnemyInAttackRange(TurnContainer turnContainer) {
