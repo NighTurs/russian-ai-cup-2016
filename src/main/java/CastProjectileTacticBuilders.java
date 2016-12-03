@@ -2,6 +2,7 @@ import model.*;
 
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Optional;
 
 public final class CastProjectileTacticBuilders {
 
@@ -69,5 +70,61 @@ public final class CastProjectileTacticBuilders {
             return true;
         }
         return false;
+    }
+
+    public static Optional<Unit> bestFocusTarget(TurnContainer turnContainer) {
+        WorldProxy world = turnContainer.getWorldProxy();
+        WizardProxy self = turnContainer.getSelf();
+
+        Unit bestUnit = null;
+        int lowestLife = Integer.MAX_VALUE;
+        for (WizardProxy wizard : world.getWizards()) {
+            if (!turnContainer.isOffensiveWizard(wizard)) {
+                continue;
+            }
+            double dist = wizard.getDistanceTo(self);
+            if (dist <=
+                    CastProjectileTacticBuilders.castRangeToWizardPessimistic(self, wizard, turnContainer.getGame()) &&
+                    lowestLife > wizard.getLife()) {
+                lowestLife = wizard.getLife();
+                bestUnit = wizard;
+            }
+        }
+        if (bestUnit != null) {
+            return Optional.of(bestUnit);
+        }
+
+        for (Minion minion : world.getMinions()) {
+            if (!turnContainer.isOffensiveMinion(minion)) {
+                continue;
+            }
+            double dist = minion.getDistanceTo(self);
+            if (dist <= turnContainer.getGame().getStaffRange() + minion.getRadius()) {
+                return Optional.of(minion);
+            }
+        }
+
+        for (Building building : world.getBuildings()) {
+            if (!turnContainer.isOffensiveBuilding(building)) {
+                continue;
+            }
+            double dist = building.getDistanceTo(self);
+            if (dist <= CastProjectileTacticBuilders.castRangeToBuilding(self, building, turnContainer.getGame())) {
+                return Optional.of(building);
+            }
+        }
+
+        for (Minion minion : world.getMinions()) {
+            if (!turnContainer.isOffensiveMinion(minion)) {
+                continue;
+            }
+            double dist = minion.getDistanceTo(self);
+            if (dist <= CastProjectileTacticBuilders.castRangeToMinion(self, minion, turnContainer.getGame()) &&
+                    lowestLife > minion.getLife()) {
+                lowestLife = minion.getLife();
+                bestUnit = minion;
+            }
+        }
+        return Optional.ofNullable(bestUnit);
     }
 }
