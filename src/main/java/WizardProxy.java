@@ -198,10 +198,6 @@ public class WizardProxy extends LivingUnit {
         return false;
     }
 
-    private static int countRangeSkills(WizardProxy wizard) {
-        return countSkills(wizard, RANGE_SKILLS);
-    }
-
     private static int countMagicalDamageSkills(WizardProxy wizard) {
         return countSkills(wizard, MAGICAL_DAMAGE_SKILLS);
     }
