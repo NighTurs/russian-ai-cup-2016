@@ -21,22 +21,22 @@ public final class CastProjectileTacticBuilders {
         double undodgebaleDistance = game.getWizardRadius() + game.getMagicMissileRadius() -
                 (int) Math.ceil(self.getCastRange() / game.getMagicMissileSpeed()) *
                         wizard.getWizardBackwardSpeed(game);
-        return wizard.getWizardCastRange(game) + undodgebaleDistance;
+        return self.getCastRange() + undodgebaleDistance;
     }
 
     public static double castRangeToWizardOptimistic(WizardProxy self, WizardProxy wizard, Game game) {
         double undodgebaleDistance = game.getWizardRadius() + game.getMagicMissileRadius() -
                 (int) Math.ceil(self.getCastRange() / game.getMagicMissileSpeed() - 1) *
                         wizard.getWizardBackwardSpeed(game);
-        return self.getWizardCastRange(game) + undodgebaleDistance;
+        return self.getCastRange() + undodgebaleDistance;
     }
 
     public static double castRangeToBuilding(WizardProxy self, Building building, Game game) {
-        return self.getWizardCastRange(game) + building.getRadius() + game.getMagicMissileRadius();
+        return self.getCastRange() + building.getRadius() + game.getMagicMissileRadius();
     }
 
     public static double castRangeToMinion(WizardProxy self, Minion minion, Game game) {
-        return self.getWizardCastRange(game);
+        return self.getCastRange();
     }
 
     public static boolean inCastSector(TurnContainer turnContainer, Point point) {

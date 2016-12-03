@@ -1,7 +1,6 @@
 import model.*;
 
-import java.util.EnumSet;
-import java.util.Set;
+import java.util.*;
 
 public class WizardProxy extends LivingUnit {
 
@@ -17,7 +16,19 @@ public class WizardProxy extends LivingUnit {
             SkillType.MOVEMENT_BONUS_FACTOR_AURA_1,
             SkillType.MOVEMENT_BONUS_FACTOR_PASSIVE_2,
             SkillType.MOVEMENT_BONUS_FACTOR_AURA_2);
+    private static final Set<SkillType> AURAS = EnumSet.of(SkillType.STAFF_DAMAGE_BONUS_AURA_1,
+            SkillType.STAFF_DAMAGE_BONUS_AURA_2,
+            SkillType.RANGE_BONUS_AURA_1,
+            SkillType.RANGE_BONUS_AURA_2,
+            SkillType.MAGICAL_DAMAGE_BONUS_AURA_1,
+            SkillType.MAGICAL_DAMAGE_BONUS_AURA_2,
+            SkillType.MOVEMENT_BONUS_FACTOR_AURA_1,
+            SkillType.MOVEMENT_BONUS_FACTOR_AURA_2,
+            SkillType.MAGICAL_DAMAGE_ABSORPTION_AURA_1,
+            SkillType.MAGICAL_DAMAGE_ABSORPTION_AURA_2);
     private final Wizard wizard;
+    private final List<SkillType> skills;
+    private final List<SkillType> affectedBySkills;
 
     public WizardProxy(Wizard wizard, World world, Game game) {
         super(wizard.getId(),
@@ -32,6 +43,22 @@ public class WizardProxy extends LivingUnit {
                 wizard.getMaxLife(),
                 wizard.getStatuses());
         this.wizard = wizard;
+        this.skills = Arrays.asList(wizard.getSkills());
+        Set<SkillType> affectedBySet = EnumSet.noneOf(SkillType.class);
+        affectedBySet.addAll(skills);
+        for (Wizard ally : world.getWizards()) {
+            if (ally.getFaction() != wizard.getFaction() || ally.getId() == wizard.getId()) {
+                continue;
+            }
+            if (ally.getDistanceTo(wizard) <= game.getAuraSkillRange()) {
+                for (SkillType skill : ally.getSkills()) {
+                    if (AURAS.contains(skill)) {
+                        affectedBySet.add(skill);
+                    }
+                }
+            }
+        }
+        this.affectedBySkills = new ArrayList<>(affectedBySet);
     }
 
     public long getOwnerPlayerId() {
@@ -66,8 +93,8 @@ public class WizardProxy extends LivingUnit {
         return wizard.getLevel();
     }
 
-    public SkillType[] getSkills() {
-        return wizard.getSkills();
+    public List<SkillType> getSkills() {
+        return skills;
     }
 
     public int getRemainingActionCooldownTicks() {
@@ -86,6 +113,10 @@ public class WizardProxy extends LivingUnit {
         return wizard.getMessages();
     }
 
+    public List<SkillType> affectedBySkills() {
+        return affectedBySkills;
+    }
+
     public double getWizardForwardSpeed(Game game) {
         return getWizardForwardSpeed(this, game);
     }
@@ -100,10 +131,6 @@ public class WizardProxy extends LivingUnit {
 
     public double getWizardMaxTurnAngle(Game game) {
         return getWizardMaxTurnAngle(this, game);
-    }
-
-    public double getWizardCastRange(Game game) {
-        return getWizardCastRange(this, game);
     }
 
     public static double getWizardCastSector(Game game) {
@@ -136,10 +163,6 @@ public class WizardProxy extends LivingUnit {
 
     static double getWizardMaxTurnAngle(WizardProxy wizard, Game game) {
         return (hasHasteBonus(wizard) ? 1 + game.getHastenedRotationBonusFactor() : 1) * game.getWizardMaxTurnAngle();
-    }
-
-    static double getWizardCastRange(WizardProxy wizard, Game game) {
-        return countRangeSkills(wizard) * game.getRangeBonusPerSkillLevel() + game.getWizardCastRange();
     }
 
     static double getMagicMissileDirectDamage(WizardProxy wizard, Game game) {
@@ -189,7 +212,7 @@ public class WizardProxy extends LivingUnit {
 
     private static int countSkills(WizardProxy wizard, Set<SkillType> skills) {
         int count = 0;
-        for (SkillType skill : wizard.getSkills()) {
+        for (SkillType skill : wizard.affectedBySkills()) {
             if (skills.contains(skill)) {
                 count++;
             }

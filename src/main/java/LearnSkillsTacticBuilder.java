@@ -28,9 +28,9 @@ public class LearnSkillsTacticBuilder implements TacticBuilder {
 
         WizardProxy self = turnContainer.getSelf();
 
-        Set<SkillType> learnedSkills = self.getSkills().length == 0 ?
+        Set<SkillType> learnedSkills = self.getSkills().isEmpty() ?
                 EnumSet.noneOf(SkillType.class) :
-                EnumSet.copyOf(Arrays.asList(self.getSkills()));
+                EnumSet.copyOf(self.getSkills());
         if (learnedSkills.size() == self.getLevel()) {
             return Optional.empty();
         }
