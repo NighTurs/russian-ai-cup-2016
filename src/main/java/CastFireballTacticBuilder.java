@@ -20,16 +20,23 @@ public class CastFireballTacticBuilder implements TacticBuilder {
         }
 
         Optional<Point> clusterPointOpt = bestClusterCastPoint(turnContainer);
+        Point targetPoint;
         if (!clusterPointOpt.isPresent()) {
-            return Optional.empty();
+            Optional<Point> singlePointOpt = bestSingleTarget(turnContainer);
+            if (!singlePointOpt.isPresent()) {
+                return Optional.empty();
+            } else {
+                targetPoint = singlePointOpt.get();
+            }
+        } else {
+            targetPoint = clusterPointOpt.get();
         }
-        Point clusterPoint = clusterPointOpt.get();
         MoveBuilder moveBuilder = new MoveBuilder();
-        if (CastProjectileTacticBuilders.inCastSector(turnContainer, clusterPoint)) {
-            castWithMove(moveBuilder, clusterPoint, turnContainer);
+        if (CastProjectileTacticBuilders.inCastSector(turnContainer, targetPoint)) {
+            castWithMove(moveBuilder, targetPoint, turnContainer);
             return assembleTactic(moveBuilder);
         } else {
-            moveBuilder.setTurn(self.getAngleTo(clusterPoint.getX(), clusterPoint.getY()));
+            moveBuilder.setTurn(self.getAngleTo(targetPoint.getX(), targetPoint.getY()));
             return assembleTactic(moveBuilder);
         }
     }
@@ -49,11 +56,50 @@ public class CastFireballTacticBuilder implements TacticBuilder {
         }
     }
 
+    private Optional<Point> bestSingleTarget(TurnContainer turnContainer) {
+        Wizard self = turnContainer.getSelf();
+        Game game = turnContainer.getGame();
+        Point buildingPoint = null;
+        Point wizardPoint = null;
+        for (Unit unit : turnContainer.getWorldProxy().getAllUnitsNearby()) {
+            if (!turnContainer.isOffensiveUnit(unit) || unit instanceof Minion) {
+                continue;
+            }
+            double dist = self.getDistanceTo(unit);
+            if (dist <
+                    self.getRadius() + game.getFireballExplosionMinDamageRange() + ((CircularUnit) unit).getRadius()) {
+                continue;
+            }
+            if (unit instanceof Building) {
+                Building building = (Building) unit;
+                if (dist < WizardTraits.getWizardCastRange(self, game) + game.getFireballExplosionMinDamageRange() +
+                        building.getRadius()) {
+                    buildingPoint = new Point(building.getX(), building.getY());
+                }
+            } else if (unit instanceof Wizard) {
+                Wizard wizard = (Wizard) unit;
+                if (dist < WizardTraits.getWizardCastRange(self, game) + game.getFireballExplosionMinDamageRange() +
+                        wizard.getRadius() - WizardTraits.getWizardForwardSpeed(wizard, game)) {
+                    wizardPoint = new Point(wizard.getX(), wizard.getY());
+                }
+            } else {
+                throw new RuntimeException("Unexpected type of target passed through " + unit.getClass());
+            }
+        }
+        if (wizardPoint != null) {
+            return Optional.of(wizardPoint);
+        } else if (buildingPoint != null) {
+            return Optional.of(buildingPoint);
+        } else {
+            return Optional.empty();
+        }
+    }
+
     private Optional<Point> bestClusterCastPoint(TurnContainer turnContainer) {
         Wizard self = turnContainer.getSelf();
         Game game = turnContainer.getGame();
         Double distThresholdMax =
-                WizardTraits.getWizardCastRange(self, game) + game.getFireballExplosionMinDamageRange() / 2;
+                WizardTraits.getWizardCastRange(self, game) + game.getFireballExplosionMinDamageRange();
         Double distThresholdMin = game.getFireballExplosionMinDamageRange();
         List<CircularUnit> potentialTargets = new ArrayList<>();
         for (Unit unit : turnContainer.getWorldProxy().getAllUnitsNearby()) {
