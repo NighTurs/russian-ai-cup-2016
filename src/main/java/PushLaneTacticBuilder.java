@@ -75,7 +75,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                 continue;
             }
             double dist = turnContainer.getSelf().getDistanceTo(minion);
-            if (dist > CastMagicMissileTacticBuilder.castRangeToMinion(self, minion, turnContainer.getGame())) {
+            if (dist > CastProjectileTacticBuilders.castRangeToMinion(self, minion, turnContainer.getGame())) {
                 continue;
             }
             double minDist = Double.MAX_VALUE;
@@ -168,7 +168,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                     Math.max(enemy.getRemainingCooldownTicksByAction()[ActionType.MAGIC_MISSILE.ordinal()],
                             enemy.getRemainingActionCooldownTicks());
             double enemyCastRange =
-                    CastMagicMissileTacticBuilder.castRangeToWizardOptimistic(enemy, self, turnContainer.getGame());
+                    CastProjectileTacticBuilders.castRangeToWizardOptimistic(enemy, self, turnContainer.getGame());
 
             double distToKeep = (distToEnemy +
                     (untilNextMissile - 1) * WizardTraits.getWizardBackwardSpeed(self, game) *
@@ -199,11 +199,11 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             double dist = unit.getDistanceTo(self);
             double range = 0;
             if (unit instanceof Building) {
-                range = CastMagicMissileTacticBuilder.castRangeToBuilding(self, (Building) unit, game);
+                range = CastProjectileTacticBuilders.castRangeToBuilding(self, (Building) unit, game);
             } else if (unit instanceof Minion) {
-                range = CastMagicMissileTacticBuilder.castRangeToMinion(self, (Minion) unit, game);
+                range = CastProjectileTacticBuilders.castRangeToMinion(self, (Minion) unit, game);
             } else if (unit instanceof Wizard) {
-                range = CastMagicMissileTacticBuilder.castRangeToWizardPessimistic(self, (Wizard) unit, game);
+                range = CastProjectileTacticBuilders.castRangeToWizardPessimistic(self, (Wizard) unit, game);
             }
             if (dist <= range) {
                 return true;

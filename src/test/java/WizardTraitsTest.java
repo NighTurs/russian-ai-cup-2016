@@ -83,4 +83,12 @@ public class WizardTraitsTest {
         when(wizard.getStatuses()).thenReturn(new Status[]{new Status(0, StatusType.HASTENED, 0, 0, 1)});
         assertEquals(6.0, WizardTraits.getWizardForwardSpeed(wizard, game), 0.0);
     }
+
+    @Test
+    public void testGetWizardManaPerTurn() throws Exception {
+        when(game.getWizardBaseManaRegeneration()).thenReturn(0.2);
+        when(game.getWizardManaRegenerationGrowthPerLevel()).thenReturn(0.02);
+        when(wizard.getLevel()).thenReturn(5);
+        assertEquals(0.3, WizardTraits.getWizardManaPerTurn(wizard, game), 1e-9);
+    }
 }

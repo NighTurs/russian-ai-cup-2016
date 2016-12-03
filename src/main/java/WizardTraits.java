@@ -56,6 +56,11 @@ public final class WizardTraits {
                         countMagicalDamageSkills(wizard) * game.getMagicalDamageBonusPerSkillLevel());
     }
 
+    public static double getWizardManaPerTurn(Wizard wizard, Game game) {
+        return game.getWizardBaseManaRegeneration() +
+                game.getWizardManaRegenerationGrowthPerLevel() * wizard.getLevel();
+    }
+
     private static double movementFactor(Wizard wizard, Game game) {
         return 1 + countMoveSpeedSkills(wizard) * game.getMovementBonusFactorPerSkillLevel() +
                 (hasHasteBonus(wizard) ? game.getHastenedMovementBonusFactor() : 0);

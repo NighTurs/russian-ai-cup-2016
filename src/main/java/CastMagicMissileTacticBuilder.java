@@ -8,13 +8,16 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
     public Optional<Tactic> build(TurnContainer turnContainer) {
         Wizard self = turnContainer.getSelf();
 
+        if (CastProjectileTacticBuilders.shouldSaveUpMana(turnContainer, ActionType.MAGIC_MISSILE)) {
+            return Optional.empty();
+        }
         Optional<Unit> bestTargetOpt = findBestTarget(turnContainer);
         if (!bestTargetOpt.isPresent()) {
             return Optional.empty();
         }
         Unit bestTarget = bestTargetOpt.get();
         MoveBuilder moveBuilder = new MoveBuilder();
-        if (inCastSector(turnContainer, bestTarget)) {
+        if (CastProjectileTacticBuilders.inCastSector(turnContainer, new Point(bestTarget.getX(), bestTarget.getY()))) {
             castWithMove(moveBuilder, bestTarget, turnContainer);
             return assembleTactic(moveBuilder);
         } else {
@@ -48,7 +51,8 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
                 continue;
             }
             double dist = wizard.getDistanceTo(self);
-            if (dist <= castRangeToWizardPessimistic(self, wizard, turnContainer.getGame()) &&
+            if (dist <=
+                    CastProjectileTacticBuilders.castRangeToWizardPessimistic(self, wizard, turnContainer.getGame()) &&
                     lowestLife > wizard.getLife()) {
                 lowestLife = wizard.getLife();
                 bestUnit = wizard;
@@ -73,7 +77,7 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
                 continue;
             }
             double dist = building.getDistanceTo(self);
-            if (dist <= castRangeToBuilding(self, building, turnContainer.getGame())) {
+            if (dist <= CastProjectileTacticBuilders.castRangeToBuilding(self, building, turnContainer.getGame())) {
                 return Optional.of(building);
             }
         }
@@ -83,39 +87,12 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
                 continue;
             }
             double dist = minion.getDistanceTo(self);
-            if (dist <= castRangeToMinion(self, minion, turnContainer.getGame()) && lowestLife > minion.getLife()) {
+            if (dist <= CastProjectileTacticBuilders.castRangeToMinion(self, minion, turnContainer.getGame()) &&
+                    lowestLife > minion.getLife()) {
                 lowestLife = minion.getLife();
                 bestUnit = minion;
             }
         }
         return Optional.ofNullable(bestUnit);
-    }
-
-    private boolean inCastSector(TurnContainer turnContainer, Unit unit) {
-        Wizard self = turnContainer.getSelf();
-        double angle = self.getAngleTo(unit);
-        return WizardTraits.getWizardCastSector(turnContainer.getGame()) > Math.abs(angle);
-    }
-
-    public static double castRangeToWizardPessimistic(Wizard self, Wizard wizard, Game game) {
-        double undodgebaleDistance = game.getWizardRadius() + game.getMagicMissileRadius() -
-                (int) Math.ceil(self.getCastRange() / game.getMagicMissileSpeed()) *
-                        WizardTraits.getWizardBackwardSpeed(wizard, game);
-        return WizardTraits.getWizardCastRange(self, game) + undodgebaleDistance;
-    }
-
-    public static double castRangeToWizardOptimistic(Wizard self, Wizard wizard, Game game) {
-        double undodgebaleDistance = game.getWizardRadius() + game.getMagicMissileRadius() -
-                (int) Math.ceil(self.getCastRange() / game.getMagicMissileSpeed() - 1) *
-                        WizardTraits.getWizardBackwardSpeed(wizard, game);
-        return WizardTraits.getWizardCastRange(self, game) + undodgebaleDistance;
-    }
-
-    public static double castRangeToBuilding(Wizard self, Building building, Game game) {
-        return WizardTraits.getWizardCastRange(self, game) + building.getRadius() + game.getMagicMissileRadius();
-    }
-
-    public static double castRangeToMinion(Wizard self, Minion minion, Game game) {
-        return WizardTraits.getWizardCastRange(self, game);
     }
 }

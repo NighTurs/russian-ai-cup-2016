@@ -104,4 +104,13 @@ public class TurnContainer {
     public Faction opposingFaction() {
         return self.getFaction() == Faction.ACADEMY ? Faction.RENEGADES : Faction.ACADEMY;
     }
+
+    public boolean isSkillLearned(Wizard wizard, SkillType skillType) {
+        for (SkillType skill : self.getSkills()) {
+            if (skill == skillType) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

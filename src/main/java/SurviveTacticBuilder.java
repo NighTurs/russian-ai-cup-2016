@@ -70,13 +70,14 @@ public class SurviveTacticBuilder implements TacticBuilder {
                 continue;
             }
             double dist = turnContainer.getSelf().getDistanceTo(wizard);
-            if (dist <= CastMagicMissileTacticBuilder.castRangeToWizardPessimistic(wizard, self, turnContainer.getGame()) +
-                    self.getRadius()) {
+            if (dist <=
+                    CastProjectileTacticBuilders.castRangeToWizardPessimistic(wizard, self, turnContainer.getGame()) +
+                            self.getRadius()) {
                 enemyLife = wizard.getLife();
                 counter++;
             }
             if (dist - WizardTraits.getWizardForwardSpeed(self, turnContainer.getGame()) <=
-                    CastMagicMissileTacticBuilder.castRangeToWizardPessimistic(wizard, self, turnContainer.getGame()) +
+                    CastProjectileTacticBuilders.castRangeToWizardPessimistic(wizard, self, turnContainer.getGame()) +
                             self.getRadius()) {
                 stepInEnemyLife = wizard.getLife();
                 stepInCounter++;
