@@ -6,6 +6,7 @@ import java.util.Optional;
 
 public final class CastProjectileTacticBuilders {
 
+    private static final double E = 1e-6;
     private static final Map<ActionType, Integer> manaPriorities;
 
     static {
@@ -18,18 +19,49 @@ public final class CastProjectileTacticBuilders {
         throw new UnsupportedOperationException("Instance not supported");
     }
 
+    public static double undodgeableRadiusPessimistic(double selfCastRange, double enemySpeed, Game game) {
+        return game.getWizardRadius() + game.getMagicMissileRadius() -
+                (int) Math.ceil(selfCastRange / game.getMagicMissileSpeed()) * enemySpeed;
+    }
+
+    public static double undodgeableRadiusOptimistic(double selfCastRange, double enemySpeed, Game game) {
+        return game.getWizardRadius() + game.getMagicMissileRadius() -
+                (int) Math.ceil(selfCastRange / game.getMagicMissileSpeed() - 1) * enemySpeed;
+    }
+
+    public static double effectiveCastRangeToWizard(WizardProxy self,
+                                                    WizardProxy wizard,
+                                                    Game game,
+                                                    boolean optimistic) {
+        double r1 = 0;
+        double r2 = self.getCastRange();
+        while (r2 - r1 > E) {
+            double r = (r1 + r2) / 2;
+            double radius = optimistic ?
+                    undodgeableRadiusOptimistic(r, wizard.getWizardBackwardSpeed(game), game) :
+                    undodgeableRadiusPessimistic(r, wizard.getWizardBackwardSpeed(game), game);
+            if (radius > 0) {
+                r1 = r;
+            } else {
+                r2 = r;
+            }
+        }
+        return r1;
+    }
+
+    private static double castRangeToWizard(WizardProxy self, WizardProxy wizard, Game game, boolean optimistic) {
+        double r = effectiveCastRangeToWizard(self, wizard, game, optimistic);
+        return r + (optimistic ?
+                undodgeableRadiusOptimistic(r, wizard.getWizardBackwardSpeed(game), game) :
+                undodgeableRadiusPessimistic(r, wizard.getWizardBackwardSpeed(game), game));
+    }
+
     public static double castRangeToWizardPessimistic(WizardProxy self, WizardProxy wizard, Game game) {
-        double undodgebaleDistance = game.getWizardRadius() + game.getMagicMissileRadius() -
-                (int) Math.ceil(self.getCastRange() / game.getMagicMissileSpeed()) *
-                        wizard.getWizardBackwardSpeed(game);
-        return self.getCastRange() + undodgebaleDistance;
+        return castRangeToWizard(self, wizard, game, false);
     }
 
     public static double castRangeToWizardOptimistic(WizardProxy self, WizardProxy wizard, Game game) {
-        double undodgebaleDistance = game.getWizardRadius() + game.getMagicMissileRadius() -
-                (int) Math.ceil(self.getCastRange() / game.getMagicMissileSpeed() - 1) *
-                        wizard.getWizardBackwardSpeed(game);
-        return self.getCastRange() + undodgebaleDistance;
+        return castRangeToWizard(self, wizard, game, true);
     }
 
     public static double castRangeToBuilding(WizardProxy self, Building building, Game game) {
@@ -64,9 +96,9 @@ public final class CastProjectileTacticBuilders {
         int manaCost = game.getMagicMissileManacost();
         //noinspection RedundantIfStatement
         if (turnContainer.isSkillLearned(self, SkillType.FIREBALL) &&
-                manaPriorities.get(ActionType.FIREBALL) > priority && self.getMana() +
-                untilProjectileCast(self, ActionType.FIREBALL) * self.getWizardManaPerTurn(game) -
-                manaCost < game.getFireballManacost()) {
+                manaPriorities.get(ActionType.FIREBALL) > priority &&
+                self.getMana() + untilProjectileCast(self, ActionType.FIREBALL) * self.getWizardManaPerTurn(game) -
+                        manaCost < game.getFireballManacost()) {
             return true;
         }
         return false;
