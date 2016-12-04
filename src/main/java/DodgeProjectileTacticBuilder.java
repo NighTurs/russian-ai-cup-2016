@@ -6,6 +6,8 @@ import static java.lang.StrictMath.hypot;
 
 public class DodgeProjectileTacticBuilder implements TacticBuilder {
 
+    private static final int PROJECTILE_IGNORE_RANGE = 800;
+
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
         WorldProxy world = turnContainer.getWorldProxy();
@@ -14,11 +16,12 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
         ProjectileControl projectileControl = turnContainer.getProjectileControl();
 
         for (Projectile projectile : world.getProjectiles()) {
-            if (projectile.getType() != ProjectileType.MAGIC_MISSILE || projectile.getFaction() == self.getFaction()) {
+            if (projectile.getType() == ProjectileType.DART ||
+                    (projectile.getType() != ProjectileType.FIREBALL && projectile.getFaction() == self.getFaction())) {
                 continue;
             }
             double dist = self.getDistanceTo(projectile);
-            if (dist > game.getWizardVisionRange()) {
+            if (dist > PROJECTILE_IGNORE_RANGE) {
                 continue;
             }
             Optional<ProjectileControl.ProjectileMeta> metaOpt = projectileControl.projectileMeta(projectile);
@@ -32,20 +35,21 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
                     projectile.getY(),
                     meta.getRange());
 
+            final double projectileEffectiveRadius = projectileEffectiveRadius(game, projectile);
             if (!MathMethods.isLineIntersectsCircle(projectile.getX(),
                     travelsTo.getX(),
                     projectile.getY(),
                     travelsTo.getY(),
                     self.getX(),
                     self.getY(),
-                    self.getRadius() + projectile.getRadius()) &&
+                    self.getRadius() + projectileEffectiveRadius) &&
                     self.getDistanceTo(travelsTo.getX(), travelsTo.getY()) >
-                            self.getRadius() + projectile.getRadius() + self.getWizardForwardSpeed(game)) {
+                            self.getRadius() + projectileEffectiveRadius + self.getWizardForwardSpeed(game)) {
                 continue;
             }
 
-            int ticksLeft = (int) Math.ceil(
-                    projectile.getDistanceTo(travelsTo.getX(), travelsTo.getY()) / game.getMagicMissileSpeed());
+            int ticksLeft = (int) Math.ceil(projectile.getDistanceTo(travelsTo.getX(), travelsTo.getY()) /
+                    projectileMoveSpeed(game, projectile));
             Optional<Movement> dodgeDirection = tryDodgeDirections(self, projectile, travelsTo, ticksLeft, game, world);
             if (dodgeDirection.isPresent()) {
                 Movement mov = dodgeDirection.get();
@@ -60,12 +64,34 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
         return Optional.empty();
     }
 
+    private double projectileEffectiveRadius(Game game, Projectile projectile) {
+        return projectile.getType() == ProjectileType.FIREBALL ?
+                game.getFireballExplosionMinDamageRange() :
+                projectile.getRadius();
+    }
+
+    private double projectileMoveSpeed(Game game, Projectile projectile) {
+        switch (projectile.getType()) {
+            case DART:
+                return game.getDartSpeed();
+            case MAGIC_MISSILE:
+                return game.getMagicMissileSpeed();
+            case FROST_BOLT:
+                return game.getFrostBoltSpeed();
+            case FIREBALL:
+                return game.getFireballSpeed();
+            default:
+                throw new RuntimeException("Unexpected projectile type " + projectile.getType());
+        }
+    }
+
     private Optional<Movement> tryDodgeDirections(WizardProxy wizard,
                                                   Projectile projectile,
                                                   Point travelsTo,
                                                   int ticksLeft,
                                                   Game game,
                                                   WorldProxy world) {
+        double projectileEffectiveRadius = projectileEffectiveRadius(game, projectile);
         double cos = Math.cos(wizard.getAngle());
         double sin = Math.sin(wizard.getAngle());
 
@@ -94,9 +120,9 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
                             travelsTo.getY(),
                             resX,
                             resY,
-                            wizard.getRadius() + projectile.getRadius()) ||
+                            wizard.getRadius() + projectileEffectiveRadius) ||
                             hypot(travelsTo.getX() - resX, travelsTo.getY() - resY) <=
-                                    wizard.getRadius() + projectile.getRadius()) {
+                                    wizard.getRadius() + projectileEffectiveRadius) {
                         continue;
                     }
                     for (Unit unit : world.getAllUnitsNearby()) {

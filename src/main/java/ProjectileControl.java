@@ -14,7 +14,7 @@ public class ProjectileControl {
         this.memory = memory;
         Set<Long> dissapearedProjectiles = new HashSet<>(memory.getProjectileMeta().keySet());
         for (Projectile projectile : world.getProjectiles()) {
-            if (projectile.getType() != ProjectileType.MAGIC_MISSILE) {
+            if (projectile.getType() == ProjectileType.DART) {
                 continue;
             }
             dissapearedProjectiles.remove(projectile.getId());
