@@ -8,6 +8,7 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
     private static final int ALLY_HALF_MANHATTAN_BASES = 9;
     private static final int ARRIVE_BEFORE_TICKS = 80;
     private static final int EXPECTED_TICKS_TO_BONUS_ERROR = 400;
+    private static final int ACCEPTABLE_TICKS_TO_TAKE_BONUS = 1000;
 
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
@@ -38,6 +39,9 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
 
         double ticksToBonus = roughDistToBonus(self, pathFinder, goForBonus) /
                 self.getWizardForwardSpeed(turnContainer.getGame()) + ARRIVE_BEFORE_TICKS;
+        if (game.isSkillsEnabled() && ticksToBonus * 2 > ACCEPTABLE_TICKS_TO_TAKE_BONUS) {
+            return Optional.empty();
+        }
         if (ticksToBonus < ticksUntilBonus && (!turnContainer.getMemory().isWentForBonusPrevTurn() ||
                 ticksToBonus + EXPECTED_TICKS_TO_BONUS_ERROR < ticksUntilBonus)) {
             turnContainer.getMemory().setWentForBonusPrevTurn(false);
