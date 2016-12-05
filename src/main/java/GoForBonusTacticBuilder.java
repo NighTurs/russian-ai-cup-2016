@@ -1,4 +1,6 @@
 import model.Bonus;
+import model.Building;
+import model.BuildingType;
 import model.Game;
 
 import java.util.Optional;
@@ -28,8 +30,7 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
         Point bottomBonus = bonusControl.bottomBonusPosition();
         Point goForBonus;
         double ticksUntilBonus;
-        if (self.getDistanceTo(topBonus.getX(), topBonus.getY()) >
-                self.getDistanceTo(bottomBonus.getX(), bottomBonus.getY())) {
+        if (shouldGoForBottomBonus(turnContainer)) {
             goForBonus = bottomBonus;
             ticksUntilBonus = bonusControl.ticksUntilBottomBonus();
         } else {
@@ -37,8 +38,9 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
             ticksUntilBonus = bonusControl.ticksUntilTopBonus();
         }
 
-        double ticksToBonus = roughDistToBonus(self, pathFinder, goForBonus) /
-                self.getWizardForwardSpeed(turnContainer.getGame()) + ARRIVE_BEFORE_TICKS;
+        double ticksToBonus =
+                roughDistToBonus(self, pathFinder, goForBonus) / self.getWizardForwardSpeed(turnContainer.getGame()) +
+                        ARRIVE_BEFORE_TICKS;
         if (game.isSkillsEnabled() && ticksToBonus * 2 > ACCEPTABLE_TICKS_TO_TAKE_BONUS) {
             return Optional.empty();
         }
@@ -79,5 +81,24 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
 
     private double roughDistToBonus(WizardProxy self, PathFinder pathFinder, Point goForBonus) {
         return pathFinder.roughDistanceTo(self, goForBonus.getX(), goForBonus.getY());
+    }
+
+    private boolean shouldGoForBottomBonus(TurnContainer turnContainer) {
+        WizardProxy self = turnContainer.getSelf();
+        Point topBonus = turnContainer.getBonusControl().topBonusPosition();
+        Point bottomBonus = turnContainer.getBonusControl().bottomBonusPosition();
+        // Going for top bonus on middle is dangerous if middle enemy tower is up
+        if (turnContainer.getLanePicker().myLane() == LocationType.MIDDLE_LANE) {
+            double unit = turnContainer.getWorldProxy().allyBase().getX();
+            for (Building building : turnContainer.getWorldProxy().getBuildings()) {
+                if (building.getType() == BuildingType.GUARDIAN_TOWER &&
+                        building.getFaction() == turnContainer.opposingFaction() && building.getX() >= unit * 4 &&
+                        building.getX() <= unit * 6 && building.getY() >= unit * 3 && building.getY() <= unit * 5) {
+                    return true;
+                }
+            }
+        }
+        return self.getDistanceTo(topBonus.getX(), topBonus.getY()) >
+                self.getDistanceTo(bottomBonus.getX(), bottomBonus.getY());
     }
 }
