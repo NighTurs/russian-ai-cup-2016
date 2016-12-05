@@ -184,27 +184,50 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             enemies.add(wizard);
         }
 
+        boolean shouldStay = false;
         for (WizardProxy enemy : enemies) {
             if (enemies.size() == 1 && enemy.getLife() + enemy.getMagicMissileDirectDamage(game) * 3 < self.getLife()) {
                 return Action.PUSH;
             }
-            double distToEnemy = self.getDistanceTo(enemy);
-            double untilNextMissile =
-                    Math.max(enemy.getRemainingCooldownTicksByAction()[ActionType.MAGIC_MISSILE.ordinal()],
-                            enemy.getRemainingActionCooldownTicks());
-            double enemyCastRange =
-                    CastProjectileTacticBuilders.castRangeToWizardOptimistic(enemy, self, turnContainer.getGame());
+            Action actionMissle = actionBecauseOfWizardSpell(turnContainer, enemy, ProjectileType.MAGIC_MISSILE);
+            Action actionFrostBolt = actionBecauseOfWizardSpell(turnContainer, enemy, ProjectileType.FROST_BOLT);
+            Action actionFireball = actionBecauseOfWizardSpell(turnContainer, enemy, ProjectileType.FIREBALL);
 
-            double distToKeep = (distToEnemy +
-                    (untilNextMissile - 1) * self.getWizardBackwardSpeed(game) * RETREAT_BACKWARD_SPEED_MULTIPLIER -
-                    Math.min(untilNextMissile + 1, EXPECT_STEPS_FORWARD_FROM_ENEMY) *
-                            enemy.getWizardForwardSpeed(game)) - enemyCastRange;
-
-            if (distToKeep <= 0) {
+            if (actionMissle == Action.RETREAT || actionFrostBolt == Action.RETREAT ||
+                    actionFireball == Action.RETREAT) {
                 return Action.RETREAT;
-            } else if (distToKeep <= self.getWizardForwardSpeed(game)) {
-                return Action.STAY;
+            } else if (actionMissle == Action.STAY || actionFrostBolt == Action.STAY || actionFireball == Action.STAY) {
+                shouldStay = true;
             }
+        }
+        return shouldStay ? Action.STAY : Action.NONE;
+    }
+
+    private Action actionBecauseOfWizardSpell(TurnContainer turnContainer,
+                                              WizardProxy enemy,
+                                              ProjectileType projectileType) {
+        if (!CastProjectileTacticBuilders.isProjectileLearned(turnContainer, enemy, projectileType)) {
+            return Action.NONE;
+        }
+        WizardProxy self = turnContainer.getSelf();
+        Game game = turnContainer.getGame();
+
+        double distToEnemy = self.getDistanceTo(enemy);
+        int untilNextMissile = CastProjectileTacticBuilders.untilNextProjectile(enemy, projectileType, game);
+        double enemyCastRange = CastProjectileTacticBuilders.castRangeToWizardOptimistic(enemy,
+                self,
+                turnContainer.getGame(),
+                projectileType);
+
+        double distToKeep = (distToEnemy +
+                (untilNextMissile - 1) * self.getWizardBackwardSpeed(game) * RETREAT_BACKWARD_SPEED_MULTIPLIER -
+                Math.min(untilNextMissile + 1, EXPECT_STEPS_FORWARD_FROM_ENEMY) * enemy.getWizardForwardSpeed(game)) -
+                enemyCastRange;
+
+        if (distToKeep <= 0) {
+            return Action.RETREAT;
+        } else if (distToKeep <= self.getWizardForwardSpeed(game)) {
+            return Action.STAY;
         }
         return Action.NONE;
     }
@@ -227,7 +250,10 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             } else if (unit instanceof Minion) {
                 range = CastProjectileTacticBuilders.castRangeToMinion(self, (Minion) unit, game);
             } else if (unit instanceof WizardProxy) {
-                range = CastProjectileTacticBuilders.castRangeToWizardPessimistic(self, (WizardProxy) unit, game);
+                range = CastProjectileTacticBuilders.castRangeToWizardPessimistic(self,
+                        (WizardProxy) unit,
+                        game,
+                        ProjectileType.MAGIC_MISSILE);
             }
             if (dist <= range) {
                 return true;

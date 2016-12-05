@@ -1,7 +1,4 @@
-import model.ActionType;
-import model.CircularUnit;
-import model.Game;
-import model.Unit;
+import model.*;
 
 import java.util.Optional;
 
@@ -35,11 +32,16 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
             return new Point(target.getX(), target.getY());
         }
         WizardProxy enemy = (WizardProxy) target;
-        double effectiveCastRange = CastProjectileTacticBuilders.effectiveCastRangeToWizard(self, enemy, game, false);
+        double effectiveCastRange = CastProjectileTacticBuilders.effectiveCastRangeToWizard(self,
+                enemy,
+                game,
+                ProjectileType.MAGIC_MISSILE,
+                false);
         double forwardUndodgeableRadius = Math.abs(CastProjectileTacticBuilders.undodgeableRadiusPessimistic(
                 effectiveCastRange,
                 enemy.getWizardForwardSpeed(game),
-                game));
+                game,
+                ProjectileType.MAGIC_MISSILE));
         double aimPointX = enemy.getX() + forwardUndodgeableRadius * Math.cos(enemy.getAngle());
         double aimPointY = enemy.getY() + forwardUndodgeableRadius * Math.sin(enemy.getAngle());
         return new Point(aimPointX, aimPointY);
@@ -51,8 +53,9 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
 
     private void castWithMove(MoveBuilder moveBuilder, Point point, double radius, TurnContainer turnContainer) {
         WizardProxy self = turnContainer.getSelf();
-        if (self.getRemainingCooldownTicksByAction()[ActionType.MAGIC_MISSILE.ordinal()] == 0 &&
-                self.getRemainingActionCooldownTicks() == 0) {
+        if (CastProjectileTacticBuilders.untilNextProjectile(self,
+                ProjectileType.MAGIC_MISSILE,
+                turnContainer.getGame()) == 0) {
             moveBuilder.setAction(ActionType.MAGIC_MISSILE);
             moveBuilder.setCastAngle(self.getAngleTo(point.getX(), point.getY()));
             moveBuilder.setMinCastDistance(self.getDistanceTo(point.getX(), point.getY()) - radius);

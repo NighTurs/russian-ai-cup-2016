@@ -65,24 +65,11 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
     }
 
     private double projectileEffectiveRadius(Game game, Projectile projectile) {
-        return projectile.getType() == ProjectileType.FIREBALL ?
-                game.getFireballExplosionMinDamageRange() :
-                projectile.getRadius();
+        return CastProjectileTacticBuilders.projectileEffectiveRadius(game, projectile.getType());
     }
 
     private double projectileMoveSpeed(Game game, Projectile projectile) {
-        switch (projectile.getType()) {
-            case DART:
-                return game.getDartSpeed();
-            case MAGIC_MISSILE:
-                return game.getMagicMissileSpeed();
-            case FROST_BOLT:
-                return game.getFrostBoltSpeed();
-            case FIREBALL:
-                return game.getFireballSpeed();
-            default:
-                throw new RuntimeException("Unexpected projectile type " + projectile.getType());
-        }
+        return CastProjectileTacticBuilders.projectileMoveSpeed(game, projectile.getType());
     }
 
     private Optional<Movement> tryDodgeDirections(WizardProxy wizard,

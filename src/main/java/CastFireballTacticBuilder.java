@@ -12,10 +12,9 @@ public class CastFireballTacticBuilder implements TacticBuilder {
         Game game = turnContainer.getGame();
         WizardProxy self = turnContainer.getSelf();
         boolean fireballLearned = turnContainer.isSkillLearned(self, SkillType.FIREBALL);
-        int untilCast = CastProjectileTacticBuilders.untilProjectileCast(self, ActionType.FIREBALL);
-        boolean haveEnoughMana = self.getMana() + untilCast * self.getWizardManaPerTurn(game) >=
-                game.getFireballManacost();
-        if (!game.isSkillsEnabled() || !fireballLearned || !haveEnoughMana || untilCast > PREPARE_TO_CAST_THRESHOLD) {
+        int untilCast = CastProjectileTacticBuilders.untilNextProjectile(self, ProjectileType.FIREBALL, game);
+
+        if (!game.isSkillsEnabled() || !fireballLearned || untilCast > PREPARE_TO_CAST_THRESHOLD) {
             return Optional.empty();
         }
 
@@ -47,8 +46,8 @@ public class CastFireballTacticBuilder implements TacticBuilder {
 
     private void castWithMove(MoveBuilder moveBuilder, Point point, TurnContainer turnContainer) {
         WizardProxy self = turnContainer.getSelf();
-        if (self.getRemainingCooldownTicksByAction()[ActionType.FIREBALL.ordinal()] == 0 &&
-                self.getRemainingActionCooldownTicks() == 0) {
+        if (CastProjectileTacticBuilders.untilNextProjectile(self, ProjectileType.FIREBALL, turnContainer.getGame()) ==
+                0) {
             moveBuilder.setAction(ActionType.FIREBALL);
             moveBuilder.setCastAngle(self.getAngleTo(point.getX(), point.getY()));
             moveBuilder.setMinCastDistance(self.getDistanceTo(point.getX(), point.getY()));
@@ -72,14 +71,13 @@ public class CastFireballTacticBuilder implements TacticBuilder {
             }
             if (unit instanceof Building) {
                 Building building = (Building) unit;
-                if (dist < self.getCastRange() + game.getFireballExplosionMinDamageRange() +
-                        building.getRadius()) {
+                if (dist < self.getCastRange() + game.getFireballExplosionMinDamageRange() + building.getRadius()) {
                     buildingPoint = new Point(building.getX(), building.getY());
                 }
             } else if (unit instanceof WizardProxy) {
                 WizardProxy wizard = (WizardProxy) unit;
-                if (dist < self.getCastRange() + game.getFireballExplosionMinDamageRange() +
-                        wizard.getRadius() - wizard.getWizardForwardSpeed(game)) {
+                if (dist < self.getCastRange() + game.getFireballExplosionMinDamageRange() + wizard.getRadius() -
+                        wizard.getWizardForwardSpeed(game)) {
                     wizardPoint = new Point(wizard.getX(), wizard.getY());
                 }
             } else {
@@ -98,8 +96,7 @@ public class CastFireballTacticBuilder implements TacticBuilder {
     private Optional<Point> bestClusterCastPoint(TurnContainer turnContainer) {
         WizardProxy self = turnContainer.getSelf();
         Game game = turnContainer.getGame();
-        Double distThresholdMax =
-                self.getCastRange() + game.getFireballExplosionMinDamageRange();
+        Double distThresholdMax = self.getCastRange() + game.getFireballExplosionMinDamageRange();
         Double distThresholdMin = game.getFireballExplosionMinDamageRange();
         List<CircularUnit> potentialTargets = new ArrayList<>();
         for (Unit unit : turnContainer.getWorldProxy().getAllUnitsNearby()) {

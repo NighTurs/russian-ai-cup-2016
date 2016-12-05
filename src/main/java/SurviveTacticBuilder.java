@@ -1,4 +1,5 @@
 import model.Building;
+import model.ProjectileType;
 
 import java.util.Optional;
 
@@ -69,15 +70,13 @@ public class SurviveTacticBuilder implements TacticBuilder {
                 continue;
             }
             double dist = turnContainer.getSelf().getDistanceTo(wizard);
-            if (dist <=
-                    CastProjectileTacticBuilders.castRangeToWizardPessimistic(wizard, self, turnContainer.getGame()) +
-                            self.getRadius()) {
+            if (inDangerousRangeToAnyProjectiles(turnContainer, wizard, dist)) {
                 enemyLife = wizard.getLife();
                 counter++;
             }
-            if (dist - self.getWizardForwardSpeed(turnContainer.getGame()) <=
-                    CastProjectileTacticBuilders.castRangeToWizardPessimistic(wizard, self, turnContainer.getGame()) +
-                            self.getRadius()) {
+            if (inDangerousRangeToAnyProjectiles(turnContainer,
+                    wizard,
+                    dist - self.getWizardForwardSpeed(turnContainer.getGame()))) {
                 stepInEnemyLife = wizard.getLife();
                 stepInCounter++;
             }
@@ -93,6 +92,30 @@ public class SurviveTacticBuilder implements TacticBuilder {
         } else {
             return Action.NONE;
         }
+    }
+
+    @SuppressWarnings("IfStatementWithIdenticalBranches")
+    private boolean inDangerousRangeToAnyProjectiles(TurnContainer turnContainer, WizardProxy enemy, double dist) {
+        WizardProxy self = turnContainer.getSelf();
+        if (dist <= CastProjectileTacticBuilders.castRangeToWizardPessimistic(enemy,
+                self,
+                turnContainer.getGame(),
+                ProjectileType.MAGIC_MISSILE) + self.getRadius()) {
+            return true;
+        } else if (CastProjectileTacticBuilders.isProjectileLearned(turnContainer, enemy, ProjectileType.FROST_BOLT) &&
+                dist <= CastProjectileTacticBuilders.castRangeToWizardPessimistic(enemy,
+                        self,
+                        turnContainer.getGame(),
+                        ProjectileType.FROST_BOLT) + self.getRadius()) {
+            return true;
+        } else if (CastProjectileTacticBuilders.isProjectileLearned(turnContainer, enemy, ProjectileType.FIREBALL) &&
+                dist <= CastProjectileTacticBuilders.castRangeToWizardPessimistic(enemy,
+                        self,
+                        turnContainer.getGame(),
+                        ProjectileType.FIREBALL) + self.getRadius()) {
+            return true;
+        }
+        return false;
     }
 
     private enum Action {
