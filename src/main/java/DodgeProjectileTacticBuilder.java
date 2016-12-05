@@ -42,7 +42,7 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
                     travelsTo.getY(),
                     self.getX(),
                     self.getY(),
-                    self.getRadius() + projectileEffectiveRadius) &&
+                    self.getRadius() + projectileEffectiveRadius + self.getWizardForwardSpeed(game)) &&
                     self.getDistanceTo(travelsTo.getX(), travelsTo.getY()) >
                             self.getRadius() + projectileEffectiveRadius + self.getWizardForwardSpeed(game)) {
                 continue;
