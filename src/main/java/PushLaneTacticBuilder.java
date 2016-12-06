@@ -54,7 +54,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             case PUSH:
                 Optional<Unit> enemy = nearestEnemy(turnContainer);
                 //noinspection OptionalIsPresent
-                if (enemy.isPresent()) {
+                if (enemy.isPresent() && mapUtils.getLocationType(self.getId()) != LocationType.RIVER) {
                     mov = turnContainer.getPathFinder().findPath(self, enemy.get().getX(), enemy.get().getY());
                 } else {
                     mov = turnContainer.getPathFinder().findPath(self, pushWaypoint.getX(), pushWaypoint.getY());
