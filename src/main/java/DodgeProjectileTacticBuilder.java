@@ -48,9 +48,7 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
                 continue;
             }
 
-            int ticksLeft = (int) Math.ceil(projectile.getDistanceTo(travelsTo.getX(), travelsTo.getY()) /
-                    projectileMoveSpeed(game, projectile));
-            Optional<Movement> dodgeDirection = tryDodgeDirections(self, projectile, travelsTo, ticksLeft, game, world);
+            Optional<Movement> dodgeDirection = tryDodgeDirections(self, projectile, travelsTo, game, world);
             if (dodgeDirection.isPresent()) {
                 Movement mov = dodgeDirection.get();
                 MoveBuilder moveBuilder = new MoveBuilder();
@@ -75,70 +73,106 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
     private Optional<Movement> tryDodgeDirections(WizardProxy wizard,
                                                   Projectile projectile,
                                                   Point travelsTo,
-                                                  int ticksLeft,
                                                   Game game,
                                                   WorldProxy world) {
         double projectileEffectiveRadius = projectileEffectiveRadius(game, projectile);
+        double projectileMoveSpeed = projectileMoveSpeed(game, projectile);
+
+        double distLeft = projectile.getDistanceTo(travelsTo.getX(), travelsTo.getY());
+        int maxTicks =
+                (int) Math.ceil(distLeft / projectileMoveSpeed);
+
         double cos = Math.cos(wizard.getAngle());
         double sin = Math.sin(wizard.getAngle());
+
+        double simProjX = projectile.getX();
+        double simProjY = projectile.getY();
+        int ticksPassed = 0;
+        double maxWizardMoveSpeed = wizard.getWizardForwardSpeed(game);
+
+        do {
+            ticksPassed++;
+            Point nextProjectilePoint =
+                    MathMethods.distPoint(simProjX, simProjY, travelsTo.getX(), travelsTo.getY(), projectileMoveSpeed);
+            simProjX = nextProjectilePoint.getX();
+            simProjY = nextProjectilePoint.getY();
+        } while (hypot(simProjX - wizard.getX(), simProjY - wizard.getY()) - maxWizardMoveSpeed * ticksPassed -
+                wizard.getRadius() - projectileEffectiveRadius > 0);
 
         for (double speedOffset = 0.0; speedOffset <= 1.0; speedOffset += 0.1) {
             for (int speedSign = -1; speedSign <= 1; speedSign += 2) {
                 for (int strafeSign = -1; strafeSign <= 1; strafeSign += 2) {
+                    boolean collision = false;
                     double strafeOffset = Math.sqrt(1 - speedOffset * speedOffset);
-                    double speed;
+                    double baseStrafe = strafeSign * wizard.getWizardStrafeSpeed(game) * strafeOffset;
+                    double baseSpeed;
                     if (speedSign == -1) {
-                        speed = -wizard.getWizardBackwardSpeed(game) * ticksLeft * speedOffset;
+                        baseSpeed = -wizard.getWizardBackwardSpeed(game) * speedOffset;
                     } else {
-                        speed = wizard.getWizardForwardSpeed(game) * ticksLeft * speedOffset;
+                        baseSpeed = wizard.getWizardForwardSpeed(game) * speedOffset;
                     }
-                    double strafe = strafeSign * wizard.getWizardStrafeSpeed(game) * ticksLeft * strafeOffset;
-                    double resX = wizard.getX() + speed * cos - strafe * sin;
-                    double resY = wizard.getY() + speed * sin + strafe * cos;
-                    boolean foundIntersection = false;
-                    if (resX < wizard.getRadius() || resY < wizard.getRadius() ||
-                            resX > world.getWidth() - wizard.getRadius() ||
-                            resY > world.getHeight() - wizard.getRadius()) {
-                        continue;
-                    }
-                    if (MathMethods.isLineIntersectsCircle(projectile.getX(),
-                            travelsTo.getX(),
-                            projectile.getY(),
-                            travelsTo.getY(),
-                            resX,
-                            resY,
-                            wizard.getRadius() + projectileEffectiveRadius) ||
-                            hypot(travelsTo.getX() - resX, travelsTo.getY() - resY) <=
-                                    wizard.getRadius() + projectileEffectiveRadius) {
-                        continue;
-                    }
-                    for (Unit unit : world.getAllUnitsNearby()) {
-                        if (unit.getId() == wizard.getId()) {
-                            continue;
-                        }
-                        if (unit instanceof Projectile || unit instanceof Bonus) {
-                            continue;
-                        }
-                        double unitR = ((CircularUnit) unit).getRadius();
-                        if (unit.getDistanceTo(resX, resY) < wizard.getRadius() + unitR) {
-                            foundIntersection = true;
+
+                    for (int ticksTotal = ticksPassed; ticksTotal <= maxTicks; ticksTotal++) {
+                        Point nextProjectilePoint = MathMethods.distPoint(projectile.getX(),
+                                projectile.getY(),
+                                travelsTo.getX(),
+                                travelsTo.getY(),
+                                Math.min(distLeft, projectileMoveSpeed * ticksTotal));
+                        simProjX = nextProjectilePoint.getX();
+                        simProjY = nextProjectilePoint.getY();
+                        double speed = baseSpeed * ticksTotal;
+                        double strafe = baseStrafe * ticksTotal;
+                        double resX = wizard.getX() + speed * cos - strafe * sin;
+                        double resY = wizard.getY() + speed * sin + strafe * cos;
+
+                        if (resX < wizard.getRadius() || resY < wizard.getRadius() ||
+                                resX > world.getWidth() - wizard.getRadius() ||
+                                resY > world.getHeight() - wizard.getRadius()) {
+                            collision = true;
                             break;
                         }
-                        if (MathMethods.isLineIntersectsCircle(wizard.getX(),
+                        if (MathMethods.isLineIntersectsCircle(projectile.getX(),
+                                simProjX,
+                                projectile.getY(),
+                                simProjY,
                                 resX,
-                                wizard.getY(),
                                 resY,
-                                unit.getX(),
-                                unit.getY(),
-                                wizard.getRadius() + ((CircularUnit) unit).getRadius())) {
-                            foundIntersection = true;
+                                wizard.getRadius() + projectileEffectiveRadius) ||
+                                hypot(simProjX - resX, simProjY - resY) <=
+                                        wizard.getRadius() + projectileEffectiveRadius) {
+                            collision = true;
+                            break;
+                        }
+                        for (Unit unit : world.getAllUnitsNearby()) {
+                            if (unit.getId() == wizard.getId()) {
+                                continue;
+                            }
+                            if (unit instanceof Projectile || unit instanceof Bonus) {
+                                continue;
+                            }
+                            double unitR = ((CircularUnit) unit).getRadius();
+                            if (unit.getDistanceTo(resX, resY) < wizard.getRadius() + unitR) {
+                                collision = true;
+                                break;
+                            }
+                            if (MathMethods.isLineIntersectsCircle(wizard.getX(),
+                                    resX,
+                                    wizard.getY(),
+                                    resY,
+                                    unit.getX(),
+                                    unit.getY(),
+                                    wizard.getRadius() + ((CircularUnit) unit).getRadius())) {
+                                collision = true;
+                                break;
+                            }
+                        }
+                        if (collision) {
                             break;
                         }
                     }
-                    if (foundIntersection) {
-                        continue;
+                    if (!collision) {
+                        return Optional.of(new Movement(baseSpeed, baseStrafe, 0));
                     }
-                    return Optional.of(new Movement(speed / ticksLeft, strafe / ticksLeft, 0));
                 }
             }
         }
