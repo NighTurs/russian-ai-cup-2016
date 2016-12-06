@@ -116,7 +116,7 @@ public final class CastProjectileTacticBuilders {
         return false;
     }
 
-    public static Optional<Unit> bestFocusTarget(TurnContainer turnContainer) {
+    public static Optional<Unit> bestFocusTarget(TurnContainer turnContainer, double castRangeBoost) {
         WorldProxy world = turnContainer.getWorldProxy();
         WizardProxy self = turnContainer.getSelf();
 
@@ -130,7 +130,7 @@ public final class CastProjectileTacticBuilders {
             if (dist <= CastProjectileTacticBuilders.castRangeToWizardPessimistic(self,
                     wizard,
                     turnContainer.getGame(),
-                    ProjectileType.MAGIC_MISSILE) && lowestLife > wizard.getLife()) {
+                    ProjectileType.MAGIC_MISSILE) && lowestLife > wizard.getLife() + castRangeBoost) {
                 lowestLife = wizard.getLife();
                 bestUnit = wizard;
             }
@@ -154,7 +154,8 @@ public final class CastProjectileTacticBuilders {
                 continue;
             }
             double dist = building.getDistanceTo(self);
-            if (dist <= CastProjectileTacticBuilders.castRangeToBuilding(self, building, turnContainer.getGame())) {
+            if (dist <= CastProjectileTacticBuilders.castRangeToBuilding(self, building, turnContainer.getGame()) +
+                    castRangeBoost) {
                 return Optional.of(building);
             }
         }
@@ -164,8 +165,8 @@ public final class CastProjectileTacticBuilders {
                 continue;
             }
             double dist = minion.getDistanceTo(self);
-            if (dist <= CastProjectileTacticBuilders.castRangeToMinion(self, minion, turnContainer.getGame()) &&
-                    lowestLife > minion.getLife()) {
+            if (dist <= CastProjectileTacticBuilders.castRangeToMinion(self, minion, turnContainer.getGame()) +
+                    castRangeBoost && lowestLife > minion.getLife()) {
                 lowestLife = minion.getLife();
                 bestUnit = minion;
             }
@@ -241,6 +242,18 @@ public final class CastProjectileTacticBuilders {
                 return turnContainer.isSkillLearned(wizard, SkillType.FIREBALL);
             default:
                 throw new RuntimeException("Unexpected projectile type " + projectileType);
+        }
+    }
+
+    public static Optional<Double> justInTimeTurn(WizardProxy wizard, Point target, int ticksLeft, Game game) {
+        double currentAngle = wizard.getAngleTo(target.getX(), target.getY());
+        int ticksToTurn = (int) Math.ceil(
+                Math.max(0, currentAngle + wizard.getWizardMaxTurnAngle(game) - WizardProxy.getWizardCastSector(game)) /
+                        wizard.getWizardMaxTurnAngle(game));
+        if (ticksToTurn < ticksLeft) {
+            return Optional.empty();
+        } else {
+            return Optional.of(currentAngle);
         }
     }
 }

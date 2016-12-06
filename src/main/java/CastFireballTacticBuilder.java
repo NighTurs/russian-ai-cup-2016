@@ -5,8 +5,6 @@ import java.util.stream.Collectors;
 
 public class CastFireballTacticBuilder implements TacticBuilder {
 
-    private static final int PREPARE_TO_CAST_THRESHOLD = 30;
-
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
         Game game = turnContainer.getGame();
@@ -14,7 +12,7 @@ public class CastFireballTacticBuilder implements TacticBuilder {
         boolean fireballLearned = turnContainer.isSkillLearned(self, SkillType.FIREBALL);
         int untilCast = CastProjectileTacticBuilders.untilNextProjectile(self, ProjectileType.FIREBALL, game);
 
-        if (!game.isSkillsEnabled() || !fireballLearned || untilCast > PREPARE_TO_CAST_THRESHOLD) {
+        if (!game.isSkillsEnabled() || !fireballLearned) {
             return Optional.empty();
         }
 
@@ -24,35 +22,29 @@ public class CastFireballTacticBuilder implements TacticBuilder {
             Optional<Point> singlePointOpt = bestSingleTarget(turnContainer);
             if (!singlePointOpt.isPresent()) {
                 return Optional.empty();
-            } else {
-                targetPoint = singlePointOpt.get();
             }
+            targetPoint = singlePointOpt.get();
         } else {
             targetPoint = clusterPointOpt.get();
         }
         MoveBuilder moveBuilder = new MoveBuilder();
-        if (CastProjectileTacticBuilders.inCastSector(turnContainer, targetPoint)) {
-            castWithMove(moveBuilder, targetPoint, turnContainer);
-            return assembleTactic(moveBuilder);
-        } else {
-            moveBuilder.setTurn(self.getAngleTo(targetPoint.getX(), targetPoint.getY()));
+        if (CastProjectileTacticBuilders.inCastSector(turnContainer, targetPoint) && untilCast == 0) {
+            moveBuilder.setAction(ActionType.FIREBALL);
+            moveBuilder.setCastAngle(self.getAngleTo(targetPoint.getX(), targetPoint.getY()));
+            moveBuilder.setMinCastDistance(self.getDistanceTo(targetPoint.getX(), targetPoint.getY()));
+            moveBuilder.setMaxCastDistance(self.getDistanceTo(targetPoint.getX(), targetPoint.getY()));
             return assembleTactic(moveBuilder);
         }
+        Optional<Double> turn = CastProjectileTacticBuilders.justInTimeTurn(self, targetPoint, untilCast, game);
+        if (turn.isPresent()) {
+            moveBuilder.setTurn(turn.get());
+            return assembleTactic(moveBuilder);
+        }
+        return Optional.empty();
     }
 
     private Optional<Tactic> assembleTactic(MoveBuilder moveBuilder) {
         return Optional.of(new TacticImpl("CastFireball", moveBuilder, Tactics.CAST_FIREBALL_TACTIC_PRIORITY));
-    }
-
-    private void castWithMove(MoveBuilder moveBuilder, Point point, TurnContainer turnContainer) {
-        WizardProxy self = turnContainer.getSelf();
-        if (CastProjectileTacticBuilders.untilNextProjectile(self, ProjectileType.FIREBALL, turnContainer.getGame()) ==
-                0) {
-            moveBuilder.setAction(ActionType.FIREBALL);
-            moveBuilder.setCastAngle(self.getAngleTo(point.getX(), point.getY()));
-            moveBuilder.setMinCastDistance(self.getDistanceTo(point.getX(), point.getY()));
-            moveBuilder.setMaxCastDistance(self.getDistanceTo(point.getX(), point.getY()));
-        }
     }
 
     private Optional<Point> bestSingleTarget(TurnContainer turnContainer) {

@@ -4,6 +4,8 @@ import java.util.Optional;
 
 public class CastMagicMissileTacticBuilder implements TacticBuilder {
 
+    private static final int FUTURE_TARGET_RANGE_BOOST = 100;
+
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
         WizardProxy self = turnContainer.getSelf();
@@ -11,20 +13,41 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
         if (CastProjectileTacticBuilders.shouldSaveUpMana(turnContainer, ActionType.MAGIC_MISSILE)) {
             return Optional.empty();
         }
-        Optional<Unit> bestTargetOpt = CastProjectileTacticBuilders.bestFocusTarget(turnContainer);
-        if (!bestTargetOpt.isPresent()) {
+        Optional<Unit> bestTargetOpt = CastProjectileTacticBuilders.bestFocusTarget(turnContainer, 0);
+        Optional<Unit> bestFutureTargetOpt;
+        int untilCast = CastProjectileTacticBuilders.untilNextProjectile(self,
+                ProjectileType.MAGIC_MISSILE,
+                turnContainer.getGame());
+        if (bestTargetOpt.isPresent()) {
+            Point aimPoint =
+                    targetAimPoint(self, bestTargetOpt.get(), turnContainer.getGame(), turnContainer.getWorldProxy());
+            MoveBuilder moveBuilder = new MoveBuilder();
+            if (CastProjectileTacticBuilders.inCastSector(turnContainer, aimPoint) && untilCast == 0) {
+                moveBuilder.setAction(ActionType.MAGIC_MISSILE);
+                moveBuilder.setCastAngle(self.getAngleTo(aimPoint.getX(), aimPoint.getY()));
+                moveBuilder.setMinCastDistance(self.getDistanceTo(aimPoint.getX(), aimPoint.getY()) -
+                        ((CircularUnit) bestTargetOpt.get()).getRadius());
+                return assembleTactic(moveBuilder);
+            }
+            bestFutureTargetOpt = bestTargetOpt;
+        } else {
+            bestFutureTargetOpt =
+                    CastProjectileTacticBuilders.bestFocusTarget(turnContainer, FUTURE_TARGET_RANGE_BOOST);
+        }
+        if (!bestFutureTargetOpt.isPresent()) {
             return Optional.empty();
         }
-        Point aimPoint =
-                targetAimPoint(self, bestTargetOpt.get(), turnContainer.getGame(), turnContainer.getWorldProxy());
+        Unit futureTarget = bestFutureTargetOpt.get();
         MoveBuilder moveBuilder = new MoveBuilder();
-        if (CastProjectileTacticBuilders.inCastSector(turnContainer, aimPoint)) {
-            castWithMove(moveBuilder, aimPoint, ((CircularUnit) bestTargetOpt.get()).getRadius(), turnContainer);
-            return assembleTactic(moveBuilder);
-        } else {
-            moveBuilder.setTurn(self.getAngleTo(aimPoint.getX(), aimPoint.getY()));
+        Optional<Double> turn = CastProjectileTacticBuilders.justInTimeTurn(self,
+                new Point(futureTarget.getX(), futureTarget.getY()),
+                untilCast,
+                turnContainer.getGame());
+        if (turn.isPresent()) {
+            moveBuilder.setTurn(turn.get());
             return assembleTactic(moveBuilder);
         }
+        return Optional.empty();
     }
 
     private Point targetAimPoint(WizardProxy self, Unit target, Game game, WorldProxy world) {

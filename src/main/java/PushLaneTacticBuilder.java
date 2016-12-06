@@ -13,6 +13,12 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     private static final int EXPECT_STEPS_FORWARD_FROM_ENEMY = 15;
     private static final int TOWER_RETREAT_SPARE_TICKS = 2;
     private static final int IGNORE_RANGE = 800;
+    private static final int POTENTIAL_ATTACK_RANGE = 750;
+    private final DirectionOptionalTacticBuilder directionOptional;
+
+    public PushLaneTacticBuilder(DirectionOptionalTacticBuilder directionOptional) {
+        this.directionOptional = directionOptional;
+    }
 
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
@@ -67,8 +73,10 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         MoveBuilder moveBuilder = new MoveBuilder();
         moveBuilder.setSpeed(mov.getSpeed());
         moveBuilder.setStrafeSpeed(mov.getStrafeSpeed());
-        if (!hasEnemyInAttackRange(turnContainer)) {
+        if (!hasEnemyInPotentialAttackRange(turnContainer)) {
             moveBuilder.setTurn(mov.getTurn());
+        } else {
+            directionOptional.addTurn(turnContainer.getWorldProxy().getTickIndex(), mov.getTurn());
         }
 
         return Optional.of(new TacticImpl("PushLane", moveBuilder, Tactics.PUSH_LANE_TACTIC_PRIORITY));
@@ -236,30 +244,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         return hasEnemyInRange(turnContainer, IGNORE_RANGE);
     }
 
-    public static boolean hasEnemyInAttackRange(TurnContainer turnContainer) {
-        WizardProxy self = turnContainer.getSelf();
-        Game game = turnContainer.getGame();
-        for (Unit unit : turnContainer.getWorldProxy().allUnitsWoTrees()) {
-            if (!turnContainer.isOffensiveUnit(unit)) {
-                continue;
-            }
-            double dist = unit.getDistanceTo(self);
-            double range = 0;
-            if (unit instanceof Building) {
-                range = CastProjectileTacticBuilders.castRangeToBuilding(self, (Building) unit, game);
-            } else if (unit instanceof Minion) {
-                range = CastProjectileTacticBuilders.castRangeToMinion(self, (Minion) unit, game);
-            } else if (unit instanceof WizardProxy) {
-                range = CastProjectileTacticBuilders.castRangeToWizardPessimistic(self,
-                        (WizardProxy) unit,
-                        game,
-                        ProjectileType.MAGIC_MISSILE);
-            }
-            if (dist <= range) {
-                return true;
-            }
-        }
-        return false;
+    public static boolean hasEnemyInPotentialAttackRange(TurnContainer turnContainer) {
+        return hasEnemyInRange(turnContainer, POTENTIAL_ATTACK_RANGE);
     }
 
     private static boolean hasEnemyInRange(TurnContainer turnContainer, double range) {

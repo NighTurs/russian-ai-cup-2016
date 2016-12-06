@@ -4,14 +4,18 @@ import java.util.*;
 
 public class TurnStrategy {
 
-    private static final List<TacticBuilder> tacticBuilders = Arrays.asList(new PushLaneTacticBuilder(),
-            new CastMagicMissileTacticBuilder(),
-            new SurviveTacticBuilder(),
-            new GoForBonusTacticBuilder(),
-            new StaffHitTacticBuilder(),
-            new DodgeProjectileTacticBuilder(),
-            new LearnSkillsTacticBuilder(),
-            new CastFireballTacticBuilder());
+    private static final DirectionOptionalTacticBuilder directionOptional = new DirectionOptionalTacticBuilder();
+    private static final List<TacticBuilder> tacticBuilders =
+            Arrays.asList(new PushLaneTacticBuilder(directionOptional),
+                    new CastMagicMissileTacticBuilder(),
+                    new SurviveTacticBuilder(),
+                    new GoForBonusTacticBuilder(directionOptional),
+                    new StaffHitTacticBuilder(),
+                    new DodgeProjectileTacticBuilder(),
+                    new LearnSkillsTacticBuilder(),
+                    new CastFireballTacticBuilder(),
+                    new NeutralTurnTacticBuilder(),
+                    directionOptional);
     private final TurnContainer turnContainer;
     private final Move move;
 

@@ -12,4 +12,6 @@ public final class Tactics {
     public static final int STAFF_HIT_TACTIC_PRIORITY = 13;
     public static final int DODGE_PROJECTILE_TACTIC_PRIORITY = 150;
     public static final int LEARN_SKILLS_TACTIC_BUILDER = 200;
+    public static final int NEUTRAL_TURN_TACTIC_BUILDER = 1;
+    public static final int DIRECTION_OPTIONAL_TACTIC_BUILDER = 2;
 }

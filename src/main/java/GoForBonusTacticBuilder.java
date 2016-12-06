@@ -12,6 +12,12 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
     private static final int EXPECTED_TICKS_TO_BONUS_ERROR = 400;
     private static final int ACCEPTABLE_TICKS_TO_TAKE_BONUS = 1000;
 
+    private final DirectionOptionalTacticBuilder directionOptional;
+
+    public GoForBonusTacticBuilder(DirectionOptionalTacticBuilder directionOptional) {
+        this.directionOptional = directionOptional;
+    }
+
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
         BonusControl bonusControl = turnContainer.getBonusControl();
@@ -63,8 +69,10 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
             MoveBuilder moveBuilder = new MoveBuilder();
             moveBuilder.setSpeed(mov.getSpeed());
             moveBuilder.setStrafeSpeed(mov.getStrafeSpeed());
-            if (!PushLaneTacticBuilder.hasEnemyInAttackRange(turnContainer)) {
+            if (!PushLaneTacticBuilder.hasEnemyInPotentialAttackRange(turnContainer)) {
                 moveBuilder.setTurn(mov.getTurn());
+            } else {
+                directionOptional.addTurn(world.getTickIndex(), mov.getTurn());
             }
             return tactic(moveBuilder);
         } else {
