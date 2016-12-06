@@ -166,7 +166,7 @@ public class WizardProxy extends LivingUnit {
     }
 
     static double getMagicMissileDirectDamage(WizardProxy wizard, Game game) {
-        return (hasEmpowerBonus(wizard) ? 1 + game.getEmpoweredDamageFactor() : 1) *
+        return (hasEmpowerBonus(wizard) ? game.getEmpoweredDamageFactor() : 1) *
                 (game.getMagicMissileDirectDamage() +
                         countMagicalDamageSkills(wizard) * game.getMagicalDamageBonusPerSkillLevel());
     }

@@ -30,7 +30,7 @@ public class WizardProxyTest {
     public void testGetMagicMissileDirectDamageRegular() throws Exception {
         when(game.getMagicMissileDirectDamage()).thenReturn(12);
         when(game.getMagicalDamageBonusPerSkillLevel()).thenReturn(1);
-        when(game.getEmpoweredDamageFactor()).thenReturn(0.5);
+        when(game.getEmpoweredDamageFactor()).thenReturn(1.5);
         when(wizard.affectedBySkills()).thenReturn(EMPTY_SKILLS);
         when(wizard.getStatuses()).thenReturn(EMPTY_STATUSES);
         assertEquals(12.0, WizardProxy.getMagicMissileDirectDamage(wizard, game), 0.0);
@@ -40,7 +40,7 @@ public class WizardProxyTest {
     public void testGetMagicMissileDirectDamageSkillsAndBonus() throws Exception {
         when(game.getMagicMissileDirectDamage()).thenReturn(12);
         when(game.getMagicalDamageBonusPerSkillLevel()).thenReturn(1);
-        when(game.getEmpoweredDamageFactor()).thenReturn(0.5);
+        when(game.getEmpoweredDamageFactor()).thenReturn(1.5);
         when(wizard.affectedBySkills()).thenReturn(Arrays.asList(SkillType.MAGICAL_DAMAGE_BONUS_PASSIVE_1,
                 SkillType.MAGICAL_DAMAGE_BONUS_PASSIVE_2,
                 SkillType.MAGICAL_DAMAGE_BONUS_AURA_1,
