@@ -9,8 +9,8 @@ public class StaffHitTacticBuilder implements TacticBuilder {
         WizardProxy self = turnContainer.getSelf();
         Game game = turnContainer.getGame();
 
-        boolean isStaffReady = self.getRemainingCooldownTicksByAction()[ActionType.STAFF.ordinal()] != 0 ||
-                self.getRemainingActionCooldownTicks() != 0;
+        boolean isStaffReady = self.getRemainingCooldownTicksByAction()[ActionType.STAFF.ordinal()] == 0 &&
+                self.getRemainingActionCooldownTicks() == 0;
         if (isStaffReady) {
             for (Tree tree : turnContainer.getWorldProxy().getTrees()) {
                 if (isInStaffRange(self, tree, game) && isInStaffCastSector(self, tree, game)) {
@@ -31,9 +31,9 @@ public class StaffHitTacticBuilder implements TacticBuilder {
             MoveBuilder moveBuilder = new MoveBuilder();
             if (isInStaffCastSector(self, focusUnit, game)) {
                 if (isStaffReady) {
-                    moveBuilder.setTurn(0);
-                } else {
                     moveBuilder.setAction(ActionType.STAFF);
+                } else {
+                    moveBuilder.setTurn(0);
                 }
             } else {
                 moveBuilder.setTurn(self.getAngleTo(focusUnit));
