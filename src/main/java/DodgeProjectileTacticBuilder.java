@@ -99,7 +99,8 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
         } while (hypot(simProjX - wizard.getX(), simProjY - wizard.getY()) - maxWizardMoveSpeed * ticksPassed -
                 wizard.getRadius() - projectileEffectiveRadius > 0);
 
-        for (double speedOffset = 0.0; speedOffset <= 1.0; speedOffset += 0.1) {
+        // first consider moving backwards as it is move safe
+        for (double speedOffset = 1.0; speedOffset >= 0.0; speedOffset -= 0.1) {
             for (int speedSign = -1; speedSign <= 1; speedSign += 2) {
                 for (int strafeSign = -1; strafeSign <= 1; strafeSign += 2) {
                     boolean collision = false;
