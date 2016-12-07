@@ -52,6 +52,8 @@ public class LanePicker {
             return LocationType.TOP_LANE;
         } else if (mid < 2) {
             return LocationType.MIDDLE_LANE;
+        } else if (memory.getLane() != null && memory.getLane() != LocationType.MIDDLE_LANE) {
+            return memory.getLane();
         } else if (bot < 2) {
             return LocationType.BOTTOM_LANE;
         } else if (top < 2) {
