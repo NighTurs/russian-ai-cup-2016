@@ -75,7 +75,7 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
                                                   Point travelsTo,
                                                   Game game,
                                                   WorldProxy world) {
-        double projectileEffectiveRadius = projectileEffectiveRadius(game, projectile);
+        double projectileEffectiveRadius = projectile.getRadius();
         double projectileMoveSpeed = projectileMoveSpeed(game, projectile);
 
         double distLeft = projectile.getDistanceTo(travelsTo.getX(), travelsTo.getY());
