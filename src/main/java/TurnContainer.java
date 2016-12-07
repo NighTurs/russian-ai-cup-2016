@@ -106,7 +106,7 @@ public class TurnContainer {
     }
 
     public boolean isSkillLearned(WizardProxy wizard, SkillType skillType) {
-        for (SkillType skill : self.getSkills()) {
+        for (SkillType skill : wizard.getSkills()) {
             if (skill == skillType) {
                 return true;
             }
