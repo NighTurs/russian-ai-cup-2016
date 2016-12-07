@@ -1,7 +1,4 @@
-import model.Bonus;
-import model.Building;
-import model.BuildingType;
-import model.Game;
+import model.*;
 
 import java.util.Optional;
 
@@ -47,7 +44,8 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
         double ticksToBonus =
                 roughDistToBonus(self, pathFinder, goForBonus) / self.getWizardForwardSpeed(turnContainer.getGame()) +
                         ARRIVE_BEFORE_TICKS;
-        if (game.isSkillsEnabled() && ticksToBonus * 2 > ACCEPTABLE_TICKS_TO_TAKE_BONUS) {
+        if (game.isSkillsEnabled() && (ticksToBonus * 2 > ACCEPTABLE_TICKS_TO_TAKE_BONUS ||
+                turnContainer.isSkillLearned(self, SkillType.FIREBALL))) {
             return Optional.empty();
         }
         if (ticksToBonus < ticksUntilBonus && (!turnContainer.getMemory().isWentForBonusPrevTurn() ||
