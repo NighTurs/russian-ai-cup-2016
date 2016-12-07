@@ -46,6 +46,7 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
                         ARRIVE_BEFORE_TICKS;
         if (game.isSkillsEnabled() && (ticksToBonus * 2 > ACCEPTABLE_TICKS_TO_TAKE_BONUS ||
                 turnContainer.isSkillLearned(self, SkillType.FIREBALL))) {
+            turnContainer.getMemory().setWentForBonusPrevTurn(false);
             return Optional.empty();
         }
         if (ticksToBonus < ticksUntilBonus && (!turnContainer.getMemory().isWentForBonusPrevTurn() ||

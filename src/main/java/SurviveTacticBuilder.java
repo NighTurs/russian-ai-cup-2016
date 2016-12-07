@@ -6,6 +6,7 @@ import java.util.Optional;
 public class SurviveTacticBuilder implements TacticBuilder {
 
     private static final double LIFE_HAZZARD_THRESHOLD = 0.5;
+    private static final double LIFE_HAZZARD_THRESHOLD_BONUS_HUNTING = 0.8;
 
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
@@ -58,7 +59,7 @@ public class SurviveTacticBuilder implements TacticBuilder {
     @SuppressWarnings("SimplifiableIfStatement")
     private Action shouldRunFromWizards(TurnContainer turnContainer) {
         WizardProxy self = turnContainer.getSelf();
-        if ((double) self.getLife() / self.getMaxLife() >= LIFE_HAZZARD_THRESHOLD) {
+        if ((double) self.getLife() / self.getMaxLife() >= getLifeHazzardThreshold(turnContainer)) {
             return Action.NONE;
         }
         int counter = 0;
@@ -91,6 +92,14 @@ public class SurviveTacticBuilder implements TacticBuilder {
             return Action.STAY;
         } else {
             return Action.NONE;
+        }
+    }
+
+    private double getLifeHazzardThreshold(TurnContainer turnContainer) {
+        if (turnContainer.getMemory().isWentForBonusPrevTurn()) {
+            return LIFE_HAZZARD_THRESHOLD_BONUS_HUNTING;
+        } else {
+            return LIFE_HAZZARD_THRESHOLD;
         }
     }
 
