@@ -16,17 +16,19 @@ public class CastFireballTacticBuilder implements TacticBuilder {
             return Optional.empty();
         }
 
-        Optional<Point> clusterPointOpt = bestClusterCastPoint(turnContainer);
         Point targetPoint;
-        if (!clusterPointOpt.isPresent()) {
-            Optional<Point> singlePointOpt = bestSingleTarget(turnContainer);
-            if (!singlePointOpt.isPresent()) {
-                return Optional.empty();
-            }
-            targetPoint = singlePointOpt.get();
-        } else {
+        Optional<Unit> singlePointOpt = bestSingleTarget(turnContainer);
+        Optional<Point> clusterPointOpt = bestClusterCastPoint(turnContainer);
+        if (singlePointOpt.isPresent() &&
+                (singlePointOpt.get() instanceof WizardProxy || !clusterPointOpt.isPresent())) {
+            Unit unit = singlePointOpt.get();
+            targetPoint = new Point(unit.getX(), unit.getY());
+        } else if (clusterPointOpt.isPresent()) {
             targetPoint = clusterPointOpt.get();
+        } else {
+            return Optional.empty();
         }
+
         MoveBuilder moveBuilder = new MoveBuilder();
         if (CastProjectileTacticBuilders.inCastSector(turnContainer, targetPoint) && untilCast == 0) {
             moveBuilder.setAction(ActionType.FIREBALL);
@@ -47,11 +49,11 @@ public class CastFireballTacticBuilder implements TacticBuilder {
         return Optional.of(new TacticImpl("CastFireball", moveBuilder, Tactics.CAST_FIREBALL_TACTIC_PRIORITY));
     }
 
-    private Optional<Point> bestSingleTarget(TurnContainer turnContainer) {
+    private Optional<Unit> bestSingleTarget(TurnContainer turnContainer) {
         WizardProxy self = turnContainer.getSelf();
         Game game = turnContainer.getGame();
-        Point buildingPoint = null;
-        Point wizardPoint = null;
+        Building bestBuilding = null;
+        WizardProxy bestWizard = null;
         for (Unit unit : turnContainer.getWorldProxy().getAllUnitsNearby()) {
             if (!turnContainer.isOffensiveUnit(unit) || unit instanceof Minion) {
                 continue;
@@ -64,22 +66,22 @@ public class CastFireballTacticBuilder implements TacticBuilder {
             if (unit instanceof Building) {
                 Building building = (Building) unit;
                 if (dist < self.getCastRange() + game.getFireballExplosionMinDamageRange() + building.getRadius()) {
-                    buildingPoint = new Point(building.getX(), building.getY());
+                    bestBuilding = building;
                 }
             } else if (unit instanceof WizardProxy) {
                 WizardProxy wizard = (WizardProxy) unit;
                 if (dist < self.getCastRange() + game.getFireballExplosionMinDamageRange() + wizard.getRadius() -
                         wizard.getWizardForwardSpeed(game)) {
-                    wizardPoint = new Point(wizard.getX(), wizard.getY());
+                    bestWizard = wizard;
                 }
             } else {
                 throw new RuntimeException("Unexpected type of target passed through " + unit.getClass());
             }
         }
-        if (wizardPoint != null) {
-            return Optional.of(wizardPoint);
-        } else if (buildingPoint != null) {
-            return Optional.of(buildingPoint);
+        if (bestWizard != null) {
+            return Optional.of(bestWizard);
+        } else if (bestBuilding != null) {
+            return Optional.of(bestBuilding);
         } else {
             return Optional.empty();
         }
