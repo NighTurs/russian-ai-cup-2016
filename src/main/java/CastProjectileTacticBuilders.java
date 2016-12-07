@@ -19,7 +19,7 @@ public final class CastProjectileTacticBuilders {
         throw new UnsupportedOperationException("Instance not supported");
     }
 
-    public static double undodgeableRadiusPessimistic(double selfCastRange,
+    private static double undodgeableRadiusPessimistic(double selfCastRange,
                                                       double enemySpeed,
                                                       Game game,
                                                       ProjectileType projectileType) {
@@ -27,7 +27,7 @@ public final class CastProjectileTacticBuilders {
                 (int) Math.ceil(selfCastRange / projectileMoveSpeed(game, projectileType)) * enemySpeed;
     }
 
-    public static double undodgeableRadiusOptimistic(double selfCastRange,
+    private static double undodgeableRadiusOptimistic(double selfCastRange,
                                                      double enemySpeed,
                                                      Game game,
                                                      ProjectileType projectileType) {
@@ -35,36 +35,33 @@ public final class CastProjectileTacticBuilders {
                 (int) Math.ceil(selfCastRange / projectileMoveSpeed(game, projectileType) - 1) * enemySpeed;
     }
 
-    public static double effectiveCastRangeToWizard(WizardProxy self,
-                                                    WizardProxy wizard,
-                                                    Game game,
-                                                    ProjectileType projectileType,
-                                                    boolean optimistic) {
+    private static double castRangeToWizard(WizardProxy self,
+                                            WizardProxy wizard,
+                                            Game game,
+                                            ProjectileType projectileType,
+                                            boolean optimistic) {
+        double wizardSpeed;
+        if (!optimistic && Math.abs(wizard.getAngleTo(self)) >= Math.PI / 3) {
+            wizardSpeed = wizard.getWizardForwardSpeed(game);
+        } else {
+            wizardSpeed = wizard.getWizardBackwardSpeed(game);
+        }
         double r1 = 0;
         double r2 = self.getCastRange();
         while (r2 - r1 > E) {
             double r = (r1 + r2) / 2;
             double radius = optimistic ?
-                    undodgeableRadiusOptimistic(r, wizard.getWizardBackwardSpeed(game), game, projectileType) :
-                    undodgeableRadiusPessimistic(r, wizard.getWizardBackwardSpeed(game), game, projectileType);
+                    undodgeableRadiusOptimistic(r, wizardSpeed, game, projectileType) :
+                    undodgeableRadiusPessimistic(r, wizardSpeed, game, projectileType);
             if (radius > 0) {
                 r1 = r;
             } else {
                 r2 = r;
             }
         }
-        return r1;
-    }
-
-    private static double castRangeToWizard(WizardProxy self,
-                                            WizardProxy wizard,
-                                            Game game,
-                                            ProjectileType projectileType,
-                                            boolean optimistic) {
-        double r = effectiveCastRangeToWizard(self, wizard, game, projectileType, optimistic);
-        return r + (optimistic ?
-                undodgeableRadiusOptimistic(r, wizard.getWizardBackwardSpeed(game), game, projectileType) :
-                undodgeableRadiusPessimistic(r, wizard.getWizardBackwardSpeed(game), game, projectileType));
+        return r1 + (optimistic ?
+                undodgeableRadiusOptimistic(r1, wizardSpeed, game, projectileType) :
+                undodgeableRadiusPessimistic(r1, wizardSpeed, game, projectileType));
     }
 
     public static double castRangeToWizardPessimistic(WizardProxy self,
@@ -86,7 +83,7 @@ public final class CastProjectileTacticBuilders {
     }
 
     public static double castRangeToMinion(WizardProxy self, Minion minion, Game game) {
-        return self.getCastRange();
+        return self.getCastRange() + minion.getRadius();
     }
 
     public static boolean inCastSector(TurnContainer turnContainer, Point point) {

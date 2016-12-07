@@ -51,23 +51,7 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
     }
 
     private Point targetAimPoint(WizardProxy self, Unit target, Game game, WorldProxy world) {
-        if (!(target instanceof WizardProxy)) {
-            return new Point(target.getX(), target.getY());
-        }
-        WizardProxy enemy = (WizardProxy) target;
-        double effectiveCastRange = CastProjectileTacticBuilders.effectiveCastRangeToWizard(self,
-                enemy,
-                game,
-                ProjectileType.MAGIC_MISSILE,
-                false);
-        double forwardUndodgeableRadius = Math.abs(CastProjectileTacticBuilders.undodgeableRadiusPessimistic(
-                effectiveCastRange,
-                enemy.getWizardForwardSpeed(game),
-                game,
-                ProjectileType.MAGIC_MISSILE));
-        double aimPointX = enemy.getX() + forwardUndodgeableRadius * Math.cos(enemy.getAngle());
-        double aimPointY = enemy.getY() + forwardUndodgeableRadius * Math.sin(enemy.getAngle());
-        return new Point(aimPointX, aimPointY);
+        return new Point(target.getX(), target.getY());
     }
 
     private Optional<Tactic> assembleTactic(MoveBuilder moveBuilder) {

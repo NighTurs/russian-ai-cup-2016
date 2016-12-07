@@ -97,19 +97,19 @@ public class SurviveTacticBuilder implements TacticBuilder {
     @SuppressWarnings("IfStatementWithIdenticalBranches")
     private boolean inDangerousRangeToAnyProjectiles(TurnContainer turnContainer, WizardProxy enemy, double dist) {
         WizardProxy self = turnContainer.getSelf();
-        if (dist <= CastProjectileTacticBuilders.castRangeToWizardPessimistic(enemy,
+        if (dist <= CastProjectileTacticBuilders.castRangeToWizardOptimistic(enemy,
                 self,
                 turnContainer.getGame(),
                 ProjectileType.MAGIC_MISSILE) + self.getRadius()) {
             return true;
         } else if (CastProjectileTacticBuilders.isProjectileLearned(turnContainer, enemy, ProjectileType.FROST_BOLT) &&
-                dist <= CastProjectileTacticBuilders.castRangeToWizardPessimistic(enemy,
+                dist <= CastProjectileTacticBuilders.castRangeToWizardOptimistic(enemy,
                         self,
                         turnContainer.getGame(),
                         ProjectileType.FROST_BOLT) + self.getRadius()) {
             return true;
         } else if (CastProjectileTacticBuilders.isProjectileLearned(turnContainer, enemy, ProjectileType.FIREBALL) &&
-                dist <= CastProjectileTacticBuilders.castRangeToWizardPessimistic(enemy,
+                dist <= CastProjectileTacticBuilders.castRangeToWizardOptimistic(enemy,
                         self,
                         turnContainer.getGame(),
                         ProjectileType.FIREBALL) + self.getRadius()) {
