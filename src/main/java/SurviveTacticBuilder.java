@@ -82,7 +82,7 @@ public class SurviveTacticBuilder implements TacticBuilder {
                 stepInCounter++;
             }
         }
-        boolean loosingTrade = self.getLife() - enemyLife < turnContainer.getGame().getMagicMissileDirectDamage();
+        boolean loosingTrade = self.getLife() < enemyLife;
         boolean stepInLoosingTrade =
                 self.getLife() - stepInEnemyLife < turnContainer.getGame().getMagicMissileDirectDamage();
 
