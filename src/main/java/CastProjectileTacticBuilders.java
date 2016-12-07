@@ -247,9 +247,9 @@ public final class CastProjectileTacticBuilders {
 
     public static Optional<Double> justInTimeTurn(WizardProxy wizard, Point target, int ticksLeft, Game game) {
         double currentAngle = wizard.getAngleTo(target.getX(), target.getY());
-        int ticksToTurn = (int) Math.ceil(
-                Math.max(0, currentAngle + wizard.getWizardMaxTurnAngle(game) - WizardProxy.getWizardCastSector(game)) /
-                        wizard.getWizardMaxTurnAngle(game));
+        int ticksToTurn = (int) Math.ceil(Math.max(0,
+                Math.abs(currentAngle) + wizard.getWizardMaxTurnAngle(game) - WizardProxy.getWizardCastSector(game)) /
+                wizard.getWizardMaxTurnAngle(game));
         if (ticksToTurn < ticksLeft) {
             return Optional.empty();
         } else {
