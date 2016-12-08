@@ -162,6 +162,11 @@ public class PushLaneTacticBuilder implements TacticBuilder {
 
     private Action actionBecauseOfBuilding(TurnContainer turnContainer, Building building) {
         WizardProxy self = turnContainer.getSelf();
+        // Middle tower near enemy base prevents me from moving forward, just ignore it
+        if (turnContainer.getMapUtils().getLocationType(self.getId()) == LocationType.BOTTOM_LANE &&
+                turnContainer.getMapUtils().getLocationType(building.getId()) == LocationType.MIDDLE_LANE) {
+            return Action.NONE;
+        }
         int c = 0;
         for (Unit unit : turnContainer.getWorldProxy().allUnitsWoTrees()) {
             if (!(unit instanceof LivingUnit)) {
