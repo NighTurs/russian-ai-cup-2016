@@ -8,6 +8,7 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
     private static final int ARRIVE_BEFORE_TICKS = 80;
     private static final int EXPECTED_TICKS_TO_BONUS_ERROR = 400;
     private static final int ACCEPTABLE_TICKS_TO_TAKE_BONUS = 1000;
+    private static final int KEEP_DISTANCE_TO_BONUS = 2;
 
     private final DirectionOptionalTacticBuilder directionOptional;
 
@@ -63,11 +64,23 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
             }
         }
         if (haveBonusInVisibilityRange || self.getDistanceTo(goForBonus.getX(), goForBonus.getY()) >
-                game.getBonusRadius() + self.getRadius() + self.getWizardForwardSpeed(game)) {
+                game.getBonusRadius() + self.getRadius() + KEEP_DISTANCE_TO_BONUS) {
             Movement mov = pathFinder.findPath(self, goForBonus.getX(), goForBonus.getY());
             MoveBuilder moveBuilder = new MoveBuilder();
-            moveBuilder.setSpeed(mov.getSpeed());
-            moveBuilder.setStrafeSpeed(mov.getStrafeSpeed());
+
+            double leftDistance = self.getDistanceTo(goForBonus.getX(), goForBonus.getY()) -
+                    (game.getBonusRadius() + self.getRadius() + KEEP_DISTANCE_TO_BONUS);
+
+            if (leftDistance >= self.getWizardForwardSpeed(game) || haveBonusInVisibilityRange) {
+                moveBuilder.setSpeed(mov.getSpeed());
+                moveBuilder.setStrafeSpeed(mov.getStrafeSpeed());
+            } else {
+                double maxSpeed = mov.getSpeed();
+                double maxStrafe = mov.getStrafeSpeed();
+                double ratio = leftDistance / Math.hypot(maxSpeed, maxStrafe);
+                moveBuilder.setSpeed(maxSpeed * ratio);
+                moveBuilder.setStrafeSpeed(maxStrafe * ratio);
+            }
             if (!PushLaneTacticBuilder.hasEnemyInPotentialAttackRange(turnContainer)) {
                 moveBuilder.setTurn(mov.getTurn());
             } else {

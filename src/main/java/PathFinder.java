@@ -68,7 +68,7 @@ public class PathFinder {
         return longSearchNextPoint(wizard.getX(), wizard.getY(), x, y).getValue();
     }
 
-    public Movement findOptimalMovement(WizardProxy wizard, double x, double y) {
+    private Movement findOptimalMovement(WizardProxy wizard, double x, double y) {
         double bestDistance = Double.MAX_VALUE;
         double optimalSpeed = 0;
         double optimalStrafe = 0;
