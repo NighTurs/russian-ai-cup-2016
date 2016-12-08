@@ -201,7 +201,12 @@ public class PushLaneTacticBuilder implements TacticBuilder {
 
         boolean shouldStay = false;
         for (WizardProxy enemy : enemies) {
-            if (enemies.size() == 1 && enemy.getLife() + enemy.getMagicMissileDirectDamage(game) * 3 < self.getLife()) {
+            if (enemies.size() == 1 && enemy.getLife() + enemy.getMagicMissileDirectDamage(game) * 2 < self.getLife()) {
+                return Action.PUSH;
+            }
+            if (self.getLife() -
+                    (int) Math.ceil(enemy.getLife() / self.getMagicMissileDirectDamage(game)) * enemies.size() *
+                            enemy.getMagicMissileDirectDamage(game) > enemy.getMagicMissileDirectDamage(game) * 3) {
                 return Action.PUSH;
             }
             Action actionMissle = actionBecauseOfWizardSpell(turnContainer, enemy, ProjectileType.MAGIC_MISSILE);
