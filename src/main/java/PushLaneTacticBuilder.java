@@ -230,9 +230,9 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                 projectileType);
 
         double distToKeep = (distToEnemy +
-                (untilNextMissile - 1) * self.getWizardBackwardSpeed(game) * RETREAT_BACKWARD_SPEED_MULTIPLIER -
-                Math.min(untilNextMissile + 1, EXPECT_STEPS_FORWARD_FROM_ENEMY) * enemy.getWizardForwardSpeed(game)) -
-                enemyCastRange;
+                Math.max(untilNextMissile - 1, EXPECT_STEPS_FORWARD_FROM_ENEMY) * self.getWizardBackwardSpeed(game) *
+                        RETREAT_BACKWARD_SPEED_MULTIPLIER -
+                EXPECT_STEPS_FORWARD_FROM_ENEMY * enemy.getWizardForwardSpeed(game)) - enemyCastRange;
 
         if (distToKeep <= 0) {
             return Action.RETREAT;
