@@ -82,9 +82,8 @@ public class SurviveTacticBuilder implements TacticBuilder {
                 stepInCounter++;
             }
         }
-        boolean loosingTrade = self.getLife() < enemyLife;
-        boolean stepInLoosingTrade =
-                self.getLife() - stepInEnemyLife < turnContainer.getGame().getMagicMissileDirectDamage();
+        boolean loosingTrade = loosingTrade(turnContainer, enemyLife);
+        boolean stepInLoosingTrade = loosingTrade(turnContainer, stepInEnemyLife);
 
         if (counter > 1 || (counter == 1 && loosingTrade)) {
             return Action.RUN;
@@ -92,6 +91,16 @@ public class SurviveTacticBuilder implements TacticBuilder {
             return Action.STAY;
         } else {
             return Action.NONE;
+        }
+    }
+
+    private boolean loosingTrade(TurnContainer turnContainer, double enemyLife) {
+        WizardProxy self = turnContainer.getSelf();
+        if (turnContainer.getMemory().isWentForBonusPrevTurn() &&
+                (double) self.getLife() / self.getMaxLife() > LIFE_HAZZARD_THRESHOLD) {
+            return enemyLife - self.getLife() > turnContainer.getGame().getMagicMissileDirectDamage();
+        } else {
+            return self.getLife() < enemyLife;
         }
     }
 
