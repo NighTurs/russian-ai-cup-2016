@@ -80,8 +80,7 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
         double projectileMoveSpeed = projectileMoveSpeed(game, projectile);
 
         double distLeft = projectile.getDistanceTo(travelsTo.getX(), travelsTo.getY());
-        int maxTicks =
-                (int) Math.ceil(distLeft / projectileMoveSpeed);
+        int maxTicks = (int) Math.ceil(distLeft / projectileMoveSpeed);
 
         double cos = Math.cos(wizard.getAngle());
         double sin = Math.sin(wizard.getAngle());
@@ -100,8 +99,10 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
         } while (hypot(simProjX - wizard.getX(), simProjY - wizard.getY()) - maxWizardMoveSpeed * ticksPassed -
                 wizard.getRadius() - projectileEffectiveRadius > 0);
 
-        // first consider moving backwards as it is move safe
-        for (double speedOffset = 1.0; speedOffset >= 0.0; speedOffset -= 0.1) {
+        double maxRunAwayDist = Double.MIN_VALUE;
+        Optional<Movement> result = Optional.empty();
+
+        for (double speedOffset = 0.0; speedOffset <= 1.0; speedOffset += 0.1) {
             for (int speedSign = -1; speedSign <= 1; speedSign += 2) {
                 for (int strafeSign = -1; strafeSign <= 1; strafeSign += 2) {
                     boolean collision = false;
@@ -173,11 +174,17 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
                         }
                     }
                     if (!collision) {
-                        return Optional.of(new Movement(baseSpeed, baseStrafe, 0));
+                        double resX = wizard.getX() + baseSpeed * maxTicks * cos - baseStrafe * maxTicks * sin;
+                        double resY = wizard.getY() + baseSpeed * maxTicks * sin + baseStrafe * maxTicks * cos;
+                        double dist = hypot(resX - projectile.getX(), resY - projectile.getY());
+                        if (dist > maxRunAwayDist) {
+                            maxRunAwayDist = dist;
+                            result = Optional.of(new Movement(baseSpeed, baseStrafe, 0));
+                        }
                     }
                 }
             }
         }
-        return Optional.empty();
+        return result;
     }
 }
