@@ -8,7 +8,6 @@ import static java.lang.StrictMath.hypot;
 public class PathFinder {
 
     private static final int DEFAULT_CELL_WIDTH = 100;
-    private static final double UNSTATIC_OBJECTS_RADIUS_ADJUST = 2.9;
     private static final double E = 1e-9;
     private static final int SHORT_SEARCH_GRID_CELL = 10;
     private static final int SHORT_SEARCH_GRID_SPAN = 250;
@@ -110,9 +109,6 @@ public class PathFinder {
                             continue;
                         }
                         double unitR = ((CircularUnit) unit).getRadius();
-                        if (unit instanceof WizardProxy || unit instanceof Minion) {
-                            unitR += UNSTATIC_OBJECTS_RADIUS_ADJUST;
-                        }
                         if (unit.getDistanceTo(resX, resY) < wizard.getRadius() + unitR) {
                             foundIntersection = true;
                             break;
@@ -162,7 +158,7 @@ public class PathFinder {
         @SuppressWarnings("SuspiciousNameCombination")
         double diagDist = hypot(cellWidth, cellWidth);
 
-        Queue<BfsPoint> bfs = new PriorityQueue<>((a, b) -> Double.compare(a.getDist(), b.getDist()));
+        Queue<BfsPoint> bfs = new PriorityQueue<>(Comparator.comparingDouble(BfsPoint::getDist));
         bfs.add(new BfsPoint(fromI, fromH, -1, -1, 0));
         Map<BfsPoint, Double> visitedPoints = new HashMap<>();
         visitedPoints.put(bfs.peek(), 0D);
@@ -220,7 +216,7 @@ public class PathFinder {
         for (int i = 0; i < dim; i++) {
             Arrays.fill(visitedPoints[i], -1);
         }
-        Queue<BfsPoint> bfs = new PriorityQueue<>((a, b) -> Double.compare(a.getDist(), b.getDist()));
+        Queue<BfsPoint> bfs = new PriorityQueue<>(Comparator.comparingDouble(BfsPoint::getDist));
         bfs.add(new BfsPoint(selfInd, selfInd, -1, -1, 0));
         visitedPoints[selfInd][selfInd] = 0;
 
@@ -295,8 +291,7 @@ public class PathFinder {
                         continue;
                     }
                     Point p = shortSearchGrid[i][h].getPoint();
-                    double radius = cunit.getRadius() +
-                            (cunit instanceof Minion || cunit instanceof Building ? UNSTATIC_OBJECTS_RADIUS_ADJUST : 0);
+                    double radius = cunit.getRadius();
                     if (hypot(p.getX() - cunit.getX(), p.getY() - cunit.getY()) <= radius + wizardRadius) {
                         shortSearchGrid[i][h].setReachable(false);
                         shortSearchGrid[i][h].setIntersectsWith(cunit);
@@ -345,9 +340,7 @@ public class PathFinder {
                                     pTo.getPoint().getY(),
                                     unit.getX(),
                                     unit.getY(),
-                                    unit.getRadius() + (unit instanceof Minion || unit instanceof Building ?
-                                            UNSTATIC_OBJECTS_RADIUS_ADJUST :
-                                            0) + wizardRadius)) {
+                                    unit.getRadius() + wizardRadius)) {
                                 foundIntersect = true;
                             }
                         }
@@ -444,9 +437,6 @@ public class PathFinder {
                                     double toX,
                                     double toY) {
         double unitR = ((CircularUnit) intersectsWith).getRadius();
-        if (intersectsWith instanceof WizardProxy || intersectsWith instanceof Minion) {
-            unitR += UNSTATIC_OBJECTS_RADIUS_ADJUST;
-        }
         double r0 = rFrom;
         double r1 = rTo;
         while (Math.abs(r1 - r0) > 1) {
@@ -490,9 +480,6 @@ public class PathFinder {
                 continue;
             }
             double unitR = ((CircularUnit) unit).getRadius();
-            if (unit instanceof WizardProxy || unit instanceof Minion) {
-                unitR += UNSTATIC_OBJECTS_RADIUS_ADJUST;
-            }
             if (MathMethods.isLineIntersectsCircle(fromX,
                     toX,
                     fromY,
