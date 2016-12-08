@@ -70,8 +70,10 @@ public class CastFireballTacticBuilder implements TacticBuilder {
                 }
             } else if (unit instanceof WizardProxy) {
                 WizardProxy wizard = (WizardProxy) unit;
-                if (dist < self.getCastRange() + game.getFireballExplosionMinDamageRange() + wizard.getRadius() -
-                        wizard.getWizardForwardSpeed(game)) {
+                if (dist <= CastProjectileTacticBuilders.castRangeToWizardPessimistic(self,
+                        wizard,
+                        game,
+                        ProjectileType.FIREBALL)) {
                     bestWizard = wizard;
                 }
             } else {
