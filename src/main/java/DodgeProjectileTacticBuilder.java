@@ -54,6 +54,7 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
                 MoveBuilder moveBuilder = new MoveBuilder();
                 moveBuilder.setSpeed(mov.getSpeed());
                 moveBuilder.setStrafeSpeed(mov.getStrafeSpeed());
+                moveBuilder.setTurn(0);
                 return Optional.of(new TacticImpl("DodgeProjectile",
                         moveBuilder,
                         Tactics.DODGE_PROJECTILE_TACTIC_PRIORITY));
