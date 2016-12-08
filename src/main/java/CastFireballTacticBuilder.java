@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class CastFireballTacticBuilder implements TacticBuilder {
+    private static final int MIN_CLUSTER_OF_MINIONS = 3;
 
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
@@ -151,7 +152,20 @@ public class CastFireballTacticBuilder implements TacticBuilder {
             }
             evaluatedTargets.add(closestUnit.getId());
         }
-        return Optional.of(centroid(clusterTargets));
+
+        int minionCount = 0;
+        for (CircularUnit unit : clusterTargets) {
+            if (unit instanceof Building || unit instanceof Wizard) {
+                return Optional.of(centroid(clusterTargets));
+            } else {
+                minionCount++;
+            }
+        }
+        if (MIN_CLUSTER_OF_MINIONS <= minionCount) {
+            return Optional.of(centroid(clusterTargets));
+        } else {
+            return Optional.empty();
+        }
     }
 
     private Point centroid(List<CircularUnit> units) {
