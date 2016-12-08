@@ -12,7 +12,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     private static final int EXPECT_STEPS_FORWARD_FROM_ENEMY = 15;
     private static final int TOWER_RETREAT_SPARE_TICKS = 2;
     private static final int IGNORE_RANGE = 800;
-    private static final int POTENTIAL_ATTACK_RANGE = 750;
+    private static final int POTENTIAL_ATTACK_RANGE = 810;
     private final DirectionOptionalTacticBuilder directionOptional;
 
     public PushLaneTacticBuilder(DirectionOptionalTacticBuilder directionOptional) {
