@@ -174,7 +174,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             }
             int life = ((LivingUnit) unit).getLife();
             if (turnContainer.isAllyUnit(unit) && building.getDistanceTo(unit) <= building.getAttackRange() &&
-                    life >= building.getDamage() && self.getLife() > life) {
+                    life >= building.getDamage() && self.getLife() >= life) {
                 c++;
             }
         }
