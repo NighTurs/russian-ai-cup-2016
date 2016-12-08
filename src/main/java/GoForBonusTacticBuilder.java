@@ -7,9 +7,9 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
     private static final int ALLY_HALF_MANHATTAN_BASES = 9;
     private static final int ARRIVE_BEFORE_TICKS = 80;
     private static final int EXPECTED_TICKS_TO_BONUS_ERROR = 400;
-    private static final int ACCEPTABLE_TICKS_TO_TAKE_BONUS = 1000;
+    private static final int ACCEPTABLE_TICKS_TO_TAKE_BONUS_WITH_SKILLS = 1000;
+    private static final int ACCEPTABLE_TICKS_TO_TAKE_BONUS_WITHOUT_SKILLS = 1300;
     private static final int KEEP_DISTANCE_TO_BONUS = 2;
-
     private final DirectionOptionalTacticBuilder directionOptional;
 
     public GoForBonusTacticBuilder(DirectionOptionalTacticBuilder directionOptional) {
@@ -45,8 +45,7 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
         double ticksToBonus =
                 roughDistToBonus(self, pathFinder, goForBonus) / self.getWizardForwardSpeed(turnContainer.getGame()) +
                         ARRIVE_BEFORE_TICKS;
-        if (game.isSkillsEnabled() && (ticksToBonus * 2 > ACCEPTABLE_TICKS_TO_TAKE_BONUS ||
-                turnContainer.isSkillLearned(self, SkillType.FIREBALL))) {
+        if (ticksToBonus * 2 > getAcceptableTicksToTakeBonus(turnContainer)) {
             turnContainer.getMemory().setWentForBonusPrevTurn(false);
             return Optional.empty();
         }
@@ -120,5 +119,17 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
         }
         return self.getDistanceTo(topBonus.getX(), topBonus.getY()) >
                 self.getDistanceTo(bottomBonus.getX(), bottomBonus.getY());
+    }
+
+    private int getAcceptableTicksToTakeBonus(TurnContainer turnContainer) {
+        if (turnContainer.getGame().isSkillsEnabled()) {
+            if (turnContainer.isSkillLearned(turnContainer.getSelf(), SkillType.FIREBALL)) {
+                return ACCEPTABLE_TICKS_TO_TAKE_BONUS_WITHOUT_SKILLS / 2;
+            } else {
+                return ACCEPTABLE_TICKS_TO_TAKE_BONUS_WITH_SKILLS;
+            }
+        } else {
+            return ACCEPTABLE_TICKS_TO_TAKE_BONUS_WITHOUT_SKILLS;
+        }
     }
 }
