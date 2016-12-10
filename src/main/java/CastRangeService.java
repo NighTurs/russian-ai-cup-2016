@@ -81,15 +81,13 @@ public class CastRangeService {
             Game game,
             boolean isOptimistic) {
         Map<ProjectileType, Map<Integer, Map<Integer, Map<Double, CastMeta>>>> extremeCastProps;
-        String line = isOptimistic ?
-                CastRangeConst.extremeCastPropsOptimisticLine.toString() :
-                CastRangeConst.extremeCastPropsPessimisticLine.toString();
+        StringBuilder lineBuilder = isOptimistic ?
+                CastRangeConst.extremeCastPropsOptimisticLine :
+                CastRangeConst.extremeCastPropsPessimisticLine;
         //noinspection ConstantConditions
-        if (line == null) {
+        if (lineBuilder == null) {
             extremeCastProps = new EnumMap<>(ProjectileType.class);
-            for (ProjectileType projectileType : Arrays.asList(ProjectileType.MAGIC_MISSILE,
-                    ProjectileType.FIREBALL,
-                    ProjectileType.FROST_BOLT)) {
+            for (ProjectileType projectileType : Arrays.asList(ProjectileType.MAGIC_MISSILE)) {
                 simulateCastsFixedProjectile(projectileType, extremeCastProps, worldProxy, game, isOptimistic);
             }
             try (FileWriter writer = new FileWriter(String.format("extremeCastProps%s.txt",
@@ -99,7 +97,7 @@ public class CastRangeService {
                 throw new RuntimeException(e);
             }
         } else {
-            extremeCastProps = parseExtremeCastProps(line);
+            extremeCastProps = parseExtremeCastProps(lineBuilder.toString());
         }
         return extremeCastProps;
     }
