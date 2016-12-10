@@ -8,8 +8,6 @@ import java.util.*;
 
 public class CastRangeService {
 
-    private static final String extremeCastPropsOptimisticLine = null;
-    private static final String extremeCastPropsPessimisticLine = null;
     private static final int ANGLES_TO_TEST = 40;
     private static final int MAX_DIST_TO_CENTER = 700;
     private static final int MAX_CENTER_OFFSET = 100;
@@ -54,11 +52,11 @@ public class CastRangeService {
 
         Map<Double, CastMeta> angleCastMap;
         if (optimistic) {
-            angleCastMap = extremeCastPropsOptimistic.get(projectileType).get(rangeAmpl).get(speedAmpl);
+            angleCastMap = extremeCastPropsOptimistic.get(projectileType).get(speedAmpl).get(rangeAmpl);
         } else {
-            angleCastMap = extremeCastPropsPessimistic.get(projectileType).get(rangeAmpl).get(speedAmpl);
+            angleCastMap = extremeCastPropsPessimistic.get(projectileType).get(speedAmpl).get(rangeAmpl);
         }
-        double leftKnownAngle = Double.MIN_VALUE;
+        double leftKnownAngle = -Double.MAX_VALUE;
         double rightKnownAngle = Double.MAX_VALUE;
         for (Double knownAngle : angleCastMap.keySet()) {
             if (knownAngle <= angle && leftKnownAngle < knownAngle) {
@@ -83,7 +81,9 @@ public class CastRangeService {
             Game game,
             boolean isOptimistic) {
         Map<ProjectileType, Map<Integer, Map<Integer, Map<Double, CastMeta>>>> extremeCastProps;
-        String line = isOptimistic ? extremeCastPropsOptimisticLine : extremeCastPropsPessimisticLine;
+        String line = isOptimistic ?
+                CastRangeConst.extremeCastPropsOptimisticLine.toString() :
+                CastRangeConst.extremeCastPropsPessimisticLine.toString();
         //noinspection ConstantConditions
         if (line == null) {
             extremeCastProps = new EnumMap<>(ProjectileType.class);
@@ -115,8 +115,8 @@ public class CastRangeService {
                                 extremeCastProps.get(projectileType).get(speedAmpl).get(rangeAmpl).get(angle);
                         sb.append(String.format("%s,%s,%s,%.3f,%.3f,%.3f#",
                                 projectileCode(projectileType),
-                                rangeAmpl,
                                 speedAmpl,
+                                rangeAmpl,
                                 angle,
                                 castMeta.getDistToCenter(),
                                 castMeta.getCenterOffset()));
@@ -145,8 +145,8 @@ public class CastRangeService {
     }
 
     private static void putToExtremeCastProps(ProjectileType projectileType,
-                                              Integer rangeAmpl,
                                               Integer speedAmpl,
+                                              Integer rangeAmpl,
                                               Double angle,
                                               Double distToCenter,
                                               Double centerOffset,
@@ -155,15 +155,15 @@ public class CastRangeService {
         if (!extremeCastProps.containsKey(projectileType)) {
             extremeCastProps.put(projectileType, new HashMap<>());
         }
-        if (!extremeCastProps.get(projectileType).containsKey(rangeAmpl)) {
-            extremeCastProps.get(projectileType).put(rangeAmpl, new HashMap<>());
+        if (!extremeCastProps.get(projectileType).containsKey(speedAmpl)) {
+            extremeCastProps.get(projectileType).put(speedAmpl, new HashMap<>());
         }
-        if (!extremeCastProps.get(projectileType).get(rangeAmpl).containsKey(speedAmpl)) {
-            extremeCastProps.get(projectileType).get(rangeAmpl).put(speedAmpl, new HashMap<>());
+        if (!extremeCastProps.get(projectileType).get(speedAmpl).containsKey(rangeAmpl)) {
+            extremeCastProps.get(projectileType).get(speedAmpl).put(rangeAmpl, new HashMap<>());
         }
         extremeCastProps.get(projectileType)
-                .get(rangeAmpl)
                 .get(speedAmpl)
+                .get(rangeAmpl)
                 .put(angle, new CastMeta(distToCenter, centerOffset));
     }
 
@@ -230,7 +230,6 @@ public class CastRangeService {
                     rangeAmpl,
                     speedAmpl,
                     projectileType,
-                    extremeCastProps,
                     worldProxy,
                     game,
                     isOptimistic);
@@ -240,18 +239,11 @@ public class CastRangeService {
                 d1 = d;
             }
         }
-        Optional<Double> centerOffsetOpt = simulateCastsFixedDist(d2,
-                angle,
-                rangeAmpl,
-                speedAmpl,
-                projectileType,
-                extremeCastProps,
-                worldProxy,
-                game,
-                isOptimistic);
+        Optional<Double> centerOffsetOpt =
+                simulateCastsFixedDist(d2, angle, rangeAmpl, speedAmpl, projectileType, worldProxy, game, isOptimistic);
         Double centerOffset = centerOffsetOpt.orElseThrow(() -> new RuntimeException(
                 "Can't happen. Some minimal cast distance is always undodgeable"));
-        putToExtremeCastProps(projectileType, rangeAmpl, speedAmpl, angle, d2, centerOffset, extremeCastProps);
+        putToExtremeCastProps(projectileType, speedAmpl, rangeAmpl, angle, d2, centerOffset, extremeCastProps);
     }
 
     private static Optional<Double> simulateCastsFixedDist(double distToCenter,
@@ -259,7 +251,6 @@ public class CastRangeService {
                                                            int rangeAmpl,
                                                            int speedAmpl,
                                                            ProjectileType projectileType,
-                                                           Map<ProjectileType, Map<Integer, Map<Integer, Map<Double, CastMeta>>>> extremeCastProps,
                                                            WorldProxy worldProxy,
                                                            Game game,
                                                            boolean isOptimistic) {
@@ -274,7 +265,6 @@ public class CastRangeService {
                     rangeAmpl,
                     speedAmpl,
                     projectileType,
-                    extremeCastProps,
                     worldProxy,
                     game,
                     isOptimistic);
@@ -284,7 +274,6 @@ public class CastRangeService {
                     rangeAmpl,
                     speedAmpl,
                     projectileType,
-                    extremeCastProps,
                     worldProxy,
                     game,
                     isOptimistic);
@@ -301,7 +290,6 @@ public class CastRangeService {
                 rangeAmpl,
                 speedAmpl,
                 projectileType,
-                extremeCastProps,
                 worldProxy,
                 game,
                 isOptimistic);
@@ -319,7 +307,6 @@ public class CastRangeService {
                                                    int rangeAmpl,
                                                    int speedAmpl,
                                                    ProjectileType projectileType,
-                                                   Map<ProjectileType, Map<Integer, Map<Integer, Map<Double, CastMeta>>>> extremeCastProps,
                                                    WorldProxy worldProxy,
                                                    Game game,
                                                    boolean isOptimistic) {
