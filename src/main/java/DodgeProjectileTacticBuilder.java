@@ -1,11 +1,16 @@
 import model.*;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 
 import static java.lang.StrictMath.hypot;
 
 public class DodgeProjectileTacticBuilder implements TacticBuilder {
 
+    private static final int ANGLES_TO_TEST = 40;
+    private static final double ANGLE_STEP = Math.PI * 2 / ANGLES_TO_TEST;
     private static final int PROJECTILE_IGNORE_RANGE = 800;
 
     @Override
@@ -48,13 +53,27 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
                 continue;
             }
 
-            Optional<Movement> dodgeDirection = tryDodgeDirections(self, projectile, travelsTo, game, world);
-            if (dodgeDirection.isPresent()) {
-                Movement mov = dodgeDirection.get();
+            List<DodgeOption> dodgeOptions = tryDodgeDirections(new Point(self.getX(), self.getY()),
+                    self.getId(),
+                    self.getAngle(),
+                    self.getWizardForwardSpeed(game),
+                    self.getWizardBackwardSpeed(game),
+                    self.getWizardStrafeSpeed(game),
+                    self.getWizardMaxTurnAngle(game),
+                    new Point(projectile.getX(), projectile.getY()),
+                    projectile.getType(),
+                    travelsTo,
+                    true,
+                    self.getRadius() + projectile.getRadius(),
+                    game,
+                    world);
+            if (!dodgeOptions.isEmpty()) {
+                dodgeOptions.sort(Comparator.comparingDouble(DodgeOption::getDistToProjectileInit));
+                Movement mov = dodgeOptions.get(dodgeOptions.size() - 1).getMove();
                 MoveBuilder moveBuilder = new MoveBuilder();
                 moveBuilder.setSpeed(mov.getSpeed());
                 moveBuilder.setStrafeSpeed(mov.getStrafeSpeed());
-                moveBuilder.setTurn(0);
+                moveBuilder.setTurn(mov.getTurn());
                 return Optional.of(new TacticImpl("DodgeProjectile",
                         moveBuilder,
                         Tactics.DODGE_PROJECTILE_TACTIC_PRIORITY));
@@ -63,32 +82,36 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
         return Optional.empty();
     }
 
-    private double projectileEffectiveRadius(Game game, Projectile projectile) {
+    private static double projectileEffectiveRadius(Game game, Projectile projectile) {
         return CastProjectileTacticBuilders.projectileEffectiveRadius(game, projectile.getType());
     }
 
-    private double projectileMoveSpeed(Game game, Projectile projectile) {
-        return CastProjectileTacticBuilders.projectileMoveSpeed(game, projectile.getType());
-    }
+    public static List<DodgeOption> tryDodgeDirections(Point wizardPoint,
+                                                       long wizardId,
+                                                       double wizardAngle,
+                                                       double wizardForwardSpeed,
+                                                       double wizardBackwardSpeed,
+                                                       double wizardStrafeSpeed,
+                                                       double wizardMaxTurnAngle,
+                                                       Point projectilePoint,
+                                                       ProjectileType projectileType,
+                                                       Point travelsTo,
+                                                       boolean considerOutsideWorld,
+                                                       // nullable
+                                                       Double exclusionRadius,
+                                                       Game game,
+                                                       WorldProxy world) {
+        double projectileEffectiveRadius = CastProjectileTacticBuilders.projectileRadius(game, projectileType);
+        double projectileMoveSpeed = CastProjectileTacticBuilders.projectileMoveSpeed(game, projectileType);
 
-    private Optional<Movement> tryDodgeDirections(WizardProxy wizard,
-                                                  Projectile projectile,
-                                                  Point travelsTo,
-                                                  Game game,
-                                                  WorldProxy world) {
-        double projectileEffectiveRadius = projectile.getRadius();
-        double projectileMoveSpeed = projectileMoveSpeed(game, projectile);
-
-        double distLeft = projectile.getDistanceTo(travelsTo.getX(), travelsTo.getY());
+        double distLeft = hypot(projectilePoint.getX() - travelsTo.getX(), projectilePoint.getY() - travelsTo.getY());
         int maxTicks = (int) Math.ceil(distLeft / projectileMoveSpeed);
 
-        double cos = Math.cos(wizard.getAngle());
-        double sin = Math.sin(wizard.getAngle());
-
-        double simProjX = projectile.getX();
-        double simProjY = projectile.getY();
+        double simProjX = projectilePoint.getX();
+        double simProjY = projectilePoint.getY();
         int ticksPassed = 0;
-        double maxWizardMoveSpeed = wizard.getWizardForwardSpeed(game);
+        @SuppressWarnings("UnnecessaryLocalVariable")
+        double maxWizardMoveSpeed = wizardForwardSpeed;
 
         do {
             ticksPassed++;
@@ -96,95 +119,163 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
                     MathMethods.distPoint(simProjX, simProjY, travelsTo.getX(), travelsTo.getY(), projectileMoveSpeed);
             simProjX = nextProjectilePoint.getX();
             simProjY = nextProjectilePoint.getY();
-        } while (hypot(simProjX - wizard.getX(), simProjY - wizard.getY()) - maxWizardMoveSpeed * ticksPassed -
-                wizard.getRadius() - projectileEffectiveRadius > 0);
+        } while (
+                hypot(simProjX - wizardPoint.getX(), simProjY - wizardPoint.getY()) - maxWizardMoveSpeed * ticksPassed -
+                        game.getWizardRadius() - projectileEffectiveRadius > 0);
 
-        double maxRunAwayDist = Double.MIN_VALUE;
-        Optional<Movement> result = Optional.empty();
+        List<DodgeOption> results = new ArrayList<>();
 
-        for (double speedOffset = 0.0; speedOffset <= 1.0; speedOffset += 0.1) {
-            for (int speedSign = -1; speedSign <= 1; speedSign += 2) {
-                for (int strafeSign = -1; strafeSign <= 1; strafeSign += 2) {
-                    boolean collision = false;
-                    double strafeOffset = Math.sqrt(1 - speedOffset * speedOffset);
-                    double baseStrafe = strafeSign * wizard.getWizardStrafeSpeed(game) * strafeOffset;
-                    double baseSpeed;
-                    if (speedSign == -1) {
-                        baseSpeed = -wizard.getWizardBackwardSpeed(game) * speedOffset;
-                    } else {
-                        baseSpeed = wizard.getWizardForwardSpeed(game) * speedOffset;
+        int directionId = 0;
+        for (double angle = -Math.PI; angle <= Math.PI; angle += ANGLE_STEP) {
+            directionId++;
+            boolean collision = false;
+            double distToProjectile = Double.MAX_VALUE;
+            double distToProjectileInit = Double.MAX_VALUE;
+            double resX = wizardPoint.getX();
+            double resY = wizardPoint.getY();
+            double resAngle = wizardAngle;
+            double baseSpeed = 0;
+            double baseStrafe = 0;
+            double baseTurn = 0;
+
+            for (int ticksTotal = 1; ticksTotal <= maxTicks; ticksTotal++) {
+
+                double diffAngle = angle - resAngle;
+                if (Math.abs(diffAngle) > Math.PI) {
+                    diffAngle = (diffAngle > 0 ? -1 : 1) * (2 * Math.PI - Math.abs(diffAngle));
+                }
+                boolean backwards = Math.abs(diffAngle) > Math.PI / 2;
+                double maxSpeed = backwards ? wizardBackwardSpeed : wizardForwardSpeed;
+                @SuppressWarnings("UnnecessaryLocalVariable")
+                double maxStrafe = wizardStrafeSpeed;
+                double speed = (backwards ? -1 : 1) * maxSpeed * maxStrafe / Math.sqrt(
+                        maxStrafe * maxStrafe + maxSpeed * maxSpeed * Math.tan(diffAngle) * Math.tan(diffAngle));
+                double strafe = (diffAngle > 0 ? 1 : -1) * maxSpeed * maxStrafe / Math.sqrt(
+                        maxSpeed * maxSpeed + maxStrafe * maxStrafe / (Math.tan(diffAngle) * Math.tan(diffAngle)));
+                resX += speed * Math.cos(resAngle) - strafe * Math.sin(resAngle);
+                resY += speed * Math.sin(resAngle) + strafe * Math.cos(resAngle);
+                double turn = (diffAngle > 0 ? 1 : -1) * Math.min(Math.abs(diffAngle), wizardMaxTurnAngle);
+                resAngle += turn;
+                if (ticksTotal == 1) {
+                    baseSpeed = speed;
+                    baseStrafe = strafe;
+                    baseTurn = turn;
+                }
+
+                Point nextProjectilePoint = MathMethods.distPoint(projectilePoint.getX(),
+                        projectilePoint.getY(),
+                        travelsTo.getX(),
+                        travelsTo.getY(),
+                        Math.min(distLeft, projectileMoveSpeed * ticksTotal));
+                simProjX = nextProjectilePoint.getX();
+                simProjY = nextProjectilePoint.getY();
+
+                if (resX < game.getWizardRadius() || resY < game.getWizardRadius() ||
+                        resX > world.getWidth() - game.getWizardRadius() ||
+                        resY > world.getHeight() - game.getWizardRadius()) {
+                    collision = true;
+                    break;
+                }
+
+                Point trajInter = MathMethods.lineCircleIntersection(projectilePoint.getX(),
+                        simProjX,
+                        projectilePoint.getY(),
+                        simProjY,
+                        resX,
+                        resY);
+                if (MathMethods.isBetween(trajInter.getX(), projectilePoint.getX(), simProjX) &&
+                        MathMethods.isBetween(trajInter.getY(), projectilePoint.getY(), simProjY)) {
+                    double distToInter = hypot(resX - trajInter.getX(), resY - trajInter.getY());
+                    if (exclusionRadius != null && distToInter <= exclusionRadius) {
+                        collision = true;
+                        break;
                     }
+                    if (distToProjectile > distToInter) {
+                        distToProjectile = distToInter;
+                    }
+                }
 
-                    for (int ticksTotal = ticksPassed; ticksTotal <= maxTicks; ticksTotal++) {
-                        Point nextProjectilePoint = MathMethods.distPoint(projectile.getX(),
-                                projectile.getY(),
-                                travelsTo.getX(),
-                                travelsTo.getY(),
-                                Math.min(distLeft, projectileMoveSpeed * ticksTotal));
-                        simProjX = nextProjectilePoint.getX();
-                        simProjY = nextProjectilePoint.getY();
-                        double speed = baseSpeed * ticksTotal;
-                        double strafe = baseStrafe * ticksTotal;
-                        double resX = wizard.getX() + speed * cos - strafe * sin;
-                        double resY = wizard.getY() + speed * sin + strafe * cos;
+                double distToTrajEnd = hypot(simProjX - resX, simProjY - resY);
 
-                        if (resX < wizard.getRadius() || resY < wizard.getRadius() ||
-                                resX > world.getWidth() - wizard.getRadius() ||
-                                resY > world.getHeight() - wizard.getRadius()) {
+                if (distToProjectile > distToTrajEnd) {
+                    distToProjectile = distToTrajEnd;
+                }
+
+                double distToTrajStart = hypot(projectilePoint.getX() - resX, projectilePoint.getY() - resY);
+                if (distToProjectileInit > distToTrajStart) {
+                    distToProjectileInit = distToTrajStart;
+                }
+
+                if (exclusionRadius != null && distToTrajEnd <= exclusionRadius) {
+                    collision = true;
+                    break;
+                }
+                if (considerOutsideWorld) {
+                    for (Unit unit : world.getAllUnitsNearby()) {
+                        if (unit.getId() == wizardId) {
+                            continue;
+                        }
+                        if (unit instanceof Projectile || unit instanceof Bonus) {
+                            continue;
+                        }
+                        double unitR = ((CircularUnit) unit).getRadius();
+                        if (unit.getDistanceTo(resX, resY) < game.getWizardRadius() + unitR) {
                             collision = true;
                             break;
                         }
-                        if (MathMethods.isLineIntersectsCircle(projectile.getX(),
-                                simProjX,
-                                projectile.getY(),
-                                simProjY,
+                        if (MathMethods.isLineIntersectsCircle(wizardPoint.getX(),
                                 resX,
+                                wizardPoint.getY(),
                                 resY,
-                                wizard.getRadius() + projectileEffectiveRadius) ||
-                                hypot(simProjX - resX, simProjY - resY) <=
-                                        wizard.getRadius() + projectileEffectiveRadius) {
+                                unit.getX(),
+                                unit.getY(),
+                                game.getWizardRadius() + ((CircularUnit) unit).getRadius())) {
                             collision = true;
                             break;
-                        }
-                        for (Unit unit : world.getAllUnitsNearby()) {
-                            if (unit.getId() == wizard.getId()) {
-                                continue;
-                            }
-                            if (unit instanceof Projectile || unit instanceof Bonus) {
-                                continue;
-                            }
-                            double unitR = ((CircularUnit) unit).getRadius();
-                            if (unit.getDistanceTo(resX, resY) < wizard.getRadius() + unitR) {
-                                collision = true;
-                                break;
-                            }
-                            if (MathMethods.isLineIntersectsCircle(wizard.getX(),
-                                    resX,
-                                    wizard.getY(),
-                                    resY,
-                                    unit.getX(),
-                                    unit.getY(),
-                                    wizard.getRadius() + ((CircularUnit) unit).getRadius())) {
-                                collision = true;
-                                break;
-                            }
-                        }
-                        if (collision) {
-                            break;
-                        }
-                    }
-                    if (!collision) {
-                        double resX = wizard.getX() + baseSpeed * maxTicks * cos - baseStrafe * maxTicks * sin;
-                        double resY = wizard.getY() + baseSpeed * maxTicks * sin + baseStrafe * maxTicks * cos;
-                        double dist = hypot(resX - projectile.getX(), resY - projectile.getY());
-                        if (dist > maxRunAwayDist) {
-                            maxRunAwayDist = dist;
-                            result = Optional.of(new Movement(baseSpeed, baseStrafe, 0));
                         }
                     }
                 }
             }
+
+            if (!collision) {
+                results.add(new DodgeOption(directionId,
+                        distToProjectile,
+                        distToProjectileInit,
+                        new Movement(baseSpeed, baseStrafe, baseTurn)));
+            }
         }
-        return result;
+
+        return results;
+    }
+
+    public static class DodgeOption {
+
+        private final int id;
+        private final double distToProjectile;
+        private final double distToProjectileInit;
+        private final Movement move;
+
+        public DodgeOption(int id, double distToProjectile, double distToProjectileInit, Movement move) {
+            this.id = id;
+            this.distToProjectile = distToProjectile;
+            this.distToProjectileInit = distToProjectileInit;
+            this.move = move;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public double getDistToProjectile() {
+            return distToProjectile;
+        }
+
+        public double getDistToProjectileInit() {
+            return distToProjectileInit;
+        }
+
+        public Movement getMove() {
+            return move;
+        }
     }
 }

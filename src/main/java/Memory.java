@@ -17,6 +17,7 @@ public class Memory {
     private Map<Long, Point> wizardPreviousPosition;
     private Map<Long, ProjectileControl.ProjectileMeta> projectileMeta;
     private boolean wentForBonusPrevTurn;
+    private CastRangeService castRangeService;
 
     public Memory() {
         this.allyGuardianTowers = new ArrayList<>();
@@ -79,5 +80,13 @@ public class Memory {
 
     public void setWentForBonusPrevTurn(boolean wentForBonusPrevTurn) {
         this.wentForBonusPrevTurn = wentForBonusPrevTurn;
+    }
+
+    public CastRangeService getCastRangeService() {
+        return castRangeService;
+    }
+
+    public void setCastRangeService(CastRangeService castRangeService) {
+        this.castRangeService = castRangeService;
     }
 }

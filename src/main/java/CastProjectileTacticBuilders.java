@@ -171,6 +171,21 @@ public final class CastProjectileTacticBuilders {
         return Optional.ofNullable(bestUnit);
     }
 
+    public static double projectileRadius(Game game, ProjectileType projectileType) {
+        switch (projectileType) {
+            case DART:
+                return game.getDartRadius();
+            case MAGIC_MISSILE:
+                return game.getMagicMissileRadius();
+            case FROST_BOLT:
+                return game.getFrostBoltRadius();
+            case FIREBALL:
+                return game.getFireballRadius();
+            default:
+                throw new RuntimeException("Unexpected projectile type " + projectileType);
+        }
+    }
+
     public static double projectileEffectiveRadius(Game game, ProjectileType projectileType) {
         switch (projectileType) {
             case DART:

@@ -26,6 +26,9 @@ public class TurnContainer {
         this.lanePicker = new LanePicker(worldProxy, this.self, mapUtils, this.memory);
         this.bonusControl = new BonusControl(this.self, worldProxy, game, memory);
         this.projectileControl = new ProjectileControl(worldProxy, game, memory);
+        if (memory.getCastRangeService() == null) {
+            memory.setCastRangeService(new CastRangeService(worldProxy, game));
+        }
     }
 
     public WizardProxy getSelf() {
