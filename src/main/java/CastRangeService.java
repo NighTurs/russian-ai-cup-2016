@@ -176,13 +176,6 @@ public class CastRangeService {
             extremeCastProps.get(projectileType).get(rangeAmpl).put(speedAmpl, new HashMap<>());
         }
         extremeCastProps.get(projectileType).get(rangeAmpl).get(speedAmpl).put(angle, new CastMeta(d2, centerOffset));
-        System.out.print(String.format("%s,%s,%s,%.3f,%.3f,%.3f#",
-                projectileCode(projectileType),
-                rangeAmpl,
-                speedAmpl,
-                angle,
-                d2,
-                centerOffset));
     }
 
     private static Optional<Double> simulateCastsFixedDist(double distToCenter,
