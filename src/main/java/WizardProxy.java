@@ -149,6 +149,18 @@ public class WizardProxy extends LivingUnit {
         return getWizardManaPerTurn(this, game);
     }
 
+    public int countRangeSkills() {
+        return countSkills(this, RANGE_SKILLS);
+    }
+
+    public int countMoveSpeedSkills() {
+        return countMoveSpeedSkills(this);
+    }
+
+    public boolean hasBonus(StatusType bonusStatusType) {
+        return hasBonus(this, bonusStatusType);
+    }
+
     static double getWizardForwardSpeed(WizardProxy wizard, Game game) {
         return movementFactor(wizard, game) * game.getWizardForwardSpeed();
     }
