@@ -1,9 +1,6 @@
 import model.*;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static java.lang.StrictMath.hypot;
 
@@ -19,6 +16,8 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
         WizardProxy self = turnContainer.getSelf();
         Game game = turnContainer.getGame();
         ProjectileControl projectileControl = turnContainer.getProjectileControl();
+        Map<Integer, Integer> dodgeOptionsIdCount = new HashMap<>();
+        List<DodgeOption> allDodgeOptions = new ArrayList<>();
 
         for (Projectile projectile : world.getProjectiles()) {
             if (projectile.getType() == ProjectileType.DART ||
@@ -67,21 +66,62 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
                     self.getRadius() + projectile.getRadius(),
                     game,
                     world);
-            if (!dodgeOptions.isEmpty()) {
-                dodgeOptions.sort(Comparator.comparingDouble(projectile.getType() == ProjectileType.FIREBALL ?
-                        DodgeOption::getDistToProjectile :
-                        DodgeOption::getDistToProjectileInit));
-                Movement mov = dodgeOptions.get(dodgeOptions.size() - 1).getMove();
-                MoveBuilder moveBuilder = new MoveBuilder();
-                moveBuilder.setSpeed(mov.getSpeed());
-                moveBuilder.setStrafeSpeed(mov.getStrafeSpeed());
-                moveBuilder.setTurn(mov.getTurn());
-                return Optional.of(new TacticImpl("DodgeProjectile",
-                        moveBuilder,
-                        Tactics.DODGE_PROJECTILE_TACTIC_PRIORITY));
+            dodgeOptions.forEach(x -> {
+                if (!dodgeOptionsIdCount.containsKey(x.getId())) {
+                    dodgeOptionsIdCount.put(x.getId(), 1);
+                } else {
+                    dodgeOptionsIdCount.put(x.getId(), dodgeOptionsIdCount.get(x.getId()) + 1);
+                }
+            });
+            allDodgeOptions.addAll(dodgeOptions);
+        }
+
+        Optional<DodgeOption> dodgeOptionOpt = allDodgeOptions.stream().sorted((a, b) -> {
+            int aCount = dodgeOptionsIdCount.get(a.getId());
+            int bCount = dodgeOptionsIdCount.get(b.getId());
+            if (aCount == bCount) {
+                int aSeverity = projectileSeverity(a.getProjectileType());
+                int bSeverity = projectileSeverity(b.getProjectileType());
+                if (aSeverity == bSeverity) {
+                    double aDist = a.getProjectileType() == ProjectileType.FIREBALL ?
+                            a.getDistToProjectile() :
+                            a.getDistToProjectileInit();
+                    double bDist = b.getProjectileType() == ProjectileType.FIREBALL ?
+                            b.getDistToProjectile() :
+                            b.getDistToProjectileInit();
+                    return -Double.compare(aDist, bDist);
+                } else {
+                    return -Integer.compare(aSeverity, bSeverity);
+                }
+            } else {
+                return -Integer.compare(aCount, bCount);
             }
+        }).findFirst();
+
+        if (dodgeOptionOpt.isPresent()) {
+            Movement mov = dodgeOptionOpt.get().getMove();
+            MoveBuilder moveBuilder = new MoveBuilder();
+            moveBuilder.setSpeed(mov.getSpeed());
+            moveBuilder.setStrafeSpeed(mov.getStrafeSpeed());
+            moveBuilder.setTurn(mov.getTurn());
+            return Optional.of(new TacticImpl("DodgeProjectile",
+                    moveBuilder,
+                    Tactics.DODGE_PROJECTILE_TACTIC_PRIORITY));
         }
         return Optional.empty();
+    }
+
+    private int projectileSeverity(ProjectileType projectileType) {
+        switch (projectileType) {
+            case MAGIC_MISSILE:
+                return 0;
+            case FIREBALL:
+                return 1;
+            case FROST_BOLT:
+                return 2;
+            default:
+                throw new RuntimeException("Unexpected project type " + projectileType);
+        }
     }
 
     private static double projectileEffectiveRadius(Game game, Projectile projectile) {
@@ -241,6 +281,7 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
 
             if (!collision) {
                 results.add(new DodgeOption(directionId,
+                        projectileType,
                         distToProjectile,
                         distToProjectileInit,
                         new Movement(baseSpeed, baseStrafe, baseTurn)));
@@ -253,12 +294,18 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
     public static class DodgeOption {
 
         private final int id;
+        private final ProjectileType projectileType;
         private final double distToProjectile;
         private final double distToProjectileInit;
         private final Movement move;
 
-        public DodgeOption(int id, double distToProjectile, double distToProjectileInit, Movement move) {
+        public DodgeOption(int id,
+                           ProjectileType projectileType,
+                           double distToProjectile,
+                           double distToProjectileInit,
+                           Movement move) {
             this.id = id;
+            this.projectileType = projectileType;
             this.distToProjectile = distToProjectile;
             this.distToProjectileInit = distToProjectileInit;
             this.move = move;
@@ -266,6 +313,10 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
 
         public int getId() {
             return id;
+        }
+
+        public ProjectileType getProjectileType() {
+            return projectileType;
         }
 
         public double getDistToProjectile() {
