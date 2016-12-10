@@ -12,6 +12,7 @@ public class TurnContainer {
     private final BonusControl bonusControl;
     private final ProjectileControl projectileControl;
     private final BuildingControl buildingControl;
+    private final CastRangeService castRangeService;
     private final Memory memory;
 
     public TurnContainer(Wizard self, World world, Game game, Memory memory) {
@@ -29,6 +30,7 @@ public class TurnContainer {
         if (memory.getCastRangeService() == null) {
             memory.setCastRangeService(new CastRangeService(worldProxy, game));
         }
+        this.castRangeService = memory.getCastRangeService();
     }
 
     public WizardProxy getSelf() {
@@ -65,6 +67,10 @@ public class TurnContainer {
 
     public Memory getMemory() {
         return memory;
+    }
+
+    public CastRangeService getCastRangeService() {
+        return castRangeService;
     }
 
     public boolean isOffensiveMinion(Minion minion) {

@@ -19,65 +19,6 @@ public final class CastProjectileTacticBuilders {
         throw new UnsupportedOperationException("Instance not supported");
     }
 
-    private static double undodgeableRadiusPessimistic(double selfCastRange,
-                                                      double enemySpeed,
-                                                      Game game,
-                                                      ProjectileType projectileType) {
-        return game.getWizardRadius() + projectileEffectiveRadius(game, projectileType) -
-                (int) Math.ceil(selfCastRange / projectileMoveSpeed(game, projectileType)) * enemySpeed;
-    }
-
-    private static double undodgeableRadiusOptimistic(double selfCastRange,
-                                                     double enemySpeed,
-                                                     Game game,
-                                                     ProjectileType projectileType) {
-        return game.getWizardRadius() + projectileEffectiveRadius(game, projectileType) -
-                (int) Math.ceil(selfCastRange / projectileMoveSpeed(game, projectileType) - 1) * enemySpeed;
-    }
-
-    private static double castRangeToWizard(WizardProxy self,
-                                            WizardProxy wizard,
-                                            Game game,
-                                            ProjectileType projectileType,
-                                            boolean optimistic) {
-        double wizardSpeed;
-        if (!optimistic && Math.abs(wizard.getAngleTo(self)) >= Math.PI / 3) {
-            wizardSpeed = wizard.getWizardForwardSpeed(game);
-        } else {
-            wizardSpeed = wizard.getWizardBackwardSpeed(game);
-        }
-        double r1 = 0;
-        double r2 = self.getCastRange();
-        while (r2 - r1 > E) {
-            double r = (r1 + r2) / 2;
-            double radius = optimistic ?
-                    undodgeableRadiusOptimistic(r, wizardSpeed, game, projectileType) :
-                    undodgeableRadiusPessimistic(r, wizardSpeed, game, projectileType);
-            if (radius > 0) {
-                r1 = r;
-            } else {
-                r2 = r;
-            }
-        }
-        return r1 + (optimistic ?
-                undodgeableRadiusOptimistic(r1, wizardSpeed, game, projectileType) :
-                undodgeableRadiusPessimistic(r1, wizardSpeed, game, projectileType));
-    }
-
-    public static double castRangeToWizardPessimistic(WizardProxy self,
-                                                      WizardProxy wizard,
-                                                      Game game,
-                                                      ProjectileType projectileType) {
-        return castRangeToWizard(self, wizard, game, projectileType, false);
-    }
-
-    public static double castRangeToWizardOptimistic(WizardProxy self,
-                                                     WizardProxy wizard,
-                                                     Game game,
-                                                     ProjectileType projectileType) {
-        return castRangeToWizard(self, wizard, game, projectileType, true);
-    }
-
     public static double castRangeToBuilding(WizardProxy self, Building building, Game game) {
         return self.getCastRange() + building.getRadius() + game.getMagicMissileRadius();
     }
@@ -124,10 +65,9 @@ public final class CastProjectileTacticBuilders {
                 continue;
             }
             double dist = wizard.getDistanceTo(self);
-            if (dist <= CastProjectileTacticBuilders.castRangeToWizardPessimistic(self,
-                    wizard,
-                    turnContainer.getGame(),
-                    ProjectileType.MAGIC_MISSILE) && lowestLife > wizard.getLife() + castRangeBoost) {
+            if (dist <= turnContainer.getCastRangeService()
+                    .castRangeToWizardPessimistic(self, wizard, turnContainer.getGame(), ProjectileType.MAGIC_MISSILE)
+                    .getDistToCenter() && lowestLife > wizard.getLife() + castRangeBoost) {
                 lowestLife = wizard.getLife();
                 bestUnit = wizard;
             }

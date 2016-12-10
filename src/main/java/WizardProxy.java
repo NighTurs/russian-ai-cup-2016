@@ -161,6 +161,11 @@ public class WizardProxy extends LivingUnit {
         return hasBonus(this, bonusStatusType);
     }
 
+    public Point faceOffsetPoint(double faceOffsetDist) {
+        return new Point(getX() + faceOffsetDist * Math.cos(getAngle()),
+                getY() + faceOffsetDist * Math.sin(getAngle()));
+    }
+
     static double getWizardForwardSpeed(WizardProxy wizard, Game game) {
         return movementFactor(wizard, game) * game.getWizardForwardSpeed();
     }

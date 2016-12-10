@@ -234,10 +234,10 @@ public class PushLaneTacticBuilder implements TacticBuilder {
 
         double distToEnemy = self.getDistanceTo(enemy);
         int untilNextMissile = CastProjectileTacticBuilders.untilNextProjectile(enemy, projectileType, game);
-        double enemyCastRange = CastProjectileTacticBuilders.castRangeToWizardOptimistic(enemy,
+        double enemyCastRange = turnContainer.getCastRangeService().castRangeToWizardOptimistic(enemy,
                 self,
                 turnContainer.getGame(),
-                projectileType);
+                projectileType).getDistToCenter();
 
         double distToKeep = (distToEnemy +
                 Math.max(untilNextMissile - 1, EXPECT_STEPS_FORWARD_FROM_ENEMY) * self.getWizardBackwardSpeed(game) *

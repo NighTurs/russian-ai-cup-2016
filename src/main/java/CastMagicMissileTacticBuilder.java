@@ -1,4 +1,7 @@
-import model.*;
+import model.ActionType;
+import model.CircularUnit;
+import model.ProjectileType;
+import model.Unit;
 
 import java.util.Optional;
 
@@ -20,7 +23,7 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
                 turnContainer.getGame());
         if (bestTargetOpt.isPresent()) {
             Point aimPoint =
-                    targetAimPoint(self, bestTargetOpt.get(), turnContainer.getGame(), turnContainer.getWorldProxy());
+                    targetAimPoint(turnContainer, bestTargetOpt.get());
             MoveBuilder moveBuilder = new MoveBuilder();
             if (CastProjectileTacticBuilders.inCastSector(turnContainer, aimPoint) && untilCast == 0) {
                 moveBuilder.setAction(ActionType.MAGIC_MISSILE);
@@ -50,22 +53,21 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
         return Optional.empty();
     }
 
-    private Point targetAimPoint(WizardProxy self, Unit target, Game game, WorldProxy world) {
-        return new Point(target.getX(), target.getY());
+    private Point targetAimPoint(TurnContainer turnContainer, Unit target) {
+        if (target instanceof WizardProxy) {
+            WizardProxy enemy = (WizardProxy) target;
+            return enemy.faceOffsetPoint(turnContainer.getCastRangeService()
+                    .castRangeToWizardPessimistic(turnContainer.getSelf(),
+                            enemy,
+                            turnContainer.getGame(),
+                            ProjectileType.MAGIC_MISSILE)
+                    .getCenterOffset());
+        } else {
+            return new Point(target.getX(), target.getY());
+        }
     }
 
     private Optional<Tactic> assembleTactic(MoveBuilder moveBuilder) {
         return Optional.of(new TacticImpl("CastMagicMissile", moveBuilder, Tactics.CAST_MAGIC_MISSILE_TACTIC_PRIORITY));
-    }
-
-    private void castWithMove(MoveBuilder moveBuilder, Point point, double radius, TurnContainer turnContainer) {
-        WizardProxy self = turnContainer.getSelf();
-        if (CastProjectileTacticBuilders.untilNextProjectile(self,
-                ProjectileType.MAGIC_MISSILE,
-                turnContainer.getGame()) == 0) {
-            moveBuilder.setAction(ActionType.MAGIC_MISSILE);
-            moveBuilder.setCastAngle(self.getAngleTo(point.getX(), point.getY()));
-            moveBuilder.setMinCastDistance(self.getDistanceTo(point.getX(), point.getY()) - radius);
-        }
     }
 }

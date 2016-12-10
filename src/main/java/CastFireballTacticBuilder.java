@@ -23,7 +23,14 @@ public class CastFireballTacticBuilder implements TacticBuilder {
         if (singlePointOpt.isPresent() &&
                 (singlePointOpt.get() instanceof WizardProxy || !clusterPointOpt.isPresent())) {
             Unit unit = singlePointOpt.get();
-            targetPoint = new Point(unit.getX(), unit.getY());
+            if (unit instanceof WizardProxy) {
+                WizardProxy wizard = (WizardProxy) unit;
+                targetPoint = wizard.faceOffsetPoint(turnContainer.getCastRangeService()
+                        .castRangeToWizardPessimistic(self, wizard, game, ProjectileType.FIREBALL)
+                        .getCenterOffset());
+            } else {
+                targetPoint = new Point(unit.getX(), unit.getY());
+            }
         } else if (clusterPointOpt.isPresent()) {
             targetPoint = clusterPointOpt.get();
         } else {
@@ -71,10 +78,9 @@ public class CastFireballTacticBuilder implements TacticBuilder {
                 }
             } else if (unit instanceof WizardProxy) {
                 WizardProxy wizard = (WizardProxy) unit;
-                if (dist <= CastProjectileTacticBuilders.castRangeToWizardPessimistic(self,
-                        wizard,
-                        game,
-                        ProjectileType.FIREBALL)) {
+                CastRangeService.CastMeta castMeta = turnContainer.getCastRangeService()
+                        .castRangeToWizardPessimistic(self, wizard, game, ProjectileType.FIREBALL);
+                if (dist <= castMeta.getDistToCenter()) {
                     bestWizard = wizard;
                 }
             } else {

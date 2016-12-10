@@ -115,22 +115,23 @@ public class SurviveTacticBuilder implements TacticBuilder {
     @SuppressWarnings("IfStatementWithIdenticalBranches")
     private boolean inDangerousRangeToAnyProjectiles(TurnContainer turnContainer, WizardProxy enemy, double dist) {
         WizardProxy self = turnContainer.getSelf();
-        if (dist <= CastProjectileTacticBuilders.castRangeToWizardOptimistic(enemy,
+        CastRangeService castRangeService = turnContainer.getCastRangeService();
+        if (dist <= castRangeService.castRangeToWizardOptimistic(enemy,
                 self,
                 turnContainer.getGame(),
-                ProjectileType.MAGIC_MISSILE) + self.getRadius()) {
+                ProjectileType.MAGIC_MISSILE).getDistToCenter() + self.getRadius()) {
             return true;
         } else if (CastProjectileTacticBuilders.isProjectileLearned(turnContainer, enemy, ProjectileType.FROST_BOLT) &&
-                dist <= CastProjectileTacticBuilders.castRangeToWizardOptimistic(enemy,
+                dist <= castRangeService.castRangeToWizardOptimistic(enemy,
                         self,
                         turnContainer.getGame(),
-                        ProjectileType.FROST_BOLT) + self.getRadius()) {
+                        ProjectileType.FROST_BOLT).getDistToCenter() + self.getRadius()) {
             return true;
         } else if (CastProjectileTacticBuilders.isProjectileLearned(turnContainer, enemy, ProjectileType.FIREBALL) &&
-                dist <= CastProjectileTacticBuilders.castRangeToWizardOptimistic(enemy,
+                dist <= castRangeService.castRangeToWizardOptimistic(enemy,
                         self,
                         turnContainer.getGame(),
-                        ProjectileType.FIREBALL) + self.getRadius()) {
+                        ProjectileType.FIREBALL).getDistToCenter() + self.getRadius()) {
             return true;
         }
         return false;
