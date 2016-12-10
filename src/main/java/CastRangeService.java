@@ -70,8 +70,8 @@ public class CastRangeService {
         }
         CastMeta leftCastMeta = angleCastMap.get(leftKnownAngle);
         CastMeta rightCastMeta = angleCastMap.get(rightKnownAngle);
-        if ((optimistic && leftCastMeta.getDistToCenter() < rightCastMeta.getDistToCenter()) ||
-                (!optimistic && leftCastMeta.getDistToCenter() > rightCastMeta.getDistToCenter())) {
+        if ((optimistic && leftCastMeta.getDistToCenter() > rightCastMeta.getDistToCenter()) ||
+                (!optimistic && leftCastMeta.getDistToCenter() < rightCastMeta.getDistToCenter())) {
             return leftCastMeta;
         } else {
             return rightCastMeta;
@@ -323,7 +323,7 @@ public class CastRangeService {
                                                    WorldProxy worldProxy,
                                                    Game game,
                                                    boolean isOptimistic) {
-        double moodOffset = (isOptimistic ? 0 : CastProjectileTacticBuilders.projectileMoveSpeed(game, projectileType));
+        double moodOffset = (isOptimistic ? CastProjectileTacticBuilders.projectileMoveSpeed(game, projectileType) : 0);
         Point projectilePoint = new Point(dummyWizardPoint.getX() + distToCenter - moodOffset, dummyWizardPoint.getY());
         double aimPointX = dummyWizardPoint.getX() + centerOffset * Math.cos(angle);
         double aimPointY = dummyWizardPoint.getY() + centerOffset * Math.sin(angle);
