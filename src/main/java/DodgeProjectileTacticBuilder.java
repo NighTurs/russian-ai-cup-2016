@@ -68,7 +68,9 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
                     game,
                     world);
             if (!dodgeOptions.isEmpty()) {
-                dodgeOptions.sort(Comparator.comparingDouble(DodgeOption::getDistToProjectileInit));
+                dodgeOptions.sort(Comparator.comparingDouble(projectile.getType() == ProjectileType.FIREBALL ?
+                        DodgeOption::getDistToProjectile :
+                        DodgeOption::getDistToProjectileInit));
                 Movement mov = dodgeOptions.get(dodgeOptions.size() - 1).getMove();
                 MoveBuilder moveBuilder = new MoveBuilder();
                 moveBuilder.setSpeed(mov.getSpeed());
