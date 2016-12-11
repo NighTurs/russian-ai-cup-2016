@@ -10,7 +10,7 @@ public class CastFireballTacticBuilder implements TacticBuilder {
     public Optional<Tactic> build(TurnContainer turnContainer) {
         Game game = turnContainer.getGame();
         WizardProxy self = turnContainer.getSelf();
-        boolean fireballLearned = turnContainer.isSkillLearned(self, SkillType.FIREBALL);
+        boolean fireballLearned = self.isSkillLearned(SkillType.FIREBALL);
         int untilCast = CastProjectileTacticBuilders.untilNextProjectile(self, ProjectileType.FIREBALL, game);
 
         if (!game.isSkillsEnabled() || !fireballLearned) {
@@ -78,6 +78,9 @@ public class CastFireballTacticBuilder implements TacticBuilder {
                 }
             } else if (unit instanceof WizardProxy) {
                 WizardProxy wizard = (WizardProxy) unit;
+                if (!wizard.isRealOrFreshShadow()) {
+                    continue;
+                }
                 CastRangeService.CastMeta castMeta = turnContainer.getCastRangeService()
                         .castRangeToWizardPessimistic(self, wizard, game, ProjectileType.FIREBALL);
                 if (dist <= castMeta.getDistToCenter()) {
@@ -161,7 +164,8 @@ public class CastFireballTacticBuilder implements TacticBuilder {
 
         int minionCount = 0;
         for (CircularUnit unit : clusterTargets) {
-            if (unit instanceof Building || unit instanceof Wizard) {
+            if (unit instanceof Building ||
+                    (unit instanceof WizardProxy && ((WizardProxy) unit).isRealOrFreshShadow())) {
                 return Optional.of(centroid(clusterTargets));
             } else {
                 minionCount++;

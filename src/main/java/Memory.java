@@ -18,6 +18,7 @@ public class Memory {
     private Map<Long, ProjectileControl.ProjectileMeta> projectileMeta;
     private boolean wentForBonusPrevTurn;
     private CastRangeService castRangeService;
+    private Map<Long, WizardProxy> shadowWizards;
 
     public Memory() {
         this.allyGuardianTowers = new ArrayList<>();
@@ -28,6 +29,7 @@ public class Memory {
         this.wizardPreviousPosition = new HashMap<>();
         this.projectileMeta = new HashMap<>();
         this.wentForBonusPrevTurn = false;
+        this.shadowWizards = new HashMap<>();
     }
 
     public LocationType getLane() {
@@ -88,5 +90,9 @@ public class Memory {
 
     public void setCastRangeService(CastRangeService castRangeService) {
         this.castRangeService = castRangeService;
+    }
+
+    public Map<Long, WizardProxy> getShadowWizards() {
+        return shadowWizards;
     }
 }

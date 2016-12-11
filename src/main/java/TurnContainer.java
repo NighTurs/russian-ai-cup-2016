@@ -13,15 +13,17 @@ public class TurnContainer {
     private final ProjectileControl projectileControl;
     private final BuildingControl buildingControl;
     private final CastRangeService castRangeService;
+    private final WizardControl wizardControl;
     private final Memory memory;
 
     public TurnContainer(Wizard self, World world, Game game, Memory memory) {
-        this.self = new WizardProxy(self, world, game);
+        this.self = WizardProxy.wizardProxy(self, world, game);
         this.world = world;
         this.game = game;
         this.memory = memory;
         this.buildingControl = new BuildingControl(memory, world);
-        this.worldProxy = new WorldProxy(world, self, buildingControl, game);
+        this.wizardControl = new WizardControl(self, memory, world, game);
+        this.worldProxy = new WorldProxy(world, self, wizardControl, buildingControl, game);
         this.mapUtils = new MapUtils(worldProxy);
         this.pathFinder = new PathFinder(this.self, worldProxy, game, mapUtils);
         this.lanePicker = new LanePicker(worldProxy, this.self, mapUtils, this.memory);
@@ -114,12 +116,5 @@ public class TurnContainer {
         return self.getFaction() == Faction.ACADEMY ? Faction.RENEGADES : Faction.ACADEMY;
     }
 
-    public boolean isSkillLearned(WizardProxy wizard, SkillType skillType) {
-        for (SkillType skill : wizard.getSkills()) {
-            if (skill == skillType) {
-                return true;
-            }
-        }
-        return false;
-    }
+
 }

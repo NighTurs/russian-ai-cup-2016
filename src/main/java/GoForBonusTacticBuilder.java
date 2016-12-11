@@ -123,7 +123,7 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
 
     private int getAcceptableTicksToTakeBonus(TurnContainer turnContainer) {
         if (turnContainer.getGame().isSkillsEnabled()) {
-            if (turnContainer.isSkillLearned(turnContainer.getSelf(), SkillType.FIREBALL)) {
+            if (turnContainer.getSelf().isSkillLearned(SkillType.FIREBALL)) {
                 return ACCEPTABLE_TICKS_TO_TAKE_BONUS_WITHOUT_SKILLS / 2;
             } else {
                 return ACCEPTABLE_TICKS_TO_TAKE_BONUS_WITH_SKILLS;

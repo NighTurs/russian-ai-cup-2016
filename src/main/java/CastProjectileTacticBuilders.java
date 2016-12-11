@@ -45,7 +45,7 @@ public final class CastProjectileTacticBuilders {
         int priority = manaPriorities.get(actionType);
         int manaCost = game.getMagicMissileManacost();
         //noinspection RedundantIfStatement
-        if (turnContainer.isSkillLearned(self, SkillType.FIREBALL) &&
+        if (self.isSkillLearned(SkillType.FIREBALL) &&
                 manaPriorities.get(ActionType.FIREBALL) > priority && self.getMana() +
                 untilNextProjectile(self, ProjectileType.FIREBALL, game) * self.getWizardManaPerTurn(game) - manaCost <
                 game.getFireballManacost()) {
@@ -61,7 +61,7 @@ public final class CastProjectileTacticBuilders {
         Unit bestUnit = null;
         int lowestLife = Integer.MAX_VALUE;
         for (WizardProxy wizard : world.getWizards()) {
-            if (!turnContainer.isOffensiveWizard(wizard)) {
+            if (!turnContainer.isOffensiveWizard(wizard) || !wizard.isRealOrFreshShadow()) {
                 continue;
             }
             double dist = wizard.getDistanceTo(self);
@@ -156,25 +156,50 @@ public final class CastProjectileTacticBuilders {
         }
     }
 
-    public static int untilNextProjectile(WizardProxy wizard, ProjectileType projectileType, Game game) {
-        ActionType actionType;
-        int manaCost;
+    public static int projectileCooldown(ProjectileType projectileType, WizardProxy wizard, Game game) {
         switch (projectileType) {
             case MAGIC_MISSILE:
-                actionType = ActionType.MAGIC_MISSILE;
-                manaCost = game.getMagicMissileManacost();
-                break;
-            case FROST_BOLT:
-                actionType = ActionType.FROST_BOLT;
-                manaCost = game.getFrostBoltManacost();
-                break;
+                return wizard.isSkillLearned(SkillType.ADVANCED_MAGIC_MISSILE) ?
+                        0 :
+                        game.getMagicMissileCooldownTicks();
             case FIREBALL:
-                actionType = ActionType.FIREBALL;
-                manaCost = game.getFireballManacost();
-                break;
+                return game.getFireballCooldownTicks();
+            case FROST_BOLT:
+                return game.getFrostBoltCooldownTicks();
             default:
                 throw new RuntimeException("Unexpected projectile type " + projectileType);
         }
+    }
+
+    public static int projectileManacost(ProjectileType projectileType, Game game) {
+        switch (projectileType) {
+            case MAGIC_MISSILE:
+                return game.getMagicMissileManacost();
+            case FROST_BOLT:
+                return game.getFrostBoltManacost();
+            case FIREBALL:
+                return game.getFireballManacost();
+            default:
+                throw new RuntimeException("Unexpected projectile type " + projectileType);
+        }
+    }
+
+    public static ActionType projectileActionType(ProjectileType projectileType) {
+        switch (projectileType) {
+            case MAGIC_MISSILE:
+                return ActionType.MAGIC_MISSILE;
+            case FROST_BOLT:
+                return ActionType.FROST_BOLT;
+            case FIREBALL:
+                return ActionType.FIREBALL;
+            default:
+                throw new RuntimeException("Unexpected projectile type " + projectileType);
+        }
+    }
+
+    public static int untilNextProjectile(WizardProxy wizard, ProjectileType projectileType, Game game) {
+        ActionType actionType = projectileActionType(projectileType);
+        int manaCost = projectileManacost(projectileType, game);
         int untilCooldown = Math.max(wizard.getRemainingCooldownTicksByAction()[actionType.ordinal()],
                 wizard.getRemainingActionCooldownTicks());
         return untilCooldown + (int) Math.ceil(
@@ -189,9 +214,9 @@ public final class CastProjectileTacticBuilders {
             case MAGIC_MISSILE:
                 return true;
             case FROST_BOLT:
-                return turnContainer.isSkillLearned(wizard, SkillType.FROST_BOLT);
+                return wizard.isSkillLearned(SkillType.FROST_BOLT);
             case FIREBALL:
-                return turnContainer.isSkillLearned(wizard, SkillType.FIREBALL);
+                return wizard.isSkillLearned(SkillType.FIREBALL);
             default:
                 throw new RuntimeException("Unexpected projectile type " + projectileType);
         }

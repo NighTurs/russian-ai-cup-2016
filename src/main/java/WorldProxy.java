@@ -22,12 +22,15 @@ public final class WorldProxy {
     private final Building allyBase;
     private List<Building> buildings;
 
-    public WorldProxy(World world, Wizard self, BuildingControl buildingControl, Game game) {
+    public WorldProxy(World world,
+                      Wizard self,
+                      WizardControl wizardControl,
+                      BuildingControl buildingControl,
+                      Game game) {
+
         this.world = world;
         this.players = unmodifiableList(world.getPlayers());
-        this.wizards = unmodifiableList(world.getWizards()).stream()
-                .map(x -> new WizardProxy(x, world, game))
-                .collect(Collectors.toList());
+        this.wizards = wizardsWithShadows(world, game, wizardControl);
         this.minions = unmodifiableList(world.getMinions());
         this.projectiles = unmodifiableList(world.getProjectiles());
         this.bonuses = unmodifiableList(world.getBonuses());
@@ -49,6 +52,15 @@ public final class WorldProxy {
         this.allUnitsNearby = Collections.unmodifiableList(units.stream()
                 .filter(x -> self.getDistanceTo(x) <= self.getVisionRange())
                 .collect(Collectors.toList()));
+    }
+
+    private static List<WizardProxy> wizardsWithShadows(World world, Game game, WizardControl wizardControl) {
+        List<WizardProxy> withShadows = new ArrayList<>();
+        withShadows.addAll(Arrays.stream(world.getWizards())
+                .map(x -> WizardProxy.wizardProxy(x, world, game))
+                .collect(Collectors.toList()));
+        withShadows.addAll(wizardControl.shadowWizardsForCurrentTurn());
+        return Collections.unmodifiableList(withShadows);
     }
 
     private static <T> List<T> unmodifiableList(T[] array) {

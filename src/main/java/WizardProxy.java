@@ -27,13 +27,53 @@ public class WizardProxy extends LivingUnit {
             SkillType.MAGICAL_DAMAGE_ABSORPTION_AURA_1,
             SkillType.MAGICAL_DAMAGE_ABSORPTION_AURA_2);
     private final Wizard wizard;
+    private final int tickIndex;
     private final List<SkillType> skills;
     private final List<SkillType> affectedBySkills;
+    private final boolean isShadow;
+    private final int shadowRemainingActionCooldownTicks;
+    private final int[] shadowRemainingCooldownTicksByAction;
+    private final double shadowMana;
+    private final int shadowImageTick;
 
-    public WizardProxy(Wizard wizard, World world, Game game) {
+    public static WizardProxy wizardProxy(Wizard wizard, World world, Game game) {
+        return new WizardProxy(wizard, false, 0, 0, 0, 0, null, 0, world, game);
+    }
+
+    public static WizardProxy shadowWizard(Wizard wizard,
+                                           int imageTick,
+                                           double x,
+                                           double y,
+                                           int remainingActionCooldownTicks,
+                                           int[] remainingCooldownTicksByAction,
+                                           double mana,
+                                           World world,
+                                           Game game) {
+        return new WizardProxy(wizard,
+                true,
+                imageTick,
+                x,
+                y,
+                remainingActionCooldownTicks,
+                remainingCooldownTicksByAction,
+                mana,
+                world,
+                game);
+    }
+
+    private WizardProxy(Wizard wizard,
+                        boolean isShadow,
+                        int imageTick,
+                        double x,
+                        double y,
+                        int remainingActionCooldownTicks,
+                        int[] remainingCooldownTicksByAction,
+                        double mana,
+                        World world,
+                        Game game) {
         super(wizard.getId(),
-                wizard.getX(),
-                wizard.getY(),
+                isShadow ? x : wizard.getX(),
+                isShadow ? y : wizard.getY(),
                 wizard.getSpeedX(),
                 wizard.getSpeedY(),
                 wizard.getAngle(),
@@ -43,6 +83,13 @@ public class WizardProxy extends LivingUnit {
                 wizard.getMaxLife(),
                 wizard.getStatuses());
         this.wizard = wizard;
+        this.tickIndex = world.getTickIndex();
+        this.isShadow = isShadow;
+        this.shadowRemainingActionCooldownTicks = remainingActionCooldownTicks;
+        this.shadowRemainingCooldownTicksByAction = remainingCooldownTicksByAction;
+        this.shadowMana = mana;
+        this.shadowImageTick = imageTick;
+
         this.skills = Arrays.asList(wizard.getSkills());
         Set<SkillType> affectedBySet = EnumSet.noneOf(SkillType.class);
         affectedBySet.addAll(skills);
@@ -69,8 +116,12 @@ public class WizardProxy extends LivingUnit {
         return wizard.isMe();
     }
 
-    public int getMana() {
-        return wizard.getMana();
+    public double getMana() {
+        if (isShadow) {
+            return shadowMana;
+        } else {
+            return wizard.getMana();
+        }
     }
 
     public int getMaxMana() {
@@ -98,11 +149,19 @@ public class WizardProxy extends LivingUnit {
     }
 
     public int getRemainingActionCooldownTicks() {
-        return wizard.getRemainingActionCooldownTicks();
+        if (isShadow) {
+            return shadowRemainingActionCooldownTicks;
+        } else {
+            return wizard.getRemainingActionCooldownTicks();
+        }
     }
 
     public int[] getRemainingCooldownTicksByAction() {
-        return wizard.getRemainingCooldownTicksByAction();
+        if (isShadow) {
+            return Arrays.copyOf(shadowRemainingCooldownTicksByAction, shadowRemainingCooldownTicksByAction.length);
+        } else {
+            return wizard.getRemainingCooldownTicksByAction();
+        }
     }
 
     public boolean isMaster() {
@@ -111,6 +170,22 @@ public class WizardProxy extends LivingUnit {
 
     public Message[] getMessages() {
         return wizard.getMessages();
+    }
+
+    public boolean isShadow() {
+        return isShadow;
+    }
+
+    public int getShadowImageTick() {
+        return shadowImageTick;
+    }
+
+    public Wizard getWizard() {
+        return wizard;
+    }
+
+    public boolean isRealOrFreshShadow() {
+        return !isShadow || (tickIndex - shadowImageTick) <= 1;
     }
 
     public List<SkillType> affectedBySkills() {
@@ -166,6 +241,15 @@ public class WizardProxy extends LivingUnit {
                 getY() + faceOffsetDist * Math.sin(getAngle()));
     }
 
+    public boolean isSkillLearned(SkillType skillType) {
+        for (SkillType skill : this.getSkills()) {
+            if (skill == skillType) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     static double getWizardForwardSpeed(WizardProxy wizard, Game game) {
         return movementFactor(wizard, game) * game.getWizardForwardSpeed();
     }
@@ -183,9 +267,8 @@ public class WizardProxy extends LivingUnit {
     }
 
     static double getMagicMissileDirectDamage(WizardProxy wizard, Game game) {
-        return (hasEmpowerBonus(wizard) ? game.getEmpoweredDamageFactor() : 1) *
-                (game.getMagicMissileDirectDamage() +
-                        countMagicalDamageSkills(wizard) * game.getMagicalDamageBonusPerSkillLevel());
+        return (hasEmpowerBonus(wizard) ? game.getEmpoweredDamageFactor() : 1) * (game.getMagicMissileDirectDamage() +
+                countMagicalDamageSkills(wizard) * game.getMagicalDamageBonusPerSkillLevel());
     }
 
     static double getWizardManaPerTurn(WizardProxy wizard, Game game) {
