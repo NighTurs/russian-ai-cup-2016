@@ -60,7 +60,11 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                 Optional<Unit> enemy = nearestEnemy(turnContainer);
                 //noinspection OptionalIsPresent
                 if (enemy.isPresent() && mapUtils.getLocationType(self.getId()) != LocationType.RIVER) {
-                    mov = turnContainer.getPathFinder().findPath(self, enemy.get().getX(), enemy.get().getY());
+                    mov = turnContainer.getPathFinder()
+                            .findPath(self,
+                                    enemy.get().getX(),
+                                    enemy.get().getY(),
+                                    ((CircularUnit) enemy.get()).getRadius());
                 } else {
                     mov = turnContainer.getPathFinder().findPath(self, pushWaypoint.getX(), pushWaypoint.getY());
                 }

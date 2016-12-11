@@ -53,9 +53,13 @@ public class PathFinder {
     }
 
     public Movement findPath(WizardProxy wizard, double x, double y) {
+        return findPath(wizard, x, y, 0);
+    }
+
+    public Movement findPath(WizardProxy wizard, double x, double y, double ignoreRadius) {
         Point longDistPoint = longSearchNextPoint(wizard.getX(), wizard.getY(), x, y).getKey();
         Optional<Point> straightLinePoint =
-                straightLinePath(wizard.getX(), wizard.getY(), longDistPoint.getX(), longDistPoint.getY());
+                straightLinePath(wizard.getX(), wizard.getY(), longDistPoint.getX(), longDistPoint.getY(), ignoreRadius);
         if (straightLinePoint.isPresent()) {
             return findOptimalMovement(wizard, straightLinePoint.get().getX(), straightLinePoint.get().getY());
         } else {
@@ -357,7 +361,7 @@ public class PathFinder {
         shortSearchGridInitialized = true;
     }
 
-    private Optional<Point> straightLinePath(double fromX, double fromY, double toX, double toY) {
+    private Optional<Point> straightLinePath(double fromX, double fromY, double toX, double toY, double ignoreRadius) {
         List<Point> tryToPoints;
         if (Math.hypot(fromX - toX, fromY - toY) <= SHORT_SEARCH_GRID_SPAN) {
             tryToPoints = Collections.singletonList(new Point(toX, toY));
@@ -370,7 +374,7 @@ public class PathFinder {
             for (Unit unit : world.allUnits()) {
                 CircularUnit cunit = (CircularUnit) unit;
                 double dist = cunit.getDistanceTo(shortTo.getX(), shortTo.getY());
-                if (dist <= cunit.getRadius() + self.getRadius()) {
+                if (dist <= ignoreRadius) {
                     ignoreId = cunit.getId();
                 }
             }
