@@ -87,7 +87,9 @@ public class CastRangeService {
         //noinspection ConstantConditions
         if (lineBuilder == null) {
             extremeCastProps = new EnumMap<>(ProjectileType.class);
-            for (ProjectileType projectileType : Arrays.asList(ProjectileType.MAGIC_MISSILE)) {
+            for (ProjectileType projectileType : Arrays.asList(ProjectileType.MAGIC_MISSILE,
+                    ProjectileType.FROST_BOLT,
+                    ProjectileType.FIREBALL)) {
                 simulateCastsFixedProjectile(projectileType, extremeCastProps, worldProxy, game, isOptimistic);
             }
             try (FileWriter writer = new FileWriter(String.format("extremeCastProps%s.txt",
