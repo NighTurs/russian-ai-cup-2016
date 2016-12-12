@@ -22,6 +22,7 @@ public class Memory {
     private Map<Long, WizardProxy> shadowWizards;
     private Message selfMessage;
     private Map<Long, Integer> allyWizardMessageIndex;
+    private WizardRole assignedRole;
 
     public Memory() {
         this.allyGuardianTowers = new ArrayList<>();
@@ -110,5 +111,13 @@ public class Memory {
 
     public Map<Long, Integer> getAllyWizardMessageIndex() {
         return allyWizardMessageIndex;
+    }
+
+    public WizardRole getAssignedRole() {
+        return assignedRole;
+    }
+
+    public void setAssignedRole(WizardRole assignedRole) {
+        this.assignedRole = assignedRole;
     }
 }

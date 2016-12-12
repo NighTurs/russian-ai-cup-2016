@@ -1,30 +1,33 @@
+import model.Message;
 import model.SkillType;
 
-import java.util.*;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 public class LearnSkillsTacticBuilder implements TacticBuilder {
 
-    private static final List<SkillType> skillsOrder = Arrays.asList(SkillType.STAFF_DAMAGE_BONUS_PASSIVE_1,
-            SkillType.STAFF_DAMAGE_BONUS_AURA_1,
-            SkillType.STAFF_DAMAGE_BONUS_PASSIVE_2,
-            SkillType.STAFF_DAMAGE_BONUS_AURA_2,
-            SkillType.FIREBALL,
-            SkillType.MOVEMENT_BONUS_FACTOR_PASSIVE_1,
-            SkillType.MOVEMENT_BONUS_FACTOR_AURA_1,
-            SkillType.MOVEMENT_BONUS_FACTOR_PASSIVE_2,
-            SkillType.MOVEMENT_BONUS_FACTOR_AURA_2,
-            SkillType.HASTE,
-            SkillType.RANGE_BONUS_PASSIVE_1,
-            SkillType.RANGE_BONUS_AURA_1,
-            SkillType.RANGE_BONUS_PASSIVE_2,
-            SkillType.RANGE_BONUS_AURA_2,
-            SkillType.ADVANCED_MAGIC_MISSILE);
+    private static final List<SkillType> DEFAULT_SKILL_ORDER = WizardRole.FIREBALL_SOLO.getSkillsOrder();
 
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
         if (!turnContainer.getGame().isSkillsEnabled()) {
             return Optional.empty();
         }
+
+        if (turnContainer.getGame().isRawMessagesEnabled()) {
+            for (Message message : turnContainer.getSelf().getMessages()) {
+                byte[] rawMessage = message.getRawMessage();
+                if (rawMessage[0] == MasterWizardTacticBuilder.ROLE_MESSAGE_CODE) {
+                    turnContainer.getMemory().setAssignedRole(WizardRole.fromCode(rawMessage[1]));
+                }
+            }
+        }
+
+        List<SkillType> skillsOrder = turnContainer.getMemory().getAssignedRole() == null ?
+                DEFAULT_SKILL_ORDER :
+                turnContainer.getMemory().getAssignedRole().getSkillsOrder();
 
         WizardProxy self = turnContainer.getSelf();
 
