@@ -1,25 +1,50 @@
+import model.Game;
+import model.Message;
+
 public class LanePicker {
 
     private static final int UNFIXED_LANE_TICK_THRESHOLD = 800;
     private final WorldProxy world;
     private final WizardProxy self;
+    private final Game game;
     private final MapUtils mapUtils;
     private final Memory memory;
 
-    public LanePicker(WorldProxy world, WizardProxy self, MapUtils mapUtils, Memory memory) {
+    public LanePicker(WorldProxy world, WizardProxy self, Game game, MapUtils mapUtils, Memory memory) {
         this.world = world;
         this.self = self;
+        this.game = game;
         this.mapUtils = mapUtils;
         this.memory = memory;
     }
 
     public LocationType myLane() {
-        if (world.getTickIndex() < UNFIXED_LANE_TICK_THRESHOLD || memory.getLane() == null) {
-            memory.setLane(vacantLane());
-            return memory.getLane();
-        } else {
-            return memory.getLane();
+        if (game.isRawMessagesEnabled()) {
+            for (Message message : self.getMessages()) {
+                if (message.getLane() == null) {
+                    continue;
+                }
+                switch (message.getLane()) {
+                    case BOTTOM:
+                        memory.setLane(LocationType.BOTTOM_LANE);
+                        break;
+                    case TOP:
+                        memory.setLane(LocationType.TOP_LANE);
+                        break;
+                    case MIDDLE:
+                        memory.setLane(LocationType.MIDDLE_LANE);
+                        break;
+                    default:
+                        throw new RuntimeException("Unexpected lane type " + message.getLane());
+                }
+            }
         }
+
+        if ((!game.isRawMessagesEnabled() && world.getTickIndex() < UNFIXED_LANE_TICK_THRESHOLD) ||
+                memory.getLane() == null) {
+            memory.setLane(vacantLane());
+        }
+        return memory.getLane();
     }
 
     private LocationType vacantLane() {

@@ -1,4 +1,5 @@
 import model.Building;
+import model.Message;
 import model.StatusType;
 
 import java.util.ArrayList;
@@ -19,6 +20,8 @@ public class Memory {
     private boolean wentForBonusPrevTurn;
     private CastRangeService castRangeService;
     private Map<Long, WizardProxy> shadowWizards;
+    private Message selfMessage;
+    private Map<Long, Integer> allyWizardMessageIndex;
 
     public Memory() {
         this.allyGuardianTowers = new ArrayList<>();
@@ -30,6 +33,7 @@ public class Memory {
         this.projectileMeta = new HashMap<>();
         this.wentForBonusPrevTurn = false;
         this.shadowWizards = new HashMap<>();
+        this.allyWizardMessageIndex = new HashMap<>();
     }
 
     public LocationType getLane() {
@@ -94,5 +98,17 @@ public class Memory {
 
     public Map<Long, WizardProxy> getShadowWizards() {
         return shadowWizards;
+    }
+
+    public Message getSelfMessage() {
+        return selfMessage;
+    }
+
+    public void setSelfMessage(Message selfMessage) {
+        this.selfMessage = selfMessage;
+    }
+
+    public Map<Long, Integer> getAllyWizardMessageIndex() {
+        return allyWizardMessageIndex;
     }
 }

@@ -26,11 +26,12 @@ public final class WorldProxy {
                       Wizard self,
                       WizardControl wizardControl,
                       BuildingControl buildingControl,
-                      Game game) {
+                      Game game,
+                      Memory memory) {
 
         this.world = world;
         this.players = unmodifiableList(world.getPlayers());
-        this.wizards = wizardsWithShadows(world, game, wizardControl);
+        this.wizards = wizardsWithShadows(world, game, wizardControl, memory);
         this.minions = unmodifiableList(world.getMinions());
         this.projectiles = unmodifiableList(world.getProjectiles());
         this.bonuses = unmodifiableList(world.getBonuses());
@@ -54,10 +55,14 @@ public final class WorldProxy {
                 .collect(Collectors.toList()));
     }
 
-    private static List<WizardProxy> wizardsWithShadows(World world, Game game, WizardControl wizardControl) {
+    private static List<WizardProxy> wizardsWithShadows(World world,
+                                                        Game game,
+                                                        WizardControl wizardControl,
+                                                        Memory memory) {
+
         List<WizardProxy> withShadows = new ArrayList<>();
         withShadows.addAll(Arrays.stream(world.getWizards())
-                .map(x -> WizardProxy.wizardProxy(x, world, game))
+                .map(x -> WizardProxy.wizardProxy(x, world, game, memory))
                 .collect(Collectors.toList()));
         withShadows.addAll(wizardControl.shadowWizardsForCurrentTurn());
         return Collections.unmodifiableList(withShadows);

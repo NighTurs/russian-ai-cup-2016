@@ -17,16 +17,16 @@ public class TurnContainer {
     private final Memory memory;
 
     public TurnContainer(Wizard self, World world, Game game, Memory memory) {
-        this.self = WizardProxy.wizardProxy(self, world, game);
+        this.self = WizardProxy.wizardProxy(self, world, game, memory);
         this.world = world;
         this.game = game;
         this.memory = memory;
         this.buildingControl = new BuildingControl(memory, world);
         this.wizardControl = new WizardControl(self, memory, world, game);
-        this.worldProxy = new WorldProxy(world, self, wizardControl, buildingControl, game);
+        this.worldProxy = new WorldProxy(world, self, wizardControl, buildingControl, game, memory);
         this.mapUtils = new MapUtils(worldProxy);
         this.pathFinder = new PathFinder(this.self, worldProxy, game, mapUtils);
-        this.lanePicker = new LanePicker(worldProxy, this.self, mapUtils, this.memory);
+        this.lanePicker = new LanePicker(worldProxy, this.self, game, mapUtils, this.memory);
         this.bonusControl = new BonusControl(this.self, worldProxy, game, memory);
         this.projectileControl = new ProjectileControl(worldProxy, game, memory);
         if (memory.getCastRangeService() == null) {

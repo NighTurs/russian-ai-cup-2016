@@ -35,9 +35,10 @@ public class WizardProxy extends LivingUnit {
     private final int[] shadowRemainingCooldownTicksByAction;
     private final double shadowMana;
     private final int shadowImageTick;
+    private final Message[] messages;
 
-    public static WizardProxy wizardProxy(Wizard wizard, World world, Game game) {
-        return new WizardProxy(wizard, false, 0, 0, 0, 0, null, 0, world, game);
+    public static WizardProxy wizardProxy(Wizard wizard, World world, Game game, Memory memory) {
+        return new WizardProxy(wizard, false, 0, 0, 0, 0, null, 0, world, game, memory);
     }
 
     public static WizardProxy shadowWizard(Wizard wizard,
@@ -58,7 +59,8 @@ public class WizardProxy extends LivingUnit {
                 remainingCooldownTicksByAction,
                 mana,
                 world,
-                game);
+                game,
+                null);
     }
 
     private WizardProxy(Wizard wizard,
@@ -70,7 +72,8 @@ public class WizardProxy extends LivingUnit {
                         int[] remainingCooldownTicksByAction,
                         double mana,
                         World world,
-                        Game game) {
+                        Game game,
+                        Memory memory) {
         super(wizard.getId(),
                 isShadow ? x : wizard.getX(),
                 isShadow ? y : wizard.getY(),
@@ -89,6 +92,10 @@ public class WizardProxy extends LivingUnit {
         this.shadowRemainingCooldownTicksByAction = remainingCooldownTicksByAction;
         this.shadowMana = mana;
         this.shadowImageTick = imageTick;
+        this.messages =
+                game.isRawMessagesEnabled() && wizard.isMaster() && wizard.isMe() && memory.getSelfMessage() != null ?
+                        new Message[]{memory.getSelfMessage()} :
+                        wizard.getMessages();
 
         this.skills = Arrays.asList(wizard.getSkills());
         Set<SkillType> affectedBySet = EnumSet.noneOf(SkillType.class);
@@ -169,7 +176,7 @@ public class WizardProxy extends LivingUnit {
     }
 
     public Message[] getMessages() {
-        return wizard.getMessages();
+        return Arrays.copyOf(messages, messages.length);
     }
 
     public boolean isShadow() {
