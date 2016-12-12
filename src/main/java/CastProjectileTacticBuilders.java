@@ -19,8 +19,11 @@ public final class CastProjectileTacticBuilders {
         throw new UnsupportedOperationException("Instance not supported");
     }
 
-    public static double castRangeToBuilding(WizardProxy self, Building building, Game game) {
-        return self.getCastRange() + building.getRadius() + game.getMagicMissileRadius();
+    public static double castRangeToBuilding(WizardProxy self,
+                                             Building building,
+                                             Game game,
+                                             ProjectileType projectileType) {
+        return self.getCastRange() + building.getRadius() + projectileEffectiveRadius(game, projectileType);
     }
 
     public static double castRangeToMinion(WizardProxy self, Minion minion, Game game) {
@@ -58,7 +61,9 @@ public final class CastProjectileTacticBuilders {
         return false;
     }
 
-    public static Optional<Unit> bestFocusTarget(TurnContainer turnContainer, double castRangeBoost) {
+    public static Optional<Unit> bestFocusTarget(TurnContainer turnContainer,
+                                                 ProjectileType projectileType,
+                                                 double castRangeBoost) {
         WorldProxy world = turnContainer.getWorldProxy();
         WizardProxy self = turnContainer.getSelf();
 
@@ -70,7 +75,7 @@ public final class CastProjectileTacticBuilders {
             }
             double dist = wizard.getDistanceTo(self);
             if (dist <= turnContainer.getCastRangeService()
-                    .castRangeToWizardPessimistic(self, wizard, turnContainer.getGame(), ProjectileType.MAGIC_MISSILE)
+                    .castRangeToWizardPessimistic(self, wizard, turnContainer.getGame(), projectileType)
                     .getDistToCenter() && lowestLife > wizard.getLife() + castRangeBoost) {
                 lowestLife = wizard.getLife();
                 bestUnit = wizard;
@@ -95,8 +100,10 @@ public final class CastProjectileTacticBuilders {
                 continue;
             }
             double dist = building.getDistanceTo(self);
-            if (dist <= CastProjectileTacticBuilders.castRangeToBuilding(self, building, turnContainer.getGame()) +
-                    castRangeBoost) {
+            if (dist <= CastProjectileTacticBuilders.castRangeToBuilding(self,
+                    building,
+                    turnContainer.getGame(),
+                    projectileType) + castRangeBoost) {
                 return Optional.of(building);
             }
         }
@@ -235,6 +242,20 @@ public final class CastProjectileTacticBuilders {
             return Optional.empty();
         } else {
             return Optional.of(currentAngle);
+        }
+    }
+
+    public static Point targetAimPoint(TurnContainer turnContainer, Unit target, ProjectileType projectileType) {
+        if (target instanceof WizardProxy) {
+            WizardProxy enemy = (WizardProxy) target;
+            return enemy.faceOffsetPoint(turnContainer.getCastRangeService()
+                    .castRangeToWizardPessimistic(turnContainer.getSelf(),
+                            enemy,
+                            turnContainer.getGame(),
+                            projectileType)
+                    .getCenterOffset());
+        } else {
+            return new Point(target.getX(), target.getY());
         }
     }
 }

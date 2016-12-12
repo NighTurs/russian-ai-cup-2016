@@ -21,7 +21,8 @@ public class StaffHitTacticBuilder implements TacticBuilder {
             }
         }
 
-        Optional<Unit> focusUnitOpt = CastProjectileTacticBuilders.bestFocusTarget(turnContainer, 0);
+        Optional<Unit> focusUnitOpt =
+                CastProjectileTacticBuilders.bestFocusTarget(turnContainer, ProjectileType.MAGIC_MISSILE, 0);
         if (!focusUnitOpt.isPresent()) {
             return Optional.empty();
         }

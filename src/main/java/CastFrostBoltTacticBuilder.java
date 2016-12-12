@@ -1,35 +1,32 @@
-import model.ActionType;
-import model.CircularUnit;
-import model.ProjectileType;
-import model.Unit;
+import model.*;
 
 import java.util.Optional;
 
-public class CastMagicMissileTacticBuilder implements TacticBuilder {
+public class CastFrostBoltTacticBuilder implements TacticBuilder {
 
     private static final double PROJECTILE_MIN_DISTANCE_WIZARD_RADIUS_RATIO = 2.0 / 3;
-    private static final int FUTURE_TARGET_RANGE_BOOST = 100;
+    private static final int SECONDARY_TARGETS_SAVE_UP_BOLTS_COUNT = 3;
+    private static final int FUTURE_TARGET_RANGE_BOOST = 10;
 
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
         WizardProxy self = turnContainer.getSelf();
+        Game game = turnContainer.getGame();
 
-        if (CastProjectileTacticBuilders.shouldSaveUpMana(turnContainer, ActionType.MAGIC_MISSILE)) {
-            return Optional.empty();
-        }
         Optional<Unit> bestTargetOpt =
-                CastProjectileTacticBuilders.bestFocusTarget(turnContainer, ProjectileType.MAGIC_MISSILE, 0);
+                CastProjectileTacticBuilders.bestFocusTarget(turnContainer, ProjectileType.FROST_BOLT, 0);
         Optional<Unit> bestFutureTargetOpt;
         int untilCast = CastProjectileTacticBuilders.untilNextProjectile(self,
-                ProjectileType.MAGIC_MISSILE,
+                ProjectileType.FROST_BOLT,
                 turnContainer.getGame());
-        if (bestTargetOpt.isPresent()) {
+        if (bestTargetOpt.isPresent() && (bestTargetOpt.get() instanceof WizardProxy ||
+                self.getMana() >= game.getFrostBoltManacost() * SECONDARY_TARGETS_SAVE_UP_BOLTS_COUNT)) {
             Point aimPoint = CastProjectileTacticBuilders.targetAimPoint(turnContainer,
                     bestTargetOpt.get(),
-                    ProjectileType.MAGIC_MISSILE);
+                    ProjectileType.FROST_BOLT);
             MoveBuilder moveBuilder = new MoveBuilder();
             if (CastProjectileTacticBuilders.inCastSector(turnContainer, aimPoint) && untilCast == 0) {
-                moveBuilder.setAction(ActionType.MAGIC_MISSILE);
+                moveBuilder.setAction(ActionType.FROST_BOLT);
                 moveBuilder.setCastAngle(self.getAngleTo(aimPoint.getX(), aimPoint.getY()));
                 moveBuilder.setMinCastDistance(self.getDistanceTo(aimPoint.getX(), aimPoint.getY()) -
                         ((CircularUnit) bestTargetOpt.get()).getRadius() * PROJECTILE_MIN_DISTANCE_WIZARD_RADIUS_RATIO);
@@ -38,15 +35,16 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
             bestFutureTargetOpt = bestTargetOpt;
         } else {
             bestFutureTargetOpt = CastProjectileTacticBuilders.bestFocusTarget(turnContainer,
-                    ProjectileType.MAGIC_MISSILE,
+                    ProjectileType.FROST_BOLT,
                     FUTURE_TARGET_RANGE_BOOST);
         }
-        if (!bestFutureTargetOpt.isPresent()) {
+        if (!bestFutureTargetOpt.isPresent() || (!(bestFutureTargetOpt.get() instanceof WizardProxy) &&
+                self.getMana() < game.getFrostBoltManacost() * SECONDARY_TARGETS_SAVE_UP_BOLTS_COUNT)) {
             return Optional.empty();
         }
         Point aimPoint = CastProjectileTacticBuilders.targetAimPoint(turnContainer,
                 bestFutureTargetOpt.get(),
-                ProjectileType.MAGIC_MISSILE);
+                ProjectileType.FROST_BOLT);
         MoveBuilder moveBuilder = new MoveBuilder();
         Optional<Double> turn = CastProjectileTacticBuilders.justInTimeTurn(self,
                 new Point(aimPoint.getX(), aimPoint.getY()),
@@ -60,6 +58,6 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
     }
 
     private Optional<Tactic> assembleTactic(MoveBuilder moveBuilder) {
-        return Optional.of(new TacticImpl("CastMagicMissile", moveBuilder, Tactics.CAST_MAGIC_MISSILE_TACTIC_PRIORITY));
+        return Optional.of(new TacticImpl("CastFrostBolt", moveBuilder, Tactics.CAST_FROST_BOLT_TACTIC_PRIORITY));
     }
 }

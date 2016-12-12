@@ -18,6 +18,7 @@ public class TurnStrategy {
                     new MasterWizardTacticBuilder(),
                     new ApplyHasteTacticBuilder(),
                     new ApplyShieldTacticBuilder(),
+                    new CastFrostBoltTacticBuilder(),
                     directionOptional);
     private final TurnContainer turnContainer;
     private final Move move;
