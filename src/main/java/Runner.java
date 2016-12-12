@@ -10,7 +10,7 @@ public final class Runner {
         new Runner(args.length == 3 ? args : new String[]{"127.0.0.1", "31001", "0000000000000000"}).run();
     }
 
-    private Runner(String[] args) throws IOException {
+    public Runner(String[] args) throws IOException {
         remoteProcessClient = new RemoteProcessClient(args[0], Integer.parseInt(args[1]));
         token = args[2];
     }
