@@ -42,6 +42,11 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
             ticksUntilBonus = bonusControl.ticksUntilTopBonus();
         }
 
+        if (turnContainer.getGame().isRawMessagesEnabled() && !isClosestToBonues(turnContainer, goForBonus)) {
+            turnContainer.getMemory().setWentForBonusPrevTurn(false);
+            return Optional.empty();
+        }
+
         double ticksToBonus =
                 roughDistToBonus(self, pathFinder, goForBonus) / self.getWizardForwardSpeed(turnContainer.getGame()) +
                         ARRIVE_BEFORE_TICKS;
@@ -131,5 +136,19 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
         } else {
             return ACCEPTABLE_TICKS_TO_TAKE_BONUS_WITHOUT_SKILLS;
         }
+    }
+
+    private boolean isClosestToBonues(TurnContainer turnContainer, Point bonusPoint) {
+        WizardProxy self = turnContainer.getSelf();
+        for (WizardProxy wizard : turnContainer.getWorldProxy().getWizards()) {
+            if (!turnContainer.isAllyWizard(wizard)) {
+                continue;
+            }
+            if (wizard.getDistanceTo(bonusPoint.getX(), bonusPoint.getY()) <
+                    self.getDistanceTo(bonusPoint.getX(), bonusPoint.getY())) {
+                return false;
+            }
+        }
+        return true;
     }
 }
