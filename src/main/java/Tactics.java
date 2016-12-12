@@ -16,4 +16,5 @@ public final class Tactics {
     public static final int DIRECTION_OPTIONAL_TACTIC_BUILDER = 2;
     public static final int MASTER_WIZARD_TACTIC_BUILDER = 300;
     public static final int APPLY_HASTE_TACTIC_BUILDER = 40;
+    public static final int APPLY_SHIELD_TACTIC_BUILDER = 41;
 }
