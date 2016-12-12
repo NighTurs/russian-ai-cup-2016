@@ -16,6 +16,7 @@ public class TurnStrategy {
                     new CastFireballTacticBuilder(),
                     new NeutralTurnTacticBuilder(),
                     new MasterWizardTacticBuilder(),
+                    new ApplyHasteTacticBuilder(),
                     directionOptional);
     private final TurnContainer turnContainer;
     private final Move move;

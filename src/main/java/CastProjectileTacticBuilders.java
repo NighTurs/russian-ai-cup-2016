@@ -29,8 +29,12 @@ public final class CastProjectileTacticBuilders {
 
     public static boolean inCastSector(TurnContainer turnContainer, Point point) {
         WizardProxy self = turnContainer.getSelf();
-        double angle = self.getAngleTo(point.getX(), point.getY());
-        return WizardProxy.getWizardCastSector(turnContainer.getGame()) > Math.abs(angle);
+        if (Math.abs(self.getX() - point.getX()) < E && Math.abs(self.getY() - point.getY()) < E) {
+            return true;
+        } else {
+            double angle = self.getAngleTo(point.getX(), point.getY());
+            return WizardProxy.getWizardCastSector(turnContainer.getGame()) > Math.abs(angle);
+        }
     }
 
     public static boolean shouldSaveUpMana(TurnContainer turnContainer, ActionType actionType) {
@@ -45,10 +49,10 @@ public final class CastProjectileTacticBuilders {
         int priority = manaPriorities.get(actionType);
         int manaCost = game.getMagicMissileManacost();
         //noinspection RedundantIfStatement
-        if (self.isSkillLearned(SkillType.FIREBALL) &&
-                manaPriorities.get(ActionType.FIREBALL) > priority && self.getMana() +
-                untilNextProjectile(self, ProjectileType.FIREBALL, game) * self.getWizardManaPerTurn(game) - manaCost <
-                game.getFireballManacost()) {
+        if (self.isSkillLearned(SkillType.FIREBALL) && manaPriorities.get(ActionType.FIREBALL) > priority &&
+                self.getMana() +
+                        untilNextProjectile(self, ProjectileType.FIREBALL, game) * self.getWizardManaPerTurn(game) -
+                        manaCost < game.getFireballManacost()) {
             return true;
         }
         return false;
