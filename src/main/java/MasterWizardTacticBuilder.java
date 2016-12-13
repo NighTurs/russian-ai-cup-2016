@@ -35,17 +35,17 @@ public class MasterWizardTacticBuilder implements TacticBuilder {
         if (world.getTickIndex() == 0) {
             MoveBuilder moveBuilder = new MoveBuilder();
             Message[] messages = new Message[NUMBER_OF_ALLY_WIZARDS];
-            Queue<WizardRole> roles = new ArrayDeque<>(Arrays.asList(WizardRole.FIREBALL_TEAM,
-                    WizardRole.FROST_BOLT,
+            Queue<WizardRole> roles = new ArrayDeque<>(Arrays.asList(WizardRole.FROST_BOLT,
                     WizardRole.HASTE,
                     WizardRole.RANGE,
-                    WizardRole.SHIELD));
+                    WizardRole.SHIELD,
+                    WizardRole.FIREBALL_SOLO));
             for (WizardProxy wizard : allyWizardsExceptMe) {
                 messages[memory.getAllyWizardMessageIndex().get(wizard.getId())] =
                         new Message(LaneType.MIDDLE, null, roleMessage(roles.poll()));
             }
             moveBuilder.setMessages(messages);
-            turnContainer.getMemory().setSelfMessage(new Message(LaneType.MIDDLE, null, roleMessage(roles.poll())));
+            turnContainer.getMemory().setSelfMessage(new Message(LaneType.BOTTOM, null, roleMessage(roles.poll())));
             return Optional.of(new TacticImpl("MasterWizard", moveBuilder, Tactics.MASTER_WIZARD_TACTIC_BUILDER));
         }
         return Optional.empty();
