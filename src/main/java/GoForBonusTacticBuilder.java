@@ -42,7 +42,8 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
             ticksUntilBonus = bonusControl.ticksUntilTopBonus();
         }
 
-        if (turnContainer.getGame().isRawMessagesEnabled() && !isClosestToBonues(turnContainer, goForBonus)) {
+        if (turnContainer.getGame().isRawMessagesEnabled() && (!isClosestToBonues(turnContainer, goForBonus) ||
+                turnContainer.getLanePicker().myLane() != LocationType.MIDDLE_LANE)) {
             turnContainer.getMemory().setWentForBonusPrevTurn(false);
             return Optional.empty();
         }
@@ -143,7 +144,9 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
     private boolean isClosestToBonues(TurnContainer turnContainer, Point bonusPoint) {
         WizardProxy self = turnContainer.getSelf();
         for (WizardProxy wizard : turnContainer.getWorldProxy().getWizards()) {
-            if (!turnContainer.isAllyWizard(wizard)) {
+            LocationType locationType = turnContainer.getMapUtils().getLocationType(wizard.getId());
+            if (!turnContainer.isAllyWizard(wizard) ||
+                    locationType == LocationType.BOTTOM_LANE || locationType == LocationType.TOP_LANE) {
                 continue;
             }
             if (wizard.getDistanceTo(bonusPoint.getX(), bonusPoint.getY()) <
