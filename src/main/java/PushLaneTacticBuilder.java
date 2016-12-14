@@ -54,7 +54,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             case STAY:
                 return Optional.empty();
             case RETREAT:
-                mov = turnContainer.getPathFinder().findPath(self, retreatWaypoint.getX(), retreatWaypoint.getY());
+                mov = turnContainer.getPathFinder()
+                        .findPath(self, retreatWaypoint.getX(), retreatWaypoint.getY(), 0, true);
                 break;
             case PUSH:
                 Optional<Unit> enemy = nearestEnemy(turnContainer);
@@ -64,9 +65,11 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                             .findPath(self,
                                     enemy.get().getX(),
                                     enemy.get().getY(),
-                                    ((CircularUnit) enemy.get()).getRadius());
+                                    ((CircularUnit) enemy.get()).getRadius(),
+                                    true);
                 } else {
-                    mov = turnContainer.getPathFinder().findPath(self, pushWaypoint.getX(), pushWaypoint.getY());
+                    mov = turnContainer.getPathFinder()
+                            .findPath(self, pushWaypoint.getX(), pushWaypoint.getY(), 0, true);
                 }
                 break;
             default:
@@ -238,10 +241,9 @@ public class PushLaneTacticBuilder implements TacticBuilder {
 
         double distToEnemy = self.getDistanceTo(enemy);
         int untilNextMissile = CastProjectileTacticBuilders.untilNextProjectile(enemy, projectileType, game);
-        double enemyCastRange = turnContainer.getCastRangeService().castRangeToWizardOptimistic(enemy,
-                self,
-                turnContainer.getGame(),
-                projectileType).getDistToCenter();
+        double enemyCastRange = turnContainer.getCastRangeService()
+                .castRangeToWizardOptimistic(enemy, self, turnContainer.getGame(), projectileType)
+                .getDistToCenter();
 
         double distToKeep = (distToEnemy +
                 Math.max(untilNextMissile - 1, EXPECT_STEPS_FORWARD_FROM_ENEMY) * self.getWizardBackwardSpeed(game) *

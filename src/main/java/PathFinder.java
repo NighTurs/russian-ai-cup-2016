@@ -13,6 +13,8 @@ public class PathFinder {
     private static final int SHORT_SEARCH_GRID_SPAN = 250;
     private static final int LONG_DISTANCE_MIN_FIRST_MOVE = 500;
     private static final int MAX_ANGLE_RADIUS = 150;
+    private static final int ALLY_WIZARD_PENALTY = 2;
+    private static final int ALLY_WIZARD_PENALTY_RADIUS = 50;
     private final WorldProxy world;
     private final Game game;
     private final WizardProxy self;
@@ -52,18 +54,18 @@ public class PathFinder {
         }
     }
 
-    public Movement findPath(WizardProxy wizard, double x, double y) {
-        return findPath(wizard, x, y, 0);
-    }
-
-    public Movement findPath(WizardProxy wizard, double x, double y, double ignoreRadius) {
+    public Movement findPath(WizardProxy wizard, double x, double y, double ignoreRadius, boolean withPenalties) {
         Point longDistPoint = longSearchNextPoint(wizard.getX(), wizard.getY(), x, y).getKey();
-        Optional<Point> straightLinePoint =
-                straightLinePath(wizard.getX(), wizard.getY(), longDistPoint.getX(), longDistPoint.getY(), ignoreRadius);
+        Optional<Point> straightLinePoint = straightLinePath(wizard.getX(),
+                wizard.getY(),
+                longDistPoint.getX(),
+                longDistPoint.getY(),
+                ignoreRadius,
+                withPenalties);
         if (straightLinePoint.isPresent()) {
             return findOptimalMovement(wizard, straightLinePoint.get().getX(), straightLinePoint.get().getY());
         } else {
-            Point shortDistPoint = shortSearchNextPoint(longDistPoint.getX(), longDistPoint.getY());
+            Point shortDistPoint = shortSearchNextPoint(longDistPoint.getX(), longDistPoint.getY(), withPenalties);
             return findOptimalMovement(wizard, shortDistPoint.getX(), shortDistPoint.getY());
         }
     }
@@ -208,7 +210,7 @@ public class PathFinder {
         return new SimpleEntry<>(new Point(bestX, bestY), bestPathDist);
     }
 
-    private Point shortSearchNextPoint(double x, double y) {
+    private Point shortSearchNextPoint(double x, double y, boolean withPenalties) {
         if (!shortSearchGridInitialized) {
             initShortSearchGrid();
         }
@@ -238,7 +240,7 @@ public class PathFinder {
             for (Map.Entry<PathPoint, Double> entry : p.getNeighbors().entrySet()) {
                 int newI = entry.getKey().getI();
                 int newH = entry.getKey().getH();
-                double newDist = cur.getDist() + entry.getValue();
+                double newDist = cur.getDist() + entry.getValue() + (withPenalties ? entry.getKey().getPenalty() : 0);
                 if (Math.abs(visitedPoints[newI][newH] + 1) < E || visitedPoints[newI][newH] > newDist) {
                     BfsPoint next = new BfsPoint(newI,
                             newH,
@@ -270,7 +272,7 @@ public class PathFinder {
             for (int h = 0; h < dim; h++) {
                 double x = startX + i * SHORT_SEARCH_GRID_CELL;
                 double y = startY + h * SHORT_SEARCH_GRID_CELL;
-                shortSearchGrid[i][h] = new PathPoint(i, h, x, y);
+                shortSearchGrid[i][h] = new PathPoint(i, h, x, y, 0);
                 if (x < wizardRadius || x > world.getWidth() - wizardRadius || y < wizardRadius ||
                         y > world.getHeight() - wizardRadius) {
                     shortSearchGrid[i][h].setReachable(false);
@@ -289,16 +291,30 @@ public class PathFinder {
                     SHORT_SEARCH_GRID_SPAN * Math.sqrt(2) + cunit.getRadius() + wizardRadius) {
                 continue;
             }
+            double radius = cunit.getRadius();
+            double penalty = 0;
+            double penaltyRadius = radius;
+            if (cunit instanceof WizardProxy) {
+                WizardProxy wizard = (WizardProxy) cunit;
+                if (wizard.getFaction() == self.getFaction()) {
+                    penalty = ALLY_WIZARD_PENALTY;
+                    penaltyRadius = radius + ALLY_WIZARD_PENALTY_RADIUS;
+                }
+            }
             for (int i = 0; i < dim; i++) {
                 for (int h = 0; h < dim; h++) {
                     if (!shortSearchGrid[i][h].isReachable()) {
                         continue;
                     }
                     Point p = shortSearchGrid[i][h].getPoint();
-                    double radius = cunit.getRadius();
-                    if (hypot(p.getX() - cunit.getX(), p.getY() - cunit.getY()) <= radius + wizardRadius) {
+                    double dist = hypot(p.getX() - cunit.getX(), p.getY() - cunit.getY());
+                    if (dist <= radius + wizardRadius) {
                         shortSearchGrid[i][h].setReachable(false);
                         shortSearchGrid[i][h].setIntersectsWith(cunit);
+                        continue;
+                    }
+                    if (dist <= penaltyRadius + wizardRadius) {
+                        shortSearchGrid[i][h].setPenalty(penalty);
                     }
                 }
             }
@@ -361,7 +377,12 @@ public class PathFinder {
         shortSearchGridInitialized = true;
     }
 
-    private Optional<Point> straightLinePath(double fromX, double fromY, double toX, double toY, double ignoreRadius) {
+    private Optional<Point> straightLinePath(double fromX,
+                                             double fromY,
+                                             double toX,
+                                             double toY,
+                                             double ignoreRadius,
+                                             boolean withPenalties) {
         List<Point> tryToPoints;
         if (Math.hypot(fromX - toX, fromY - toY) <= SHORT_SEARCH_GRID_SPAN) {
             tryToPoints = Collections.singletonList(new Point(toX, toY));
@@ -379,7 +400,8 @@ public class PathFinder {
                 }
             }
 
-            Unit intersectsWith = findIntersectUnit(fromX, fromY, shortTo.getX(), shortTo.getY(), ignoreId);
+            Unit intersectsWith =
+                    findIntersectUnit(fromX, fromY, shortTo.getX(), shortTo.getY(), ignoreId, withPenalties);
             if (intersectsWith == null) {
                 return Optional.of(shortTo);
             }
@@ -397,16 +419,21 @@ public class PathFinder {
                     fromX,
                     fromY,
                     shortTo.getX(),
-                    shortTo.getY());
+                    shortTo.getY(),
+                    withPenalties);
             Point leftSide = MathMethods.distPoint(intersectsWith.getX(),
                     intersectsWith.getY(),
                     intersectPoint.getX(),
                     intersectPoint.getY(),
                     leftRadius);
 
-            if (findIntersectUnit(fromX, fromY, leftSide.getX(), leftSide.getY(), Long.MAX_VALUE) == null &&
-                    findIntersectUnit(leftSide.getX(), leftSide.getY(), shortTo.getX(), shortTo.getY(), ignoreId) ==
-                            null) {
+            if (findIntersectUnit(fromX, fromY, leftSide.getX(), leftSide.getY(), Long.MAX_VALUE, withPenalties) ==
+                    null && findIntersectUnit(leftSide.getX(),
+                    leftSide.getY(),
+                    shortTo.getX(),
+                    shortTo.getY(),
+                    ignoreId,
+                    withPenalties) == null) {
                 return Optional.of(leftSide);
             }
 
@@ -417,15 +444,20 @@ public class PathFinder {
                     fromX,
                     fromY,
                     shortTo.getX(),
-                    shortTo.getY());
+                    shortTo.getY(),
+                    withPenalties);
             Point rightSide = MathMethods.distPoint(intersectsWith.getX(),
                     intersectsWith.getY(),
                     intersectPoint.getX(),
                     intersectPoint.getY(),
                     rightRadius);
-            if (findIntersectUnit(fromX, fromY, rightSide.getX(), rightSide.getY(), Long.MAX_VALUE) == null &&
-                    findIntersectUnit(rightSide.getX(), rightSide.getY(), shortTo.getX(), shortTo.getY(), ignoreId) ==
-                            null) {
+            if (findIntersectUnit(fromX, fromY, rightSide.getX(), rightSide.getY(), Long.MAX_VALUE, withPenalties) ==
+                    null && findIntersectUnit(rightSide.getX(),
+                    rightSide.getY(),
+                    shortTo.getX(),
+                    shortTo.getY(),
+                    ignoreId,
+                    withPenalties) == null) {
                 return Optional.of(rightSide);
             }
         }
@@ -439,8 +471,9 @@ public class PathFinder {
                                     double fromX,
                                     double fromY,
                                     double toX,
-                                    double toY) {
-        double unitR = ((CircularUnit) intersectsWith).getRadius();
+                                    double toY,
+                                    boolean withPenalties) {
+        double unitR = withPenalties ? penaltyRadius(intersectsWith) : ((CircularUnit) intersectsWith).getRadius();
         double r0 = rFrom;
         double r1 = rTo;
         while (Math.abs(r1 - r0) > 1) {
@@ -475,7 +508,12 @@ public class PathFinder {
         return r1;
     }
 
-    private Unit findIntersectUnit(double fromX, double fromY, double toX, double toY, long ignoreId) {
+    private Unit findIntersectUnit(double fromX,
+                                   double fromY,
+                                   double toX,
+                                   double toY,
+                                   long ignoreId,
+                                   boolean withPenalties) {
         for (Unit unit : world.allUnits()) {
             if (unit.getId() == self.getId() || unit.getId() == ignoreId) {
                 continue;
@@ -483,7 +521,7 @@ public class PathFinder {
             if (unit instanceof Projectile || unit instanceof Bonus) {
                 continue;
             }
-            double unitR = ((CircularUnit) unit).getRadius();
+            double unitR = withPenalties ? penaltyRadius(unit) : ((CircularUnit) unit).getRadius();
             if (MathMethods.isLineIntersectsCircle(fromX,
                     toX,
                     fromY,
@@ -495,6 +533,17 @@ public class PathFinder {
             }
         }
         return null;
+    }
+
+    private double penaltyRadius(Unit unit) {
+        double unitR = ((CircularUnit) unit).getRadius();
+        if (unit instanceof WizardProxy) {
+            WizardProxy wizard = (WizardProxy) unit;
+            if (wizard.getFaction() == self.getFaction()) {
+                unitR = unitR + ALLY_WIZARD_PENALTY_RADIUS;
+            }
+        }
+        return unitR;
     }
 
     private static class BfsPoint {
@@ -559,13 +608,15 @@ public class PathFinder {
         private boolean isReachable;
         private Map<PathPoint, Double> neighbors;
         private CircularUnit intersectsWith;
+        private double penalty;
 
-        public PathPoint(int i, int h, double x, double y) {
+        public PathPoint(int i, int h, double x, double y, double penalty) {
             this.i = i;
             this.h = h;
             this.point = new Point(x, y);
             this.isReachable = true;
             this.neighbors = new HashMap<>();
+            this.penalty = 0;
         }
 
         public int getI() {
@@ -598,6 +649,14 @@ public class PathFinder {
 
         public void setIntersectsWith(CircularUnit intersectsWith) {
             this.intersectsWith = intersectsWith;
+        }
+
+        public double getPenalty() {
+            return penalty;
+        }
+
+        public void setPenalty(double penalty) {
+            this.penalty = penalty;
         }
     }
 }

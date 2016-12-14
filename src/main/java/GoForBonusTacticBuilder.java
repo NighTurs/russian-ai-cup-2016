@@ -69,7 +69,8 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
         }
         if (haveBonusInVisibilityRange || self.getDistanceTo(goForBonus.getX(), goForBonus.getY()) >
                 game.getBonusRadius() + self.getRadius() + KEEP_DISTANCE_TO_BONUS) {
-            Movement mov = pathFinder.findPath(self, goForBonus.getX(), goForBonus.getY(), game.getBonusRadius());
+            Movement mov =
+                    pathFinder.findPath(self, goForBonus.getX(), goForBonus.getY(), game.getBonusRadius(), false);
             MoveBuilder moveBuilder = new MoveBuilder();
 
             double leftDistance = self.getDistanceTo(goForBonus.getX(), goForBonus.getY()) -
