@@ -17,8 +17,10 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
         if (CastProjectileTacticBuilders.shouldSaveUpMana(turnContainer, ActionType.MAGIC_MISSILE)) {
             return Optional.empty();
         }
-        Optional<Unit> bestTargetOpt =
-                CastProjectileTacticBuilders.bestFocusTarget(turnContainer, ProjectileType.MAGIC_MISSILE, 0);
+        Optional<Unit> bestTargetOpt = CastProjectileTacticBuilders.bestFocusTarget(turnContainer,
+                ProjectileType.MAGIC_MISSILE,
+                turnContainer.getMemory().getExpectedPushDuration() *
+                        self.getWizardForwardSpeed(turnContainer.getGame()));
         Optional<Unit> bestFutureTargetOpt;
         int untilCast = CastProjectileTacticBuilders.untilNextProjectile(self,
                 ProjectileType.MAGIC_MISSILE,
@@ -28,7 +30,11 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
                     bestTargetOpt.get(),
                     ProjectileType.MAGIC_MISSILE);
             MoveBuilder moveBuilder = new MoveBuilder();
-            if (CastProjectileTacticBuilders.inCastSector(turnContainer, aimPoint) && untilCast == 0) {
+            if (CastProjectileTacticBuilders.isInCastRange(turnContainer,
+                    self,
+                    bestTargetOpt.get(),
+                    ProjectileType.MAGIC_MISSILE) &&
+                    CastProjectileTacticBuilders.inCastSector(turnContainer, aimPoint) && untilCast == 0) {
                 moveBuilder.setAction(ActionType.MAGIC_MISSILE);
                 moveBuilder.setCastAngle(self.getAngleTo(aimPoint.getX(), aimPoint.getY()));
                 moveBuilder.setMinCastDistance(self.getDistanceTo(aimPoint.getX(), aimPoint.getY()) -

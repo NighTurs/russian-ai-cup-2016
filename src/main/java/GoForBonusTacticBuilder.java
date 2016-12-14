@@ -60,6 +60,7 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
             return Optional.empty();
         }
         turnContainer.getMemory().setWentForBonusPrevTurn(true);
+        turnContainer.getMemory().setExpectedPushDuration(0);
 
         boolean haveBonusInVisibilityRange = false;
         for (Bonus bonus : world.getBonuses()) {

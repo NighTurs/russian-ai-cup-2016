@@ -16,6 +16,7 @@ public class SurviveTacticBuilder implements TacticBuilder {
         Action towerAction = shouldRunFromTower(turnContainer);
         Action wizardsAction = shouldRunFromWizards(turnContainer);
         if (towerAction == Action.RUN || wizardsAction == Action.RUN) {
+            turnContainer.getMemory().setExpectedPushDuration(0);
             Point retreatWaypoint = mapUtils.retreatWaypoint(self.getX(), self.getY(), lane);
             Movement mov = turnContainer.getPathFinder()
                     .findPath(self, retreatWaypoint.getX(), retreatWaypoint.getY(), 0, false);
@@ -25,7 +26,9 @@ public class SurviveTacticBuilder implements TacticBuilder {
             moveBuilder.setTurn(mov.getTurn());
             return buildTactic(moveBuilder);
         } else if ((towerAction == Action.STAY || wizardsAction == Action.STAY) &&
-                PushLaneTacticBuilder.actionBecauseOfMinions(turnContainer) != PushLaneTacticBuilder.Action.RETREAT) {
+                PushLaneTacticBuilder.actionBecauseOfMinions(turnContainer).getActionType() !=
+                        PushLaneTacticBuilder.ActionType.RETREAT) {
+            turnContainer.getMemory().setExpectedPushDuration(0);
             MoveBuilder moveBuilder = new MoveBuilder();
             moveBuilder.setSpeed(0);
             moveBuilder.setStrafeSpeed(0);

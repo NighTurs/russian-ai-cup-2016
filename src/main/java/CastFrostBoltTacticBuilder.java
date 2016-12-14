@@ -13,8 +13,9 @@ public class CastFrostBoltTacticBuilder implements TacticBuilder {
         WizardProxy self = turnContainer.getSelf();
         Game game = turnContainer.getGame();
 
-        Optional<Unit> bestTargetOpt =
-                CastProjectileTacticBuilders.bestFocusTarget(turnContainer, ProjectileType.FROST_BOLT, 0);
+        Optional<Unit> bestTargetOpt = CastProjectileTacticBuilders.bestFocusTarget(turnContainer,
+                ProjectileType.FROST_BOLT,
+                turnContainer.getMemory().getExpectedPushDuration() * self.getWizardForwardSpeed(game));
         Optional<Unit> bestFutureTargetOpt;
         int untilCast = CastProjectileTacticBuilders.untilNextProjectile(self,
                 ProjectileType.FROST_BOLT,
@@ -25,7 +26,11 @@ public class CastFrostBoltTacticBuilder implements TacticBuilder {
                     bestTargetOpt.get(),
                     ProjectileType.FROST_BOLT);
             MoveBuilder moveBuilder = new MoveBuilder();
-            if (CastProjectileTacticBuilders.inCastSector(turnContainer, aimPoint) && untilCast == 0) {
+            if (CastProjectileTacticBuilders.isInCastRange(turnContainer,
+                    self,
+                    bestTargetOpt.get(),
+                    ProjectileType.FROST_BOLT) &&
+                    CastProjectileTacticBuilders.inCastSector(turnContainer, aimPoint) && untilCast == 0) {
                 moveBuilder.setAction(ActionType.FROST_BOLT);
                 moveBuilder.setCastAngle(self.getAngleTo(aimPoint.getX(), aimPoint.getY()));
                 moveBuilder.setMinCastDistance(self.getDistanceTo(aimPoint.getX(), aimPoint.getY()) -

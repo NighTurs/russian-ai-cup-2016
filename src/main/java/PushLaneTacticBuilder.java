@@ -2,17 +2,23 @@ import model.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public class PushLaneTacticBuilder implements TacticBuilder {
 
     private static final int TOWER_TARGETS_THRESHOLD = 1;
     private static final double RETREAT_BACKWARD_SPEED_MULTIPLIER = 0.9;
     private static final double TOWER_RETREAT_BACKWARD_SPEED_MULTIPLIER = 0.7;
-    private static final int EXPECT_STEPS_FORWARD_FROM_ENEMY = 15;
     private static final int TOWER_RETREAT_SPARE_TICKS = 2;
     private static final int IGNORE_RANGE = 800;
     private static final int POTENTIAL_ATTACK_RANGE = 810;
+    private static final int LIFE_ADVANTAGE_FORWARD_STEPS = 5;
+    private static final int MAX_PUSH_EXPECTATIONS = 30;
+    private static final Action RETREAT_ACTION = new Action(ActionType.RETREAT);
+    private static final Action STAY_ACTION = new Action(ActionType.STAY);
+    private static final Action NONE_ACTION = new Action(ActionType.PUSH);
     private final DirectionOptionalTacticBuilder directionOptional;
 
     public PushLaneTacticBuilder(DirectionOptionalTacticBuilder directionOptional) {
@@ -32,17 +38,25 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             Action buildingAction = actionBecauseOfBuildings(turnContainer);
             Action minionAction = actionBecauseOfMinions(turnContainer);
             Action wizardsAction = actionBecauseOfWizards(turnContainer);
-            if (buildingAction == Action.RETREAT || minionAction == Action.RETREAT || wizardsAction == Action.RETREAT) {
-                action = Action.RETREAT;
-            } else if (buildingAction == Action.STAY || minionAction == Action.STAY || wizardsAction == Action.STAY) {
-                action = Action.STAY;
+            if (buildingAction.getActionType() == ActionType.RETREAT ||
+                    minionAction.getActionType() == ActionType.RETREAT ||
+                    wizardsAction.getActionType() == ActionType.RETREAT) {
+                action = RETREAT_ACTION;
+            } else if (buildingAction.getActionType() == ActionType.STAY ||
+                    minionAction.getActionType() == ActionType.STAY ||
+                    wizardsAction.getActionType() == ActionType.STAY) {
+                action = STAY_ACTION;
             } else {
-                action = Action.PUSH;
+                Optional<Integer> minDuration = Stream.of(buildingAction, minionAction, wizardsAction)
+                        .map(Action::getDuration)
+                        .filter(Objects::nonNull)
+                        .min(Integer::compare);
+                action = new Action(ActionType.PUSH, minDuration.isPresent() ? minDuration.get() : 0);
             }
         } else {
             action = actionBecauseOfBuildings(turnContainer);
-            if (action == Action.NONE) {
-                action = Action.PUSH;
+            if (action.getActionType() == ActionType.NONE) {
+                action = NONE_ACTION;
             }
         }
 
@@ -50,7 +64,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         Point retreatWaypoint = mapUtils.retreatWaypoint(self.getX(), self.getY(), lane);
         Movement mov;
 
-        switch (action) {
+        turnContainer.getMemory().setExpectedPushDuration(0);
+        switch (action.getActionType()) {
             case STAY:
                 return Optional.empty();
             case RETREAT:
@@ -67,6 +82,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                                     enemy.get().getY(),
                                     ((CircularUnit) enemy.get()).getRadius(),
                                     true);
+                    turnContainer.getMemory()
+                            .setExpectedPushDuration(action.getDuration() == null ? 0 : action.getDuration());
                 } else {
                     mov = turnContainer.getPathFinder()
                             .findPath(self, pushWaypoint.getX(), pushWaypoint.getY(), 0, true);
@@ -125,16 +142,17 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                 }
             }
             if (dist < minDist) {
-                return Action.RETREAT;
+                return RETREAT_ACTION;
             }
             if (minTriggerTargetDist > dist - minDist) {
                 minTriggerTargetDist = dist - minDist;
             }
         }
         if (minTriggerTargetDist < self.getWizardForwardSpeed(turnContainer.getGame())) {
-            return Action.STAY;
+            return STAY_ACTION;
         } else {
-            return Action.NONE;
+            return new Action(ActionType.NONE,
+                    (int) (minTriggerTargetDist / self.getWizardForwardSpeed(turnContainer.getGame())));
         }
     }
 
@@ -155,16 +173,16 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             }
         }
         for (Building building : buildings) {
-            if (actionBecauseOfBuilding(turnContainer, building) == Action.RETREAT) {
-                return Action.RETREAT;
+            if (actionBecauseOfBuilding(turnContainer, building).getActionType() == ActionType.RETREAT) {
+                return RETREAT_ACTION;
             }
         }
         for (Building building : moveOutsideOfRange) {
-            if (actionBecauseOfBuilding(turnContainer, building) == Action.RETREAT) {
-                return Action.STAY;
+            if (actionBecauseOfBuilding(turnContainer, building).getActionType() == ActionType.RETREAT) {
+                return STAY_ACTION;
             }
         }
-        return Action.NONE;
+        return NONE_ACTION;
     }
 
     private Action actionBecauseOfBuilding(TurnContainer turnContainer, Building building) {
@@ -172,7 +190,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         // Middle tower near enemy base prevents me from moving forward, just ignore it
         if (turnContainer.getMapUtils().getLocationType(self.getId()) == LocationType.BOTTOM_LANE &&
                 turnContainer.getMapUtils().getLocationType(building.getId()) == LocationType.MIDDLE_LANE) {
-            return Action.NONE;
+            return NONE_ACTION;
         }
         int c = 0;
         for (Unit unit : turnContainer.getWorldProxy().allUnitsWoTrees()) {
@@ -190,9 +208,9 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                         Math.max((building.getRemainingActionCooldownTicks() - TOWER_RETREAT_SPARE_TICKS), 0) *
                                 self.getWizardBackwardSpeed(turnContainer.getGame()) *
                                 TOWER_RETREAT_BACKWARD_SPEED_MULTIPLIER <= building.getAttackRange()) {
-            return Action.RETREAT;
+            return RETREAT_ACTION;
         }
-        return Action.NONE;
+        return NONE_ACTION;
     }
 
     private Action actionBecauseOfWizards(TurnContainer turnContainer) {
@@ -207,34 +225,45 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         }
 
         boolean shouldStay = false;
+        int minNoneDuration = Integer.MAX_VALUE;
         for (WizardProxy enemy : enemies) {
             if (enemies.size() == 1 && enemy.getLife() + enemy.getMagicMissileDirectDamage(game) * 2 < self.getLife()) {
-                return Action.PUSH;
+                return new Action(ActionType.PUSH, MAX_PUSH_EXPECTATIONS);
             }
             if (self.getLife() -
                     (int) Math.ceil(enemy.getLife() / self.getMagicMissileDirectDamage(game)) * enemies.size() *
                             enemy.getMagicMissileDirectDamage(game) > enemy.getMagicMissileDirectDamage(game) * 3) {
-                return Action.PUSH;
+                return new Action(ActionType.PUSH, MAX_PUSH_EXPECTATIONS);
             }
             Action actionMissle = actionBecauseOfWizardSpell(turnContainer, enemy, ProjectileType.MAGIC_MISSILE);
             Action actionFrostBolt = actionBecauseOfWizardSpell(turnContainer, enemy, ProjectileType.FROST_BOLT);
             Action actionFireball = actionBecauseOfWizardSpell(turnContainer, enemy, ProjectileType.FIREBALL);
 
-            if (actionMissle == Action.RETREAT || actionFrostBolt == Action.RETREAT ||
-                    actionFireball == Action.RETREAT) {
-                return Action.RETREAT;
-            } else if (actionMissle == Action.STAY || actionFrostBolt == Action.STAY || actionFireball == Action.STAY) {
+            if (actionMissle.getActionType() == ActionType.RETREAT ||
+                    actionFrostBolt.getActionType() == ActionType.RETREAT ||
+                    actionFireball.getActionType() == ActionType.RETREAT) {
+                return RETREAT_ACTION;
+            } else if (actionMissle.getActionType() == ActionType.STAY ||
+                    actionFrostBolt.getActionType() == ActionType.STAY ||
+                    actionFireball.getActionType() == ActionType.STAY) {
                 shouldStay = true;
             }
+            //noinspection OptionalGetWithoutIsPresent
+            minNoneDuration = Stream.of(actionMissle.getDuration(),
+                    actionFireball.getDuration(),
+                    actionFrostBolt.getDuration(),
+                    minNoneDuration).filter(Objects::nonNull).min(Integer::compare).get();
         }
-        return shouldStay ? Action.STAY : Action.NONE;
+        return shouldStay ?
+                STAY_ACTION :
+                new Action(ActionType.NONE, minNoneDuration == Integer.MAX_VALUE ? 0 : minNoneDuration);
     }
 
     private Action actionBecauseOfWizardSpell(TurnContainer turnContainer,
                                               WizardProxy enemy,
                                               ProjectileType projectileType) {
         if (!CastProjectileTacticBuilders.isProjectileLearned(turnContainer, enemy, projectileType)) {
-            return Action.NONE;
+            return NONE_ACTION;
         }
         WizardProxy self = turnContainer.getSelf();
         Game game = turnContainer.getGame();
@@ -245,17 +274,66 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                 .castRangeToWizardOptimistic(enemy, self, turnContainer.getGame(), projectileType)
                 .getDistToCenter();
 
+        int expectedStepsForward = enemyExpectedStepsForward(turnContainer, self, enemy, projectileType);
         double distToKeep = (distToEnemy +
-                Math.max(untilNextMissile - 1, EXPECT_STEPS_FORWARD_FROM_ENEMY) * self.getWizardBackwardSpeed(game) *
-                        RETREAT_BACKWARD_SPEED_MULTIPLIER -
-                EXPECT_STEPS_FORWARD_FROM_ENEMY * enemy.getWizardForwardSpeed(game)) - enemyCastRange;
+                Math.max(untilNextMissile - 1, expectedStepsForward) * self.getWizardBackwardSpeed(game) *
+                        RETREAT_BACKWARD_SPEED_MULTIPLIER - expectedStepsForward * enemy.getWizardForwardSpeed(game)) -
+                enemyCastRange;
 
         if (distToKeep <= 0) {
-            return Action.RETREAT;
+            return RETREAT_ACTION;
         } else if (distToKeep <= self.getWizardForwardSpeed(game)) {
-            return Action.STAY;
+            return STAY_ACTION;
         }
-        return Action.NONE;
+        return new Action(ActionType.NONE, (int) Math.floor(distToKeep / self.getWizardForwardSpeed(game)));
+    }
+
+    private int enemyExpectedStepsForward(TurnContainer turnContainer,
+                                          WizardProxy self,
+                                          WizardProxy enemy,
+                                          ProjectileType projectileType) {
+        Game game = turnContainer.getGame();
+        int maxForwardSteps = (int) Math.ceil(Math.PI / self.getWizardMaxTurnAngle(game));
+        int untilProjectileCast = CastProjectileTacticBuilders.untilNextProjectile(enemy, projectileType, game);
+        int untilSameOrBetterProjectileCast = Integer.MAX_VALUE;
+        if (self.isSkillLearned(SkillType.FROST_BOLT)) {
+            untilSameOrBetterProjectileCast =
+                    CastProjectileTacticBuilders.untilNextProjectile(self, ProjectileType.FROST_BOLT, game);
+        }
+        if (self.isSkillLearned(SkillType.FIREBALL) &&
+                (projectileType == ProjectileType.MAGIC_MISSILE || projectileType == ProjectileType.FIREBALL)) {
+            untilSameOrBetterProjectileCast =
+                    Math.min(CastProjectileTacticBuilders.untilNextProjectile(self, ProjectileType.FIREBALL, game),
+                            untilSameOrBetterProjectileCast);
+        }
+        if (projectileType == ProjectileType.MAGIC_MISSILE) {
+            untilSameOrBetterProjectileCast =
+                    Math.min(CastProjectileTacticBuilders.untilNextProjectile(self, ProjectileType.MAGIC_MISSILE, game),
+                            untilSameOrBetterProjectileCast);
+        }
+        int lifeAdvantage = Math.max(0, enemy.getLife() - self.getLife());
+        int lifeAdvantageForwardSteps = Math.min(maxForwardSteps,
+                (lifeAdvantage / game.getMagicMissileDirectDamage()) * LIFE_ADVANTAGE_FORWARD_STEPS);
+        if (untilProjectileCast > untilSameOrBetterProjectileCast) {
+            return lifeAdvantageForwardSteps;
+        }
+        boolean hasAlternativeTargets = false;
+        for (Unit unit : turnContainer.getWorldProxy().allUnitsWoTrees()) {
+            if (!turnContainer.isAllyUnit(unit) ||
+                    ((projectileType == ProjectileType.FIREBALL || projectileType == ProjectileType.FROST_BOLT) &&
+                            unit instanceof Minion) || !(unit instanceof LivingUnit)) {
+                continue;
+            }
+            if (CastProjectileTacticBuilders.isInCastRange(turnContainer, enemy, unit, projectileType) &&
+                    ((LivingUnit) unit).getLife() > game.getMagicMissileDirectDamage()) {
+                hasAlternativeTargets = true;
+            }
+        }
+        if (!hasAlternativeTargets) {
+            return maxForwardSteps;
+        } else {
+            return lifeAdvantageForwardSteps;
+        }
     }
 
     private static boolean hasEnemyInUnignorableRange(TurnContainer turnContainer) {
@@ -280,7 +358,30 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         return false;
     }
 
-    public enum Action {
+    public static class Action {
+
+        private final ActionType actionType;
+        private final Integer duration;
+
+        public Action(ActionType actionType) {
+            this(actionType, null);
+        }
+
+        public Action(ActionType actionType, Integer duration) {
+            this.actionType = actionType;
+            this.duration = duration;
+        }
+
+        public ActionType getActionType() {
+            return actionType;
+        }
+
+        public Integer getDuration() {
+            return duration;
+        }
+    }
+
+    public enum ActionType {
         RETREAT,
         PUSH,
         STAY,

@@ -23,6 +23,7 @@ public class Memory {
     private Message selfMessage;
     private Map<Long, Integer> allyWizardMessageIndex;
     private WizardRole assignedRole;
+    private int expectedPushDuration;
 
     public Memory() {
         this.allyGuardianTowers = new ArrayList<>();
@@ -35,6 +36,7 @@ public class Memory {
         this.wentForBonusPrevTurn = false;
         this.shadowWizards = new HashMap<>();
         this.allyWizardMessageIndex = new HashMap<>();
+        this.expectedPushDuration = 0;
     }
 
     public LocationType getLane() {
@@ -119,5 +121,13 @@ public class Memory {
 
     public void setAssignedRole(WizardRole assignedRole) {
         this.assignedRole = assignedRole;
+    }
+
+    public int getExpectedPushDuration() {
+        return expectedPushDuration;
+    }
+
+    public void setExpectedPushDuration(int expectedPushDuration) {
+        this.expectedPushDuration = expectedPushDuration;
     }
 }
