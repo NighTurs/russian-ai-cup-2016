@@ -234,13 +234,13 @@ public class CastRangeService {
                     game,
                     isOptimistic);
             if (centerOffset.isPresent()) {
-                d2 = d;
-            } else {
                 d1 = d;
+            } else {
+                d2 = d;
             }
         }
         Optional<Double> centerOffsetOpt =
-                simulateCastsFixedDist(d2, angle, rangeAmpl, speedAmpl, projectileType, worldProxy, game, isOptimistic);
+                simulateCastsFixedDist(d1, angle, rangeAmpl, speedAmpl, projectileType, worldProxy, game, isOptimistic);
         Double centerOffset = centerOffsetOpt.orElseThrow(() -> new RuntimeException(
                 "Can't happen. Some minimal cast distance is always undodgeable"));
         putToExtremeCastProps(projectileType, speedAmpl, rangeAmpl, angle, d2, centerOffset, extremeCastProps);
@@ -293,7 +293,7 @@ public class CastRangeService {
                 worldProxy,
                 game,
                 isOptimistic);
-        if (maxDodge >
+        if (maxDodge <=
                 game.getWizardRadius() + CastProjectileTacticBuilders.projectileEffectiveRadius(game, projectileType)) {
             return Optional.of(d1);
         } else {
