@@ -21,7 +21,7 @@ public class ApplyHasteTacticBuilder extends ApplyStatusTacticBuilder {
         WizardProxy target = targetOpt.get();
         int untilCast = untilNextStatus(self, StatusType.HASTENED, game);
         Point targetPoint = new Point(target.getX(), target.getY());
-        if (untilCast == 0 && CastProjectileTacticBuilders.inCastSector(turnContainer, targetPoint)) {
+        if (untilCast == 0 && CastProjectileTacticBuilders.inCastSector(turnContainer, self, targetPoint)) {
             MoveBuilder moveBuilder = new MoveBuilder();
             moveBuilder.setAction(ActionType.HASTE);
             moveBuilder.setStatusTargetId(target.getId());

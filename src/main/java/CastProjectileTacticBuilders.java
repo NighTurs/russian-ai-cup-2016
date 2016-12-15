@@ -30,12 +30,11 @@ public final class CastProjectileTacticBuilders {
         return self.getCastRange() + minion.getRadius();
     }
 
-    public static boolean inCastSector(TurnContainer turnContainer, Point point) {
-        WizardProxy self = turnContainer.getSelf();
-        if (Math.abs(self.getX() - point.getX()) < E && Math.abs(self.getY() - point.getY()) < E) {
+    public static boolean inCastSector(TurnContainer turnContainer, WizardProxy wizard, Point point) {
+        if (Math.abs(wizard.getX() - point.getX()) < E && Math.abs(wizard.getY() - point.getY()) < E) {
             return true;
         } else {
-            double angle = self.getAngleTo(point.getX(), point.getY());
+            double angle = wizard.getAngleTo(point.getX(), point.getY());
             return WizardProxy.getWizardCastSector(turnContainer.getGame()) > Math.abs(angle);
         }
     }

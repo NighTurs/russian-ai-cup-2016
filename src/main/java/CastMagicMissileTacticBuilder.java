@@ -34,7 +34,7 @@ public class CastMagicMissileTacticBuilder implements TacticBuilder {
                     self,
                     bestTargetOpt.get(),
                     ProjectileType.MAGIC_MISSILE) &&
-                    CastProjectileTacticBuilders.inCastSector(turnContainer, aimPoint) && untilCast == 0) {
+                    CastProjectileTacticBuilders.inCastSector(turnContainer, self, aimPoint) && untilCast == 0) {
                 moveBuilder.setAction(ActionType.MAGIC_MISSILE);
                 moveBuilder.setCastAngle(self.getAngleTo(aimPoint.getX(), aimPoint.getY()));
                 moveBuilder.setMinCastDistance(self.getDistanceTo(aimPoint.getX(), aimPoint.getY()) -

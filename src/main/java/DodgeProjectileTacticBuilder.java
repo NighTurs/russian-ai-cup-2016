@@ -9,6 +9,9 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
     private static final int ANGLES_TO_TEST = 40;
     private static final double ANGLE_STEP = Math.PI * 2 / ANGLES_TO_TEST;
     private static final int PROJECTILE_IGNORE_RANGE = 800;
+    private static final List<ProjectileType> PROJECTILE_TYPES = Arrays.asList(ProjectileType.MAGIC_MISSILE,
+            ProjectileType.FROST_BOLT,
+            ProjectileType.FIREBALL);
 
     @Override
     public Optional<Tactic> build(TurnContainer turnContainer) {
@@ -66,15 +69,56 @@ public class DodgeProjectileTacticBuilder implements TacticBuilder {
                     self.getRadius() + projectile.getRadius(),
                     game,
                     world);
-            dodgeOptions.forEach(x -> {
-                if (!dodgeOptionsIdCount.containsKey(x.getId())) {
-                    dodgeOptionsIdCount.put(x.getId(), 1);
-                } else {
-                    dodgeOptionsIdCount.put(x.getId(), dodgeOptionsIdCount.get(x.getId()) + 1);
-                }
-            });
+
             allDodgeOptions.addAll(dodgeOptions);
         }
+
+        for (WizardProxy wizard : world.getWizards()) {
+            if (wizard.getFaction() == self.getFaction()) {
+                continue;
+            }
+            double dist = self.getDistanceTo(wizard);
+            for (ProjectileType projectileType : PROJECTILE_TYPES) {
+                if (!CastProjectileTacticBuilders.isProjectileLearned(turnContainer, wizard, projectileType)) {
+                    continue;
+                }
+                CastRangeService.CastMeta castMeta = turnContainer.getCastRangeService()
+                        .castRangeToWizardOptimistic(wizard, self, game, projectileType);
+                Point castPoint = self.faceOffsetPoint(castMeta.getCenterOffset());
+                if (dist <= castMeta.getDistToCenter() &&
+                        CastProjectileTacticBuilders.untilNextProjectile(wizard, projectileType, game) == 0 &&
+                        CastProjectileTacticBuilders.inCastSector(turnContainer, self, castPoint)) {
+
+                    List<DodgeOption> dodgeOptions = tryDodgeDirections(new Point(self.getX(), self.getY()),
+                            self.getId(),
+                            self.getAngle(),
+                            self.getWizardForwardSpeed(game),
+                            self.getWizardBackwardSpeed(game),
+                            self.getWizardStrafeSpeed(game),
+                            self.getWizardMaxTurnAngle(game),
+                            new Point(wizard.getX(), wizard.getY()),
+                            projectileType,
+                            MathMethods.distPoint(wizard.getX(),
+                                    wizard.getY(),
+                                    castPoint.getX(),
+                                    castPoint.getY(),
+                                    wizard.getCastRange()),
+                            true,
+                            self.getRadius() + CastProjectileTacticBuilders.projectileRadius(game, projectileType),
+                            game,
+                            world);
+                    allDodgeOptions.addAll(dodgeOptions);
+                }
+            }
+        }
+
+        allDodgeOptions.forEach(x -> {
+            if (!dodgeOptionsIdCount.containsKey(x.getId())) {
+                dodgeOptionsIdCount.put(x.getId(), 1);
+            } else {
+                dodgeOptionsIdCount.put(x.getId(), dodgeOptionsIdCount.get(x.getId()) + 1);
+            }
+        });
 
         Optional<DodgeOption> dodgeOptionOpt = allDodgeOptions.stream().sorted((a, b) -> {
             int aCount = dodgeOptionsIdCount.get(a.getId());

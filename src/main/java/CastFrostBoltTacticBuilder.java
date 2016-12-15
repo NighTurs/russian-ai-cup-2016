@@ -30,7 +30,7 @@ public class CastFrostBoltTacticBuilder implements TacticBuilder {
                     self,
                     bestTargetOpt.get(),
                     ProjectileType.FROST_BOLT) &&
-                    CastProjectileTacticBuilders.inCastSector(turnContainer, aimPoint) && untilCast == 0) {
+                    CastProjectileTacticBuilders.inCastSector(turnContainer, self, aimPoint) && untilCast == 0) {
                 moveBuilder.setAction(ActionType.FROST_BOLT);
                 moveBuilder.setCastAngle(self.getAngleTo(aimPoint.getX(), aimPoint.getY()));
                 moveBuilder.setMinCastDistance(self.getDistanceTo(aimPoint.getX(), aimPoint.getY()) -

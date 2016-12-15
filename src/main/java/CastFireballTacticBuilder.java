@@ -38,7 +38,7 @@ public class CastFireballTacticBuilder implements TacticBuilder {
         }
 
         MoveBuilder moveBuilder = new MoveBuilder();
-        if (CastProjectileTacticBuilders.inCastSector(turnContainer, targetPoint) && untilCast == 0) {
+        if (CastProjectileTacticBuilders.inCastSector(turnContainer, self, targetPoint) && untilCast == 0) {
             moveBuilder.setAction(ActionType.FIREBALL);
             moveBuilder.setCastAngle(self.getAngleTo(targetPoint.getX(), targetPoint.getY()));
             moveBuilder.setMinCastDistance(self.getDistanceTo(targetPoint.getX(), targetPoint.getY()));
