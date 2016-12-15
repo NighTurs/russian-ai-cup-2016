@@ -73,7 +73,8 @@ public class CastFireballTacticBuilder implements TacticBuilder {
             }
             if (unit instanceof Building) {
                 Building building = (Building) unit;
-                if (dist < self.getCastRange() + game.getFireballExplosionMinDamageRange() + building.getRadius()) {
+                if (!turnContainer.getMapUtils().isIgnorableBuilding(self, building) &&
+                        dist < self.getCastRange() + game.getFireballExplosionMinDamageRange() + building.getRadius()) {
                     bestBuilding = building;
                 }
             } else if (unit instanceof WizardProxy) {

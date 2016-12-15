@@ -192,6 +192,13 @@ public class MapUtils {
         return false;
     }
 
+    public boolean isIgnorableBuilding(WizardProxy self, Building building) {
+        LocationType selfLocation = getLocationType(self.getId());
+        LocationType buildingLocation = getLocationType(building.getId());
+        return (selfLocation == LocationType.BOTTOM_LANE && buildingLocation == LocationType.MIDDLE_LANE) ||
+                (selfLocation == LocationType.MIDDLE_LANE && buildingLocation == LocationType.TOP_LANE);
+    }
+
     private double forestTriangleSquare(int ind) {
         List<Point> p = forestTriangles.get(ind);
         return triangleSquare(p.get(0).getX(),

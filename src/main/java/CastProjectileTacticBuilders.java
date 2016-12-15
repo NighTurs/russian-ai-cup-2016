@@ -96,7 +96,8 @@ public final class CastProjectileTacticBuilders {
         }
 
         for (Building building : world.getBuildings()) {
-            if (!turnContainer.isOffensiveBuilding(building)) {
+            if (!turnContainer.isOffensiveBuilding(building) ||
+                    turnContainer.getMapUtils().isIgnorableBuilding(self, building)) {
                 continue;
             }
             double dist = building.getDistanceTo(self);

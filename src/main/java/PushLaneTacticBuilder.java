@@ -109,7 +109,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         double minDist = Double.MAX_VALUE;
         Unit nearestEnemy = null;
         for (Unit unit : turnContainer.getWorldProxy().getAllUnitsNearby()) {
-            if (!turnContainer.isOffensiveUnit(unit)) {
+            if (!turnContainer.isOffensiveUnit(unit) || (unit instanceof Building &&
+                    turnContainer.getMapUtils().isIgnorableBuilding(turnContainer.getSelf(), (Building) unit))) {
                 continue;
             }
             double dist = unit.getDistanceTo(turnContainer.getSelf());
@@ -188,8 +189,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     private Action actionBecauseOfBuilding(TurnContainer turnContainer, Building building) {
         WizardProxy self = turnContainer.getSelf();
         // Middle tower near enemy base prevents me from moving forward, just ignore it
-        if (turnContainer.getMapUtils().getLocationType(self.getId()) == LocationType.BOTTOM_LANE &&
-                turnContainer.getMapUtils().getLocationType(building.getId()) == LocationType.MIDDLE_LANE) {
+        if (turnContainer.getMapUtils().isIgnorableBuilding(self, building)) {
             return NONE_ACTION;
         }
         int c = 0;
