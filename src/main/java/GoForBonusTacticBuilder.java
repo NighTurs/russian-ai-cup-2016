@@ -7,6 +7,7 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
     private static final int ALLY_HALF_MANHATTAN_BASES = 9;
     private static final int ARRIVE_BEFORE_TICKS = 80;
     private static final int EXPECTED_TICKS_TO_BONUS_ERROR = 400;
+    private static final int ACCEPTABLE_TICKS_TO_TAKE_BONUS_WITH_TEAM = 600;
     private static final int ACCEPTABLE_TICKS_TO_TAKE_BONUS_WITH_SKILLS = 1000;
     private static final int ACCEPTABLE_TICKS_TO_TAKE_BONUS_WITHOUT_SKILLS = 1300;
     private static final int KEEP_DISTANCE_TO_BONUS = 2;
@@ -130,6 +131,9 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
     }
 
     private int getAcceptableTicksToTakeBonus(TurnContainer turnContainer) {
+        if (turnContainer.getGame().isRawMessagesEnabled()) {
+            return ACCEPTABLE_TICKS_TO_TAKE_BONUS_WITH_TEAM;
+        }
         if (turnContainer.getGame().isSkillsEnabled()) {
             if (turnContainer.getSelf().isSkillLearned(SkillType.FIREBALL)) {
                 return ACCEPTABLE_TICKS_TO_TAKE_BONUS_WITHOUT_SKILLS / 2;
