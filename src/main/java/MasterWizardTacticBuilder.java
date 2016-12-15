@@ -38,11 +38,14 @@ public class MasterWizardTacticBuilder implements TacticBuilder {
             Queue<WizardRole> roles = new ArrayDeque<>(Arrays.asList(WizardRole.FROST_BOLT,
                     WizardRole.HASTE,
                     WizardRole.RANGE,
-                    WizardRole.SHIELD,
+                    WizardRole.FIREBALL_SOLO,
                     WizardRole.FIREBALL_SOLO));
             for (WizardProxy wizard : allyWizardsExceptMe) {
+                WizardRole role = roles.poll();
                 messages[memory.getAllyWizardMessageIndex().get(wizard.getId())] =
-                        new Message(LaneType.MIDDLE, null, roleMessage(roles.poll()));
+                        new Message(role == WizardRole.FIREBALL_SOLO ? LaneType.TOP : LaneType.MIDDLE,
+                                null,
+                                roleMessage(role));
             }
             moveBuilder.setMessages(messages);
             turnContainer.getMemory().setSelfMessage(new Message(LaneType.BOTTOM, null, roleMessage(roles.poll())));
