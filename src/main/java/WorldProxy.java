@@ -35,7 +35,7 @@ public final class WorldProxy {
         this.minions = unmodifiableList(world.getMinions());
         this.projectiles = unmodifiableList(world.getProjectiles());
         this.bonuses = unmodifiableList(world.getBonuses());
-        this.buildings = buildingControl.buildingsIncludingEnemy();
+        this.buildings = buildingControl.getBuildingsIncludingEnemy();
         this.allyBase = allyBase(world.getBuildings(), world.getMyPlayer());
 
         this.trees = unmodifiableList(world.getTrees());
@@ -188,4 +188,19 @@ public final class WorldProxy {
         }
         throw new RuntimeException("Ally base not found");
     }
+
+    public static List<LivingUnit> allyAllyUnits(Wizard self, World world) {
+        List<LivingUnit> allyUnits = new ArrayList<>();
+        allyUnits.addAll(Arrays.stream(world.getWizards())
+                .filter(x -> x.getFaction() == self.getFaction())
+                .collect(Collectors.toList()));
+        allyUnits.addAll(Arrays.stream(world.getMinions())
+                .filter(x -> x.getFaction() == self.getFaction())
+                .collect(Collectors.toList()));
+        allyUnits.addAll(Arrays.stream(world.getBuildings())
+                .filter(x -> x.getFaction() == self.getFaction())
+                .collect(Collectors.toList()));
+        return allyUnits;
+    }
+
 }

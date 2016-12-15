@@ -1,6 +1,4 @@
-import model.Building;
-import model.Message;
-import model.StatusType;
+import model.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,6 +22,8 @@ public class Memory {
     private Map<Long, Integer> allyWizardMessageIndex;
     private WizardRole assignedRole;
     private int expectedPushDuration;
+    private Map<Integer, Integer> buildingCooldownByX;
+    private Map<Long, Integer> lifeByLivingUnit;
 
     public Memory() {
         this.allyGuardianTowers = new ArrayList<>();
@@ -37,6 +37,8 @@ public class Memory {
         this.shadowWizards = new HashMap<>();
         this.allyWizardMessageIndex = new HashMap<>();
         this.expectedPushDuration = 0;
+        this.buildingCooldownByX = new HashMap<>();
+        this.lifeByLivingUnit = new HashMap<>();
     }
 
     public LocationType getLane() {
@@ -129,5 +131,13 @@ public class Memory {
 
     public void setExpectedPushDuration(int expectedPushDuration) {
         this.expectedPushDuration = expectedPushDuration;
+    }
+
+    public Map<Integer, Integer> getBuildingCooldownByX() {
+        return buildingCooldownByX;
+    }
+
+    public Map<Long, Integer> getLifeByLivingUnit() {
+        return lifeByLivingUnit;
     }
 }

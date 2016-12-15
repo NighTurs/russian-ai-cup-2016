@@ -9,16 +9,17 @@ public class BuildingControl {
 
     private static final int SAME_BUILDINGS_THRESHOLD = 1;
     private static final int VISION_RANGE_DEC_TO_BE_SURE = 5;
+    private final List<Building> buildingsIncludingEnemy;
 
-    private final World world;
-    private final Memory memory;
-
-    public BuildingControl(Memory memory, World world) {
-        this.memory = memory;
-        this.world = world;
+    public BuildingControl(Wizard self, Memory memory, World world, Game game) {
+        this.buildingsIncludingEnemy = buildingsIncludingEnemy(self, memory, world, game);
     }
 
-    public List<Building> buildingsIncludingEnemy() {
+    public List<Building> getBuildingsIncludingEnemy() {
+        return buildingsIncludingEnemy;
+    }
+
+    private static List<Building> buildingsIncludingEnemy(Wizard self, Memory memory, World world, Game game) {
         if (memory.getAllyGuardianTowers().isEmpty()) {
             for (Building building : world.getBuildings()) {
                 if (building.getType() == BuildingType.GUARDIAN_TOWER) {
@@ -27,14 +28,16 @@ public class BuildingControl {
             }
         }
         List<Building> allBuildings = new ArrayList<>();
-        List<Unit> allUnitsWithVision = new ArrayList<>();
+        List<LivingUnit> allUnitsWithVision = new ArrayList<>();
         allUnitsWithVision.addAll(Arrays.asList(world.getMinions()));
         allUnitsWithVision.addAll(Arrays.asList(world.getWizards()));
         allUnitsWithVision.addAll(Arrays.asList(world.getBuildings()));
+        List<LivingUnit> allAllyUnits = WorldProxy.allyAllyUnits(self, world);
 
         outerLoop:
         for (Building ally : memory.getAllyGuardianTowers()) {
-            Building enemyGuardianTower = enemyMirrorStructure(ally);
+            updateBuildingCooldown(ally, allAllyUnits, world, memory, game);
+            Building enemyGuardianTower = enemyMirrorStructure(ally, memory, world);
             for (Building building : world.getBuildings()) {
                 if (building.getDistanceTo(enemyGuardianTower) < SAME_BUILDINGS_THRESHOLD) {
                     continue outerLoop;
@@ -71,8 +74,9 @@ public class BuildingControl {
                 memory.getDestroyedEnemyGuardianTowers().add(enemyGuardianTower);
             }
         }
-        Building enemyBase =
-                enemyMirrorStructure(WorldProxy.allyBase(world.getBuildings(), world.getMyPlayer()));
+        Building allyBase = WorldProxy.allyBase(world.getBuildings(), world.getMyPlayer());
+        updateBuildingCooldown(allyBase, allAllyUnits, world, memory, game);
+        Building enemyBase = enemyMirrorStructure(allyBase, memory, world);
         boolean alreadyInVision = false;
         for (Building building : world.getBuildings()) {
             if (building.getDistanceTo(enemyBase) < SAME_BUILDINGS_THRESHOLD) {
@@ -83,12 +87,69 @@ public class BuildingControl {
             allBuildings.add(enemyBase);
         }
         allBuildings.addAll(unmodifiableList(world.getBuildings()));
+
+        memory.getLifeByLivingUnit().clear();
+        for (LivingUnit livingUnit : allUnitsWithVision) {
+            memory.getLifeByLivingUnit().put(livingUnit.getId(), livingUnit.getLife());
+        }
         return allBuildings;
     }
 
-    private Building enemyMirrorStructure(Building allyTower) {
+    private static void updateBuildingCooldown(Building allyBuilding,
+                                               List<LivingUnit> allAllyUnits,
+                                               World world,
+                                               Memory memory,
+                                               Game game) {
+        double x = world.getWidth() - allyBuilding.getX();
+        int key = (int) x;
+        double y = world.getHeight() - allyBuilding.getY();
+        for (Building building : memory.getDestroyedEnemyGuardianTowers()) {
+            if (building.getDistanceTo(x, y) < SAME_BUILDINGS_THRESHOLD) {
+                return;
+            }
+        }
+        for (Building building : world.getBuildings()) {
+            if (building.getDistanceTo(x, y) < SAME_BUILDINGS_THRESHOLD) {
+                memory.getBuildingCooldownByX().put(key, building.getRemainingActionCooldownTicks());
+                return;
+            }
+        }
+        memory.getBuildingCooldownByX().putIfAbsent(key, 0);
+
+        if (memory.getBuildingCooldownByX().get(key) == 0) {
+            LivingUnit bestUnit = null;
+            int bestEffectiveDamage = 0;
+            int bestHP = 0;
+            for (LivingUnit livingUnit : allAllyUnits) {
+                double dist = livingUnit.getDistanceTo(x, y);
+                Integer previousLife = memory.getLifeByLivingUnit().get(livingUnit.getId());
+                if (previousLife == null) {
+                    continue;
+                }
+                if (dist <= allyBuilding.getAttackRange() &&
+                        ((bestEffectiveDamage < Math.min(allyBuilding.getDamage(), previousLife) ||
+                                (bestEffectiveDamage == Math.min(allyBuilding.getDamage(), previousLife) &&
+                                        bestHP > previousLife)))) {
+                    bestEffectiveDamage = Math.min(allyBuilding.getDamage(), previousLife);
+                    bestHP = previousLife;
+                    bestUnit = livingUnit;
+                }
+            }
+            if (bestUnit != null) {
+                int previousLife = memory.getLifeByLivingUnit().get(bestUnit.getId());
+                if (previousLife - bestUnit.getLife() >= allyBuilding.getDamage() / 2) {
+                    memory.getBuildingCooldownByX().put(key, allyBuilding.getCooldownTicks() - 1);
+                    return;
+                }
+            }
+        }
+        memory.getBuildingCooldownByX().put(key, Math.max(0, memory.getBuildingCooldownByX().get(key) - 1));
+    }
+
+    private static Building enemyMirrorStructure(Building allyTower, Memory memory, World world) {
+        double x = world.getWidth() - allyTower.getX();
         return new Building(-allyTower.getId(),
-                world.getWidth() - allyTower.getX(),
+                x,
                 world.getHeight() - allyTower.getY(),
                 allyTower.getSpeedX(),
                 allyTower.getSpeedY(),
@@ -103,7 +164,7 @@ public class BuildingControl {
                 allyTower.getAttackRange(),
                 allyTower.getDamage(),
                 allyTower.getCooldownTicks(),
-                0);
+                memory.getBuildingCooldownByX().get((int) x));
     }
 
     private static <T> List<T> unmodifiableList(T[] array) {

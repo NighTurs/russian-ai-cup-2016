@@ -11,7 +11,7 @@ public class WizardControl {
 
     public WizardControl(Wizard self, Memory memory, World world, Game game) {
         Map<Long, WizardProxy> shadowWizards = memory.getShadowWizards();
-        List<LivingUnit> allyUnits = allyUnits(self, world);
+        List<LivingUnit> allyUnits = WorldProxy.allyAllyUnits(self, world);
         List<WizardProxy> newShadowWizards = new ArrayList<>();
         outer_loop:
         for (WizardProxy shadowWizard : shadowWizards.values()) {
@@ -109,19 +109,5 @@ public class WizardControl {
         } else {
             throw new RuntimeException("Unexpected unit type " + unit.getClass());
         }
-    }
-
-    private List<LivingUnit> allyUnits(Wizard self, World world) {
-        List<LivingUnit> allyUnits = new ArrayList<>();
-        allyUnits.addAll(Arrays.stream(world.getWizards())
-                .filter(x -> x.getFaction() == self.getFaction())
-                .collect(Collectors.toList()));
-        allyUnits.addAll(Arrays.stream(world.getMinions())
-                .filter(x -> x.getFaction() == self.getFaction())
-                .collect(Collectors.toList()));
-        allyUnits.addAll(Arrays.stream(world.getBuildings())
-                .filter(x -> x.getFaction() == self.getFaction())
-                .collect(Collectors.toList()));
-        return allyUnits;
     }
 }

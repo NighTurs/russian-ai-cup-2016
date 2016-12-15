@@ -21,7 +21,7 @@ public class TurnContainer {
         this.world = world;
         this.game = game;
         this.memory = memory;
-        this.buildingControl = new BuildingControl(memory, world);
+        this.buildingControl = new BuildingControl(self, memory, world, game);
         this.wizardControl = new WizardControl(self, memory, world, game);
         this.worldProxy = new WorldProxy(world, self, wizardControl, buildingControl, game, memory);
         this.mapUtils = new MapUtils(worldProxy);
