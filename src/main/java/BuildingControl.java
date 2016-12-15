@@ -53,8 +53,8 @@ public class BuildingControl {
                 double visionRange;
                 if (unit instanceof Minion) {
                     visionRange = ((Minion) unit).getVisionRange();
-                } else if (unit instanceof WizardProxy) {
-                    visionRange = ((WizardProxy) unit).getVisionRange();
+                } else if (unit instanceof Wizard) {
+                    visionRange = ((Wizard) unit).getVisionRange();
                 } else if (unit instanceof Building) {
                     visionRange = ((Building) unit).getVisionRange();
                 } else {
