@@ -65,7 +65,7 @@ public class WizardControl {
             double minRevealedBy = Double.MAX_VALUE;
             for (LivingUnit ally : allyUnits) {
                 double untilHidden = visionRange(ally) - ally.getDistanceTo(wizard);
-                if (untilHidden > 0 && minRevealedBy > untilHidden) {
+                if (untilHidden >= 0 && minRevealedBy > untilHidden) {
                     minRevealedBy = untilHidden;
                     revealedBy = ally;
                 }
