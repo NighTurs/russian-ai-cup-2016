@@ -126,14 +126,19 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         WizardProxy self = turnContainer.getSelf();
         Game game = turnContainer.getGame();
         double minTriggerTargetDist = Double.MAX_VALUE;
+        double minDistToMinion = Double.MAX_VALUE;
         for (Minion minion : turnContainer.getWorldProxy().getMinions()) {
             if (!turnContainer.isOffensiveUnit(minion)) {
                 continue;
             }
             double dist = turnContainer.getSelf().getDistanceTo(minion);
+            if (dist < minDistToMinion) {
+                minDistToMinion = dist;
+            }
             if (dist > (minion.getType() == MinionType.FETISH_BLOWDART ?
                     game.getFetishBlowdartAttackRange() :
-                    game.getOrcWoodcutterAttackRange()) + self.getWizardForwardSpeed(game) + self.getRadius()) {
+                    game.getOrcWoodcutterAttackRange()) + self.getRadius() + self.getWizardForwardSpeed(game) +
+                    game.getMinionSpeed()) {
                 continue;
             }
             double minDist = Double.MAX_VALUE;
@@ -149,7 +154,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                 minTriggerTargetDist = dist - minDist;
             }
         }
-        if (minTriggerTargetDist < self.getWizardForwardSpeed(turnContainer.getGame())) {
+        if (minTriggerTargetDist < self.getWizardForwardSpeed(turnContainer.getGame()) ||
+                minDistToMinion <= game.getStaffRange()) {
             return STAY_ACTION;
         } else {
             return new Action(ActionType.NONE,
