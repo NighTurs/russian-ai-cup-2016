@@ -10,8 +10,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
 
     private static final int TOWER_TARGETS_THRESHOLD = 1;
     private static final double RETREAT_BACKWARD_SPEED_MULTIPLIER = 0.9;
-    private static final double TOWER_RETREAT_BACKWARD_SPEED_MULTIPLIER = 0.7;
-    private static final int TOWER_RETREAT_SPARE_TICKS = 2;
+    private static final double TOWER_RETREAT_BACKWARD_SPEED_MULTIPLIER = 0.5;
+    private static final int TOWER_RETREAT_SPARE_TICKS = 15;
     private static final int IGNORE_RANGE = 800;
     private static final int POTENTIAL_ATTACK_RANGE = 810;
     private static final int LIFE_ADVANTAGE_FORWARD_STEPS = 5;
