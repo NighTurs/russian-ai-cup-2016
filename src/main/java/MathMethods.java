@@ -1,6 +1,7 @@
 import static java.lang.StrictMath.hypot;
 
 public final class MathMethods {
+    private static final double E = 1e-9;
 
     private MathMethods() {
         throw new UnsupportedOperationException("Instance not supported");
@@ -8,6 +9,9 @@ public final class MathMethods {
 
     public static Point distPoint(double fromX, double fromY, double toX, double toY, double dist) {
         double curDist = hypot(fromX - toX, fromY - toY);
+        if (curDist < E) {
+            return new Point(fromX, fromY);
+        }
         double proportion = dist / curDist;
         double deltaX = (toX - fromX) * proportion;
         double deltaY = (toY - fromY) * proportion;
@@ -17,6 +21,9 @@ public final class MathMethods {
     public static Point lineCircleIntersection(double x1, double x2, double y1, double y2, double cx, double cy) {
         double a = y1 - y2;
         double b = x2 - x1;
+        if (Math.abs(a) + Math.abs(b) < E) {
+            return new Point(x1, y1);
+        }
         double c = (x1 - x2) * y1 + (y2 - y1) * x1;
         double xi = (b * (b * cx - a * cy) - a * c) / (a * a + b * b);
         double yi = (a * (-b * cx + a * cy) - b * c) / (a * a + b * b);
@@ -26,6 +33,9 @@ public final class MathMethods {
     public static boolean isLineIntersectsCircle(double x1, double x2, double y1, double y2, double cx, double cy, double r) {
         double a = y1 - y2;
         double b = x2 - x1;
+        if (Math.abs(a) + Math.abs(b) < E) {
+            return hypot(x1 - cx, y1 - cy) <= r;
+        }
         double c = (x1 - x2) * y1 + (y2 - y1) * x1;
         double xi = (b * (b * cx - a * cy) - a * c) / (a * a + b * b);
         double yi = (a * (-b * cx + a * cy) - b * c) / (a * a + b * b);
