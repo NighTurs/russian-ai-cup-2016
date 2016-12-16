@@ -28,6 +28,13 @@ public class CastFireballTacticBuilder implements TacticBuilder {
                 targetPoint = wizard.faceOffsetPoint(turnContainer.getCastRangeService()
                         .castRangeToWizardPessimistic(self, wizard, game, ProjectileType.FIREBALL)
                         .getCenterOffset());
+            } else if (unit instanceof Building) {
+                Building building = (Building) unit;
+                targetPoint = MathMethods.distPoint(self.getX(),
+                        self.getY(),
+                        building.getX(),
+                        building.getY(),
+                        self.getDistanceTo(building) + building.getRadius());
             } else {
                 targetPoint = new Point(unit.getX(), unit.getY());
             }
@@ -67,10 +74,6 @@ public class CastFireballTacticBuilder implements TacticBuilder {
                 continue;
             }
             double dist = self.getDistanceTo(unit);
-            if (dist <
-                    self.getRadius() + game.getFireballExplosionMinDamageRange() + ((CircularUnit) unit).getRadius()) {
-                continue;
-            }
             if (unit instanceof Building) {
                 Building building = (Building) unit;
                 if (!turnContainer.getMapUtils().isIgnorableBuilding(self, building) &&
