@@ -74,9 +74,7 @@ public final class CastProjectileTacticBuilders {
                 continue;
             }
             double dist = wizard.getDistanceTo(self);
-            double castRange = turnContainer.getCastRangeService()
-                    .castRangeToWizardPessimistic(self, wizard, turnContainer.getGame(), projectileType)
-                    .getDistToCenter();
+            double castRange = castMeta(turnContainer, self, wizard, projectileType).getDistToCenter();
             if ((dist <= castRange && lowestLife > wizard.getLife()) ||
                     (dist <= castRange + castRangeBoost && minDist > dist)) {
                 lowestLife = wizard.getLife();
@@ -252,12 +250,10 @@ public final class CastProjectileTacticBuilders {
     public static Point targetAimPoint(TurnContainer turnContainer, Unit target, ProjectileType projectileType) {
         if (target instanceof WizardProxy) {
             WizardProxy enemy = (WizardProxy) target;
-            return enemy.faceOffsetPoint(turnContainer.getCastRangeService()
-                    .castRangeToWizardPessimistic(turnContainer.getSelf(),
-                            enemy,
-                            turnContainer.getGame(),
-                            projectileType)
-                    .getCenterOffset());
+            return enemy.faceOffsetPoint(CastProjectileTacticBuilders.castMeta(turnContainer,
+                    turnContainer.getSelf(),
+                    enemy,
+                    projectileType).getCenterOffset());
         } else {
             return new Point(target.getX(), target.getY());
         }
@@ -267,15 +263,28 @@ public final class CastProjectileTacticBuilders {
                                         WizardProxy wizard,
                                         Unit target,
                                         ProjectileType projectileType) {
+        double castRange = castMeta(turnContainer, wizard, target, projectileType).getDistToCenter();
+        return wizard.getDistanceTo(target) <= castRange;
+    }
+
+    public static CastRangeService.CastMeta castMeta(TurnContainer turnContainer,
+                                                     WizardProxy wizard,
+                                                     Unit target,
+                                                     ProjectileType projectileType) {
         if (target instanceof Building) {
-            return wizard.getDistanceTo(target) <=
-                    castRangeToBuilding(wizard, (Building) target, turnContainer.getGame(), projectileType);
+            return new CastRangeService.CastMeta(castRangeToBuilding(wizard,
+                    (Building) target,
+                    turnContainer.getGame(),
+                    projectileType), 0);
         } else if (target instanceof Minion) {
-            return wizard.getDistanceTo(target) <= castRangeToMinion(wizard, (Minion) target, turnContainer.getGame());
+            return new CastRangeService.CastMeta(castRangeToMinion(wizard, (Minion) target, turnContainer.getGame()),
+                    0);
         } else if (target instanceof WizardProxy) {
-            return wizard.getDistanceTo(target) <= turnContainer.getCastRangeService()
-                    .castRangeToWizardPessimistic(wizard, (WizardProxy) target, turnContainer.getGame(), projectileType)
-                    .getDistToCenter();
+            return turnContainer.getCastRangeService()
+                    .castRangeToWizardPessimistic(wizard,
+                            (WizardProxy) target,
+                            turnContainer.getGame(),
+                            projectileType);
         } else {
             throw new RuntimeException("Unexpected target type " + target.getClass());
         }

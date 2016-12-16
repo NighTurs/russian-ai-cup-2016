@@ -25,9 +25,10 @@ public class CastFireballTacticBuilder implements TacticBuilder {
             Unit unit = singlePointOpt.get();
             if (unit instanceof WizardProxy) {
                 WizardProxy wizard = (WizardProxy) unit;
-                targetPoint = wizard.faceOffsetPoint(turnContainer.getCastRangeService()
-                        .castRangeToWizardPessimistic(self, wizard, game, ProjectileType.FIREBALL)
-                        .getCenterOffset());
+                targetPoint = wizard.faceOffsetPoint(CastProjectileTacticBuilders.castMeta(turnContainer,
+                        self,
+                        wizard,
+                        ProjectileType.FIREBALL).getCenterOffset());
             } else if (unit instanceof Building) {
                 Building building = (Building) unit;
                 targetPoint = MathMethods.distPoint(self.getX(),
@@ -85,9 +86,7 @@ public class CastFireballTacticBuilder implements TacticBuilder {
                 if (!wizard.isRealOrFreshShadow()) {
                     continue;
                 }
-                CastRangeService.CastMeta castMeta = turnContainer.getCastRangeService()
-                        .castRangeToWizardPessimistic(self, wizard, game, ProjectileType.FIREBALL);
-                if (dist <= castMeta.getDistToCenter()) {
+                if (CastProjectileTacticBuilders.isInCastRange(turnContainer, self, wizard, ProjectileType.FIREBALL)) {
                     bestWizard = wizard;
                 }
             } else {
