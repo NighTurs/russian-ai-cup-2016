@@ -12,7 +12,10 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     private static final int IGNORE_RANGE = 800;
     private static final int POTENTIAL_ATTACK_RANGE = 810;
     private static final int LIFE_ADVANTAGE_FORWARD_STEPS = 5;
+    private static final int ENEMY_PREV_TURN_FORWARD_STEPS = 7;
+    private static final int DEFAULT_ENEMY_FORWARD_STEPS_WITH_COOLDOWN_ADVANTAGE = 7;
     private static final int MAX_PUSH_EXPECTATIONS = 30;
+    private static final int ENEMY_INTENTIONAL_MOVE_THRESHOLD = 2;
     private static final Action RETREAT_ACTION = new Action(ActionType.RETREAT);
     private static final Action STAY_ACTION = new Action(ActionType.STAY);
     private static final Action NONE_ACTION = new Action(ActionType.PUSH);
@@ -267,6 +270,11 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                     actionFireball.getActionType() == ActionType.STAY) {
                 shouldStay = true;
             }
+            if (self.getDistanceTo(enemy) < turnContainer.getCastRangeService()
+                    .castRangeToWizardPessimistic(self, enemy, game, ProjectileType.MAGIC_MISSILE).getDistToCenter() -
+                    enemy.getWizardForwardSpeed(game) * 2) {
+                shouldStay = true;
+            }
             //noinspection OptionalGetWithoutIsPresent
             minNoneDuration = Stream.of(actionMissle.getDuration(),
                     actionFireball.getDuration(),
@@ -318,6 +326,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                                           WizardProxy enemy,
                                           ProjectileType projectileType) {
         Game game = turnContainer.getGame();
+        ActionType enemyPrevAction = enemyPreviousTurnAction(turnContainer, enemy);
         int maxForwardSteps = (int) Math.ceil(Math.PI / self.getWizardMaxTurnAngle(game));
         int untilProjectileCast = CastProjectileTacticBuilders.untilNextProjectile(enemy, projectileType, game);
         int untilSameOrBetterProjectileCast = Integer.MAX_VALUE;
@@ -336,11 +345,14 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                     Math.min(CastProjectileTacticBuilders.untilNextProjectile(self, ProjectileType.MAGIC_MISSILE, game),
                             untilSameOrBetterProjectileCast);
         }
-        int lifeAdvantage = Math.max(0, enemy.getLife() - self.getLife());
+        int lifeAdvantage = enemy.getLife() - self.getLife();
         int lifeAdvantageForwardSteps = Math.min(maxForwardSteps,
                 (lifeAdvantage / game.getMagicMissileDirectDamage()) * LIFE_ADVANTAGE_FORWARD_STEPS);
-        if (untilProjectileCast > untilSameOrBetterProjectileCast) {
-            return lifeAdvantageForwardSteps;
+        int enemyPreviousTurnForwardSteps = enemyPrevAction == ActionType.RETREAT ?
+                -ENEMY_PREV_TURN_FORWARD_STEPS :
+                enemyPrevAction == ActionType.PUSH ? ENEMY_PREV_TURN_FORWARD_STEPS : 0;
+        if (untilProjectileCast >= untilSameOrBetterProjectileCast) {
+            return lifeAdvantageForwardSteps + enemyPreviousTurnForwardSteps;
         }
         boolean hasAlternativeTargets = false;
         for (Unit unit : turnContainer.getWorldProxy().allUnitsWoTrees()) {
@@ -357,12 +369,33 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         if (!hasAlternativeTargets) {
             return maxForwardSteps;
         } else {
-            return lifeAdvantageForwardSteps;
+            return DEFAULT_ENEMY_FORWARD_STEPS_WITH_COOLDOWN_ADVANTAGE + lifeAdvantageForwardSteps +
+                    enemyPreviousTurnForwardSteps;
         }
     }
 
     private static boolean hasEnemyInUnignorableRange(TurnContainer turnContainer) {
         return hasEnemyInRange(turnContainer, IGNORE_RANGE);
+    }
+
+    private ActionType enemyPreviousTurnAction(TurnContainer turnContainer, WizardProxy enemy) {
+        WizardProxy self = turnContainer.getSelf();
+        Memory memory = turnContainer.getMemory();
+        Point selfPrevious = memory.getWizardPreviousPosition().get(self.getId());
+        Point enemyPrevious = memory.getWizardPreviousPosition().get(enemy.getId());
+        if (selfPrevious == null || enemyPrevious == null) {
+            return ActionType.STAY;
+        }
+        double distDiff =
+                Math.hypot(enemyPrevious.getX() - selfPrevious.getX(), enemyPrevious.getY() - selfPrevious.getY()) -
+                        enemy.getDistanceTo(selfPrevious.getX(), selfPrevious.getY());
+        if (distDiff > ENEMY_INTENTIONAL_MOVE_THRESHOLD) {
+            return ActionType.PUSH;
+        } else if (distDiff < -ENEMY_INTENTIONAL_MOVE_THRESHOLD) {
+            return ActionType.RETREAT;
+        } else {
+            return ActionType.STAY;
+        }
     }
 
     public static boolean hasEnemyInPotentialAttackRange(TurnContainer turnContainer) {

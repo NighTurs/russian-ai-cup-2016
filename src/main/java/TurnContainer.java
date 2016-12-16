@@ -116,5 +116,9 @@ public class TurnContainer {
         return self.getFaction() == Faction.ACADEMY ? Faction.RENEGADES : Faction.ACADEMY;
     }
 
-
+    public void postTurn() {
+        for (WizardProxy wizard : worldProxy.getWizards()) {
+            memory.getWizardPreviousPosition().put(wizard.getId(), new Point(wizard.getX(), wizard.getY()));
+        }
+    }
 }

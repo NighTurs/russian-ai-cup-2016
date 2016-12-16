@@ -31,9 +31,6 @@ public class ProjectileControl {
                 }
             }
         }
-        for (WizardProxy wizard : world.getWizards()) {
-            memory.getWizardPreviousPosition().put(wizard.getId(), new Point(wizard.getX(), wizard.getY()));
-        }
         dissapearedProjectiles.forEach(x -> memory.getProjectileMeta().remove(x));
     }
 

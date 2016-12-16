@@ -68,16 +68,20 @@ public final class CastProjectileTacticBuilders {
 
         Unit bestUnit = null;
         int lowestLife = Integer.MAX_VALUE;
+        double minDist = Double.MAX_VALUE;
         for (WizardProxy wizard : world.getWizards()) {
             if (!turnContainer.isOffensiveWizard(wizard) || !wizard.isRealOrFreshShadow()) {
                 continue;
             }
             double dist = wizard.getDistanceTo(self);
-            if (dist <= turnContainer.getCastRangeService()
+            double castRange = turnContainer.getCastRangeService()
                     .castRangeToWizardPessimistic(self, wizard, turnContainer.getGame(), projectileType)
-                    .getDistToCenter() + castRangeBoost && lowestLife > wizard.getLife()) {
+                    .getDistToCenter();
+            if ((dist <= castRange && lowestLife > wizard.getLife()) ||
+                    (dist <= castRange + castRangeBoost && minDist > dist)) {
                 lowestLife = wizard.getLife();
                 bestUnit = wizard;
+                minDist = dist;
             }
         }
         if (bestUnit != null) {
@@ -270,10 +274,8 @@ public final class CastProjectileTacticBuilders {
             return wizard.getDistanceTo(target) <= castRangeToMinion(wizard, (Minion) target, turnContainer.getGame());
         } else if (target instanceof WizardProxy) {
             return wizard.getDistanceTo(target) <= turnContainer.getCastRangeService()
-                    .castRangeToWizardPessimistic(wizard,
-                            (WizardProxy) target,
-                            turnContainer.getGame(),
-                            projectileType).getDistToCenter();
+                    .castRangeToWizardPessimistic(wizard, (WizardProxy) target, turnContainer.getGame(), projectileType)
+                    .getDistToCenter();
         } else {
             throw new RuntimeException("Unexpected target type " + target.getClass());
         }

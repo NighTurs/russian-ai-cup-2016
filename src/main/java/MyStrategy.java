@@ -10,7 +10,7 @@ public final class MyStrategy implements Strategy {
     @Override
     public void move(Wizard self, World world, Game game, Move move) {
         this.turnContainer = new TurnContainer(self, world, game, memory);
-
         new TurnStrategy(turnContainer, move).findStrategy();
+        this.turnContainer.postTurn();
     }
 }
