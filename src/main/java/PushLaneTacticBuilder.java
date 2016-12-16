@@ -95,10 +95,11 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                 Optional<Unit> enemy = nearestEnemy(turnContainer);
                 //noinspection OptionalIsPresent
                 if (enemy.isPresent() && mapUtils.getLocationType(self.getId()) != LocationType.RIVER) {
+                    Point pushPoint = enemyUnitPushPoint(turnContainer, enemy.get());
                     mov = turnContainer.getPathFinder()
                             .findPath(self,
-                                    enemy.get().getX(),
-                                    enemy.get().getY(),
+                                    pushPoint.getX(),
+                                    pushPoint.getY(),
                                     ((CircularUnit) enemy.get()).getRadius(),
                                     true);
                     turnContainer.getMemory()
@@ -434,6 +435,19 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             }
         }
         return false;
+    }
+
+    private static Point enemyUnitPushPoint(TurnContainer turnContainer, Unit unit) {
+        if (unit instanceof Building) {
+            Building building = (Building) unit;
+            if (building.getType() == BuildingType.FACTION_BASE) {
+                return MathMethods.distPoint(building.getX(),
+                        building.getY(),
+                        turnContainer.getWorldProxy().getWidth(),
+                        0, building.getRadius() / 2);
+            }
+        }
+        return new Point(unit.getX(), unit.getY());
     }
 
     public static class Action {
