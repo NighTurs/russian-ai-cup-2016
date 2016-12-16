@@ -14,8 +14,11 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     private static final int LIFE_ADVANTAGE_FORWARD_STEPS = 5;
     private static final int ENEMY_PREV_TURN_FORWARD_STEPS = 7;
     private static final int DEFAULT_ENEMY_FORWARD_STEPS_WITH_COOLDOWN_ADVANTAGE = 7;
+    private static final int DEFAULT_ENEMY_FORWARD_STEPS_WITH_TEAM_ADVANTAGE = 5;
     private static final int MAX_PUSH_EXPECTATIONS = 30;
     private static final int ENEMY_INTENTIONAL_MOVE_THRESHOLD = 2;
+    private static final double TEAM_HEALTH_ADVANTAGE_RATIO = 1.5;
+    private static final double TANK_TOWER_HIT_LIFE_THRESHOLD = 0.9;
     private static final Action RETREAT_ACTION = new Action(ActionType.RETREAT);
     private static final Action STAY_ACTION = new Action(ActionType.STAY);
     private static final Action NONE_ACTION = new Action(ActionType.PUSH);
@@ -214,6 +217,12 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         if (turnContainer.getMapUtils().isIgnorableBuilding(self, building)) {
             return NONE_ACTION;
         }
+        TeamHealthService teamHealthService = turnContainer.getTeamHealthService();
+        if (turnContainer.getGame().isRawMessagesEnabled() &&
+                teamHealthService.getHealthAlly() / TEAM_HEALTH_ADVANTAGE_RATIO > teamHealthService.getHealthEnemy() &&
+                self.getLife() / (double) self.getMaxLife()  >= TANK_TOWER_HIT_LIFE_THRESHOLD) {
+            return NONE_ACTION;
+        }
         int c = 0;
         for (Unit unit : turnContainer.getWorldProxy().allUnitsWoTrees()) {
             if (!(unit instanceof LivingUnit)) {
@@ -354,8 +363,16 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         int enemyPreviousTurnForwardSteps = enemyPrevAction == ActionType.RETREAT ?
                 -ENEMY_PREV_TURN_FORWARD_STEPS :
                 enemyPrevAction == ActionType.PUSH ? ENEMY_PREV_TURN_FORWARD_STEPS : 0;
+        TeamHealthService teamHealthService = turnContainer.getTeamHealthService();
+        int enemyTeamAdvangateForwardSteps = 0;
+        if (teamHealthService.getHealthAlly() / TEAM_HEALTH_ADVANTAGE_RATIO > teamHealthService.getHealthEnemy()) {
+            enemyTeamAdvangateForwardSteps = -DEFAULT_ENEMY_FORWARD_STEPS_WITH_TEAM_ADVANTAGE;
+        } else if (teamHealthService.getHealthEnemy() / TEAM_HEALTH_ADVANTAGE_RATIO >
+                teamHealthService.getHealthAlly()) {
+            enemyTeamAdvangateForwardSteps = DEFAULT_ENEMY_FORWARD_STEPS_WITH_TEAM_ADVANTAGE;
+        }
         if (untilProjectileCast >= untilSameOrBetterProjectileCast) {
-            return lifeAdvantageForwardSteps + enemyPreviousTurnForwardSteps;
+            return lifeAdvantageForwardSteps + enemyPreviousTurnForwardSteps + enemyTeamAdvangateForwardSteps;
         }
         boolean hasAlternativeTargets = false;
         for (Unit unit : turnContainer.getWorldProxy().allUnitsWoTrees()) {
@@ -373,7 +390,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             return maxForwardSteps;
         } else {
             return DEFAULT_ENEMY_FORWARD_STEPS_WITH_COOLDOWN_ADVANTAGE + lifeAdvantageForwardSteps +
-                    enemyPreviousTurnForwardSteps;
+                    enemyPreviousTurnForwardSteps + enemyTeamAdvangateForwardSteps;
         }
     }
 

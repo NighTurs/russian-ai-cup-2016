@@ -14,6 +14,7 @@ public class TurnContainer {
     private final BuildingControl buildingControl;
     private final CastRangeService castRangeService;
     private final WizardControl wizardControl;
+    private final TeamHealthService teamHealthService;
     private final Memory memory;
 
     public TurnContainer(Wizard self, World world, Game game, Memory memory) {
@@ -33,6 +34,7 @@ public class TurnContainer {
             memory.setCastRangeService(new CastRangeService(worldProxy, game));
         }
         this.castRangeService = memory.getCastRangeService();
+        this.teamHealthService = new TeamHealthService(this.self, worldProxy);
     }
 
     public WizardProxy getSelf() {
@@ -73,6 +75,10 @@ public class TurnContainer {
 
     public CastRangeService getCastRangeService() {
         return castRangeService;
+    }
+
+    public TeamHealthService getTeamHealthService() {
+        return teamHealthService;
     }
 
     public boolean isOffensiveMinion(Minion minion) {
