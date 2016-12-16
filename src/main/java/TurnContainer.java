@@ -34,7 +34,7 @@ public class TurnContainer {
             memory.setCastRangeService(new CastRangeService(worldProxy, game));
         }
         this.castRangeService = memory.getCastRangeService();
-        this.teamHealthService = new TeamHealthService(this.self, worldProxy);
+        this.teamHealthService = new TeamHealthService(this.self, worldProxy, this.game);
     }
 
     public WizardProxy getSelf() {
