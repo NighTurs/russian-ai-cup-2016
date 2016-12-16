@@ -1,6 +1,5 @@
 import model.Faction;
 import model.Game;
-import model.StatusType;
 
 public class TeamHealthService {
     private static final int SURROUNDINGS_THRESHOLD = 1000;
@@ -14,12 +13,10 @@ public class TeamHealthService {
             if (self.getDistanceTo(wizard) > SURROUNDINGS_THRESHOLD) {
                 continue;
             }
-            double shieldFactor =
-                    wizard.hasBonus(StatusType.SHIELDED) ? 1 + game.getShieldedDirectDamageAbsorptionFactor() : 1;
             if (wizard.getFaction() == Faction.ACADEMY) {
-                healthAcademySum += wizard.getLife() * shieldFactor;
+                healthAcademySum += wizard.getShieldedLife(game);
             } else {
-                healthRenegadesSum += wizard.getLife() * shieldFactor;
+                healthRenegadesSum += wizard.getShieldedLife(game);
             }
         }
         if (self.getFaction() == Faction.ACADEMY) {

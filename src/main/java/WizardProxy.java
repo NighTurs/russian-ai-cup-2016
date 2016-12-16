@@ -257,6 +257,10 @@ public class WizardProxy extends LivingUnit {
         return false;
     }
 
+    public double getShieldedLife(Game game) {
+        return getLife() * (hasBonus(StatusType.SHIELDED) ? 1 + game.getShieldedDirectDamageAbsorptionFactor() : 1);
+    }
+
     static double getWizardForwardSpeed(WizardProxy wizard, Game game) {
         return movementFactor(wizard, game) * game.getWizardForwardSpeed();
     }
