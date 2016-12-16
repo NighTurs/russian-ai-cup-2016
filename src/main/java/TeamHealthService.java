@@ -1,11 +1,12 @@
 import model.Faction;
+import model.Game;
 
 public class TeamHealthService {
     private static final int SURROUNDINGS_THRESHOLD = 1000;
     private final int healthAlly;
     private final int healthEnemy;
 
-    public TeamHealthService(WizardProxy self, WorldProxy world) {
+    public TeamHealthService(WizardProxy self, WorldProxy world, Game game) {
         int healthAcademySum = 0;
         int healthRenegadesSum = 0;
         for (WizardProxy wizard : world.getWizards()) {
@@ -15,7 +16,7 @@ public class TeamHealthService {
             if (wizard.getFaction() == Faction.ACADEMY) {
                 healthAcademySum += wizard.getLife();
             } else {
-                healthRenegadesSum = wizard.getLife();
+                healthRenegadesSum += wizard.getLife();
             }
         }
         if (self.getFaction() == Faction.ACADEMY) {
