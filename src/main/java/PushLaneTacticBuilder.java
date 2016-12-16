@@ -36,6 +36,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
 
         Point pushWaypoint = null;
         Point retreatWaypoint = null;
+        LocationType myLocation = mapUtils.getLocationType(self.getId());
 
         if (enemiesNearby) {
             Action buildingAction = actionBecauseOfBuildings(turnContainer);
@@ -45,7 +46,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                     minionAction.getActionType() == ActionType.RETREAT ||
                     wizardsAction.getActionType() == ActionType.RETREAT) {
                 action = RETREAT_ACTION;
-                if (turnContainer.getGame().isRawMessagesEnabled() && wizardsAction.getCustomRetreatPoint() != null) {
+                if (turnContainer.getGame().isRawMessagesEnabled() && wizardsAction.getCustomRetreatPoint() != null &&
+                        lane == myLocation) {
                     retreatWaypoint = wizardsAction.getCustomRetreatPoint();
                 }
             } else if (buildingAction.getActionType() == ActionType.STAY ||
@@ -58,7 +60,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                         .filter(Objects::nonNull)
                         .min(Integer::compare);
                 action = new Action(ActionType.PUSH, minDuration.isPresent() ? minDuration.get() : 0);
-                if (turnContainer.getGame().isRawMessagesEnabled() && wizardsAction.getCustomPushPoint() != null) {
+                if (turnContainer.getGame().isRawMessagesEnabled() && wizardsAction.getCustomPushPoint() != null &&
+                        lane == myLocation) {
                     pushWaypoint = wizardsAction.getCustomPushPoint();
                 }
             }
