@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 
 public class MasterWizardTacticBuilder implements TacticBuilder {
 
-    private static final Set<String> SCARED_OF = new HashSet<>(Collections.singletonList("Recar"));
+    private static final Set<String> SCARED_OF = new HashSet<>(Collections.singletonList("NO_FEAR"));
     private static final List<LaneRole> ALL_MID = Arrays.asList(new LaneRole(LaneType.MIDDLE, WizardRole.FROST_BOLT),
             new LaneRole(LaneType.MIDDLE, WizardRole.HASTE_QUICK),
             new LaneRole(LaneType.MIDDLE, WizardRole.RANGE),
