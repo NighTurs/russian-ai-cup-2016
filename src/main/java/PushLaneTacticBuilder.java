@@ -18,7 +18,9 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     private static final int MAX_PUSH_EXPECTATIONS = 30;
     private static final int ENEMY_INTENTIONAL_MOVE_THRESHOLD = 2;
     private static final double TEAM_HEALTH_ADVANTAGE_RATIO = 1.5;
+    private static final double TEAM_LEVEL_ADVANTAGE_RATIO = 2;
     private static final double TANK_TOWER_HIT_LIFE_THRESHOLD = 0.9;
+    private static final int GO_HAM_WIZARDS_THRESHOLD = 3;
     private static final Action RETREAT_ACTION = new Action(ActionType.RETREAT);
     private static final Action STAY_ACTION = new Action(ActionType.STAY);
     private static final Action NONE_ACTION = new Action(ActionType.PUSH);
@@ -84,33 +86,39 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         Movement mov;
 
         turnContainer.getMemory().setExpectedPushDuration(0);
-        switch (action.getActionType()) {
-            case STAY:
-                return Optional.empty();
-            case RETREAT:
-                mov = turnContainer.getPathFinder()
-                        .findPath(self, retreatWaypoint.getX(), retreatWaypoint.getY(), 0, true);
-                break;
-            case PUSH:
-                Optional<Unit> enemy = nearestEnemy(turnContainer);
-                //noinspection OptionalIsPresent
-                if (enemy.isPresent() && mapUtils.getLocationType(self.getId()) != LocationType.RIVER) {
-                    Point pushPoint = enemyUnitPushPoint(turnContainer, enemy.get());
+        Optional<Point> goHam = goHam(turnContainer);
+        if (goHam.isPresent()) {
+            mov = turnContainer.getPathFinder()
+                    .findPath(self, goHam.get().getX(), goHam.get().getY(), 0, true);
+        } else {
+            switch (action.getActionType()) {
+                case STAY:
+                    return Optional.empty();
+                case RETREAT:
                     mov = turnContainer.getPathFinder()
-                            .findPath(self,
-                                    pushPoint.getX(),
-                                    pushPoint.getY(),
-                                    ((CircularUnit) enemy.get()).getRadius(),
-                                    true);
-                    turnContainer.getMemory()
-                            .setExpectedPushDuration(action.getDuration() == null ? 0 : action.getDuration());
-                } else {
-                    mov = turnContainer.getPathFinder()
-                            .findPath(self, pushWaypoint.getX(), pushWaypoint.getY(), 0, true);
-                }
-                break;
-            default:
-                throw new RuntimeException("Unexpected action " + action);
+                            .findPath(self, retreatWaypoint.getX(), retreatWaypoint.getY(), 0, true);
+                    break;
+                case PUSH:
+                    Optional<Unit> enemy = nearestEnemy(turnContainer);
+                    //noinspection OptionalIsPresent
+                    if (enemy.isPresent() && mapUtils.getLocationType(self.getId()) != LocationType.RIVER) {
+                        Point pushPoint = enemyUnitPushPoint(turnContainer, enemy.get());
+                        mov = turnContainer.getPathFinder()
+                                .findPath(self,
+                                        pushPoint.getX(),
+                                        pushPoint.getY(),
+                                        ((CircularUnit) enemy.get()).getRadius(),
+                                        true);
+                        turnContainer.getMemory()
+                                .setExpectedPushDuration(action.getDuration() == null ? 0 : action.getDuration());
+                    } else {
+                        mov = turnContainer.getPathFinder()
+                                .findPath(self, pushWaypoint.getX(), pushWaypoint.getY(), 0, true);
+                    }
+                    break;
+                default:
+                    throw new RuntimeException("Unexpected action " + action);
+            }
         }
 
         MoveBuilder moveBuilder = new MoveBuilder();
@@ -220,8 +228,9 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         }
         TeamAdvantageService teamAdvantageService = turnContainer.getTeamAdvantageService();
         if (turnContainer.getGame().isRawMessagesEnabled() &&
-                teamAdvantageService.getHealthAlly() / TEAM_HEALTH_ADVANTAGE_RATIO > teamAdvantageService.getHealthEnemy() &&
-                self.getLife() / (double) self.getMaxLife()  >= TANK_TOWER_HIT_LIFE_THRESHOLD) {
+                teamAdvantageService.getHealthAlly() / TEAM_HEALTH_ADVANTAGE_RATIO >
+                        teamAdvantageService.getHealthEnemy() &&
+                self.getLife() / (double) self.getMaxLife() >= TANK_TOWER_HIT_LIFE_THRESHOLD) {
             return NONE_ACTION;
         }
         int c = 0;
@@ -284,8 +293,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                 shouldStay = true;
             }
             if (self.getDistanceTo(enemy) < turnContainer.getCastRangeService()
-                    .castRangeToWizardPessimistic(self, enemy, game, ProjectileType.MAGIC_MISSILE).getDistToCenter() -
-                    enemy.getWizardForwardSpeed(game) * 2) {
+                    .castRangeToWizardPessimistic(self, enemy, game, ProjectileType.MAGIC_MISSILE)
+                    .getDistToCenter() - enemy.getWizardForwardSpeed(game) * 2) {
                 shouldStay = true;
             }
             //noinspection OptionalGetWithoutIsPresent
@@ -366,7 +375,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                 enemyPrevAction == ActionType.PUSH ? ENEMY_PREV_TURN_FORWARD_STEPS : 0;
         TeamAdvantageService teamAdvantageService = turnContainer.getTeamAdvantageService();
         int enemyTeamAdvangateForwardSteps = 0;
-        if (teamAdvantageService.getHealthAlly() / TEAM_HEALTH_ADVANTAGE_RATIO > teamAdvantageService.getHealthEnemy()) {
+        if (teamAdvantageService.getHealthAlly() / TEAM_HEALTH_ADVANTAGE_RATIO >
+                teamAdvantageService.getHealthEnemy()) {
             enemyTeamAdvangateForwardSteps = -DEFAULT_ENEMY_FORWARD_STEPS_WITH_TEAM_ADVANTAGE;
         } else if (teamAdvantageService.getHealthEnemy() / TEAM_HEALTH_ADVANTAGE_RATIO >
                 teamAdvantageService.getHealthAlly()) {
@@ -437,6 +447,51 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         return false;
     }
 
+    private Optional<Point> goHam(TurnContainer turnContainer) {
+        TeamAdvantageService teamAdvantageService = turnContainer.getTeamAdvantageService();
+        WizardProxy self = turnContainer.getSelf();
+        WorldProxy world = turnContainer.getWorldProxy();
+        if (!turnContainer.getGame().isRawMessagesEnabled()) {
+            return Optional.empty();
+        }
+        if (!(teamAdvantageService.getHealthAlly() / TEAM_HEALTH_ADVANTAGE_RATIO >
+                teamAdvantageService.getHealthEnemy() &&
+                teamAdvantageService.getLevelAlly() / TEAM_LEVEL_ADVANTAGE_RATIO >
+                        teamAdvantageService.getLevelEnemy())) {
+            return Optional.empty();
+        }
+
+        Building enemyBase = null;
+        for (Building building : world.getBuildings()) {
+            if (building.getType() == BuildingType.FACTION_BASE && building.getFaction() != self.getFaction()) {
+                enemyBase = building;
+            }
+        }
+        if (enemyBase == null) {
+            throw new RuntimeException("If enemy doesn't have base, then game is ended");
+        }
+
+        if (self.getX() >= enemyBase.getX() - enemyBase.getRadius() &&
+                self.getY() <= enemyBase.getY() + enemyBase.getRadius()) {
+            return Optional.empty();
+        }
+
+        int allyWizardsReadyToGo = 0;
+        for (WizardProxy wizard : world.getWizards()) {
+            if (wizard.getFaction() != self.getFaction()) {
+                continue;
+            }
+            if (wizard.getDistanceTo(enemyBase) <= enemyBase.getAttackRange()) {
+                allyWizardsReadyToGo++;
+            }
+        }
+        if (allyWizardsReadyToGo >= GO_HAM_WIZARDS_THRESHOLD) {
+
+            return Optional.of(new Point(world.getWidth(), 0));
+        }
+        return Optional.empty();
+    }
+
     private static Point enemyUnitPushPoint(TurnContainer turnContainer, Unit unit) {
         if (unit instanceof Building) {
             Building building = (Building) unit;
@@ -444,7 +499,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                 return MathMethods.distPoint(building.getX(),
                         building.getY(),
                         turnContainer.getWorldProxy().getWidth(),
-                        0, building.getRadius() / 2);
+                        0,
+                        building.getRadius() / 2);
             }
         }
         return new Point(unit.getX(), unit.getY());
