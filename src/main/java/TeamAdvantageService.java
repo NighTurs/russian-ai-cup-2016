@@ -1,12 +1,12 @@
 import model.Faction;
 import model.Game;
 
-public class TeamHealthService {
+public class TeamAdvantageService {
     private static final int SURROUNDINGS_THRESHOLD = 1000;
     private final int healthAlly;
     private final int healthEnemy;
 
-    public TeamHealthService(WizardProxy self, WorldProxy world, Game game) {
+    public TeamAdvantageService(WizardProxy self, WorldProxy world, Game game) {
         int healthAcademySum = 0;
         int healthRenegadesSum = 0;
         for (WizardProxy wizard : world.getWizards()) {

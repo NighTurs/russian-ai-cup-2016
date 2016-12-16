@@ -218,9 +218,9 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         if (turnContainer.getMapUtils().isIgnorableBuilding(self, building)) {
             return NONE_ACTION;
         }
-        TeamHealthService teamHealthService = turnContainer.getTeamHealthService();
+        TeamAdvantageService teamAdvantageService = turnContainer.getTeamAdvantageService();
         if (turnContainer.getGame().isRawMessagesEnabled() &&
-                teamHealthService.getHealthAlly() / TEAM_HEALTH_ADVANTAGE_RATIO > teamHealthService.getHealthEnemy() &&
+                teamAdvantageService.getHealthAlly() / TEAM_HEALTH_ADVANTAGE_RATIO > teamAdvantageService.getHealthEnemy() &&
                 self.getLife() / (double) self.getMaxLife()  >= TANK_TOWER_HIT_LIFE_THRESHOLD) {
             return NONE_ACTION;
         }
@@ -364,12 +364,12 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         int enemyPreviousTurnForwardSteps = enemyPrevAction == ActionType.RETREAT ?
                 -ENEMY_PREV_TURN_FORWARD_STEPS :
                 enemyPrevAction == ActionType.PUSH ? ENEMY_PREV_TURN_FORWARD_STEPS : 0;
-        TeamHealthService teamHealthService = turnContainer.getTeamHealthService();
+        TeamAdvantageService teamAdvantageService = turnContainer.getTeamAdvantageService();
         int enemyTeamAdvangateForwardSteps = 0;
-        if (teamHealthService.getHealthAlly() / TEAM_HEALTH_ADVANTAGE_RATIO > teamHealthService.getHealthEnemy()) {
+        if (teamAdvantageService.getHealthAlly() / TEAM_HEALTH_ADVANTAGE_RATIO > teamAdvantageService.getHealthEnemy()) {
             enemyTeamAdvangateForwardSteps = -DEFAULT_ENEMY_FORWARD_STEPS_WITH_TEAM_ADVANTAGE;
-        } else if (teamHealthService.getHealthEnemy() / TEAM_HEALTH_ADVANTAGE_RATIO >
-                teamHealthService.getHealthAlly()) {
+        } else if (teamAdvantageService.getHealthEnemy() / TEAM_HEALTH_ADVANTAGE_RATIO >
+                teamAdvantageService.getHealthAlly()) {
             enemyTeamAdvangateForwardSteps = DEFAULT_ENEMY_FORWARD_STEPS_WITH_TEAM_ADVANTAGE;
         }
         if (untilProjectileCast >= untilSameOrBetterProjectileCast) {
