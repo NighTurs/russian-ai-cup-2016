@@ -1,9 +1,6 @@
 import model.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class PushLaneTacticBuilder implements TacticBuilder {
@@ -34,6 +31,9 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         boolean enemiesNearby = hasEnemyInUnignorableRange(turnContainer);
         Action action;
 
+        Point pushWaypoint = null;
+        Point retreatWaypoint = null;
+
         if (enemiesNearby) {
             Action buildingAction = actionBecauseOfBuildings(turnContainer);
             Action minionAction = actionBecauseOfMinions(turnContainer);
@@ -42,6 +42,9 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                     minionAction.getActionType() == ActionType.RETREAT ||
                     wizardsAction.getActionType() == ActionType.RETREAT) {
                 action = RETREAT_ACTION;
+                if (turnContainer.getGame().isRawMessagesEnabled() && wizardsAction.getCustomRetreatPoint() != null) {
+                    retreatWaypoint = wizardsAction.getCustomRetreatPoint();
+                }
             } else if (buildingAction.getActionType() == ActionType.STAY ||
                     minionAction.getActionType() == ActionType.STAY ||
                     wizardsAction.getActionType() == ActionType.STAY) {
@@ -52,6 +55,9 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                         .filter(Objects::nonNull)
                         .min(Integer::compare);
                 action = new Action(ActionType.PUSH, minDuration.isPresent() ? minDuration.get() : 0);
+                if (turnContainer.getGame().isRawMessagesEnabled() && wizardsAction.getCustomPushPoint() != null) {
+                    pushWaypoint = wizardsAction.getCustomPushPoint();
+                }
             }
         } else {
             action = actionBecauseOfBuildings(turnContainer);
@@ -60,8 +66,12 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             }
         }
 
-        Point pushWaypoint = mapUtils.pushWaypoint(self.getX(), self.getY(), lane);
-        Point retreatWaypoint = mapUtils.retreatWaypoint(self.getX(), self.getY(), lane);
+        if (pushWaypoint == null) {
+            pushWaypoint = mapUtils.pushWaypoint(self.getX(), self.getY(), lane);
+        }
+        if (retreatWaypoint == null) {
+            retreatWaypoint = mapUtils.retreatWaypoint(self.getX(), self.getY(), lane);
+        }
         Movement mov;
 
         turnContainer.getMemory().setExpectedPushDuration(0);
@@ -234,12 +244,12 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         int minNoneDuration = Integer.MAX_VALUE;
         for (WizardProxy enemy : enemies) {
             if (enemies.size() == 1 && enemy.getLife() + enemy.getMagicMissileDirectDamage(game) * 2 < self.getLife()) {
-                return new Action(ActionType.PUSH, MAX_PUSH_EXPECTATIONS);
+                return new Action(ActionType.PUSH, MAX_PUSH_EXPECTATIONS, new Point(enemy.getX(), enemy.getY()), null);
             }
             if (self.getLife() -
                     (int) Math.ceil(enemy.getLife() / self.getMagicMissileDirectDamage(game)) * enemies.size() *
                             enemy.getMagicMissileDirectDamage(game) > enemy.getMagicMissileDirectDamage(game) * 3) {
-                return new Action(ActionType.PUSH, MAX_PUSH_EXPECTATIONS);
+                return new Action(ActionType.PUSH, MAX_PUSH_EXPECTATIONS, new Point(enemy.getX(), enemy.getY()), null);
             }
             Action actionMissle = actionBecauseOfWizardSpell(turnContainer, enemy, ProjectileType.MAGIC_MISSILE);
             Action actionFrostBolt = actionBecauseOfWizardSpell(turnContainer, enemy, ProjectileType.FROST_BOLT);
@@ -248,7 +258,10 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             if (actionMissle.getActionType() == ActionType.RETREAT ||
                     actionFrostBolt.getActionType() == ActionType.RETREAT ||
                     actionFireball.getActionType() == ActionType.RETREAT) {
-                return RETREAT_ACTION;
+                return new Action(ActionType.RETREAT,
+                        0,
+                        null,
+                        MathMethods.distPoint(enemy.getX(), enemy.getY(), self.getX(), self.getY(), IGNORE_RANGE));
             } else if (actionMissle.getActionType() == ActionType.STAY ||
                     actionFrostBolt.getActionType() == ActionType.STAY ||
                     actionFireball.getActionType() == ActionType.STAY) {
@@ -262,7 +275,13 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         }
         return shouldStay ?
                 STAY_ACTION :
-                new Action(ActionType.NONE, minNoneDuration == Integer.MAX_VALUE ? 0 : minNoneDuration);
+                new Action(ActionType.NONE,
+                        minNoneDuration == Integer.MAX_VALUE ? 0 : minNoneDuration,
+                        enemies.stream()
+                                .min(Comparator.comparingDouble(self::getDistanceTo))
+                                .map(x -> new Point(x.getX(), x.getY()))
+                                .orElse(null),
+                        null);
     }
 
     private Action actionBecauseOfWizardSpell(TurnContainer turnContainer,
@@ -368,14 +387,22 @@ public class PushLaneTacticBuilder implements TacticBuilder {
 
         private final ActionType actionType;
         private final Integer duration;
+        private final Point customPushPoint;
+        private final Point customRetreatPoint;
 
         public Action(ActionType actionType) {
             this(actionType, null);
         }
 
         public Action(ActionType actionType, Integer duration) {
+            this(actionType, duration, null, null);
+        }
+
+        public Action(ActionType actionType, Integer duration, Point customPushPoint, Point customRetreatPoint) {
             this.actionType = actionType;
             this.duration = duration;
+            this.customPushPoint = customPushPoint;
+            this.customRetreatPoint = customRetreatPoint;
         }
 
         public ActionType getActionType() {
@@ -384,6 +411,14 @@ public class PushLaneTacticBuilder implements TacticBuilder {
 
         public Integer getDuration() {
             return duration;
+        }
+
+        public Point getCustomPushPoint() {
+            return customPushPoint;
+        }
+
+        public Point getCustomRetreatPoint() {
+            return customRetreatPoint;
         }
     }
 
