@@ -18,6 +18,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     private static final int MAX_PUSH_EXPECTATIONS = 30;
     private static final int ENEMY_INTENTIONAL_MOVE_THRESHOLD = 2;
     private static final double TEAM_HEALTH_ADVANTAGE_RATIO = 1.5;
+    private static final double TEAM_HEALTH_BIG_ADVANTAGE_RATIO = 2.3;
     private static final double TEAM_LEVEL_ADVANTAGE_RATIO = 2;
     private static final double TANK_TOWER_HIT_LIFE_THRESHOLD = 0.9;
     private static final int GO_HAM_WIZARDS_THRESHOLD = 3;
@@ -454,7 +455,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         if (!turnContainer.getGame().isRawMessagesEnabled()) {
             return Optional.empty();
         }
-        if (!(teamAdvantageService.getHealthAlly() / TEAM_HEALTH_ADVANTAGE_RATIO >
+        if (!(teamAdvantageService.getHealthAlly() / TEAM_HEALTH_BIG_ADVANTAGE_RATIO >
                 teamAdvantageService.getHealthEnemy() &&
                 teamAdvantageService.getLevelAlly() / TEAM_LEVEL_ADVANTAGE_RATIO >
                         teamAdvantageService.getLevelEnemy())) {
