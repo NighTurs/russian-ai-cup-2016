@@ -8,6 +8,7 @@ public final class CastProjectileTacticBuilders {
 
     private static final double E = 1e-6;
     private static final Map<ActionType, Integer> manaPriorities;
+    public static final double ENEMY_BASE_PRIMARY_TARGET_THRESHOLD = 0.15;
 
     static {
         manaPriorities = new EnumMap<>(ActionType.class);
@@ -65,6 +66,23 @@ public final class CastProjectileTacticBuilders {
                                                  double castRangeBoost) {
         WorldProxy world = turnContainer.getWorldProxy();
         WizardProxy self = turnContainer.getSelf();
+
+        for (Building building : world.getBuildings()) {
+            if (!turnContainer.isOffensiveBuilding(building) ||
+                    building.getType() != BuildingType.FACTION_BASE) {
+                continue;
+            }
+            if ((double) building.getLife() / building.getMaxLife() > ENEMY_BASE_PRIMARY_TARGET_THRESHOLD) {
+                continue;
+            }
+            double dist = building.getDistanceTo(self);
+            if (dist <= CastProjectileTacticBuilders.castRangeToBuilding(self,
+                    building,
+                    turnContainer.getGame(),
+                    projectileType) + castRangeBoost) {
+                return Optional.of(building);
+            }
+        }
 
         Unit bestUnit = null;
         int lowestLife = Integer.MAX_VALUE;
