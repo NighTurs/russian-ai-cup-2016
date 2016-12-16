@@ -280,11 +280,19 @@ public final class CastProjectileTacticBuilders {
             return new CastRangeService.CastMeta(castRangeToMinion(wizard, (Minion) target, turnContainer.getGame()),
                     0);
         } else if (target instanceof WizardProxy) {
-            return turnContainer.getCastRangeService()
-                    .castRangeToWizardPessimistic(wizard,
-                            (WizardProxy) target,
-                            turnContainer.getGame(),
-                            projectileType);
+            if (projectileType == ProjectileType.MAGIC_MISSILE && turnContainer.getGame().isRawMessagesEnabled()) {
+                return turnContainer.getCastRangeService()
+                        .castRangeToWizardOptimistic(wizard,
+                                (WizardProxy) target,
+                                turnContainer.getGame(),
+                                ProjectileType.MAGIC_MISSILE);
+            } else {
+                return turnContainer.getCastRangeService()
+                        .castRangeToWizardPessimistic(wizard,
+                                (WizardProxy) target,
+                                turnContainer.getGame(),
+                                projectileType);
+            }
         } else {
             throw new RuntimeException("Unexpected target type " + target.getClass());
         }
