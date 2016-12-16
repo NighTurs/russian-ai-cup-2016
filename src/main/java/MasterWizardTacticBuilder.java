@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 
 public class MasterWizardTacticBuilder implements TacticBuilder {
 
-    private static final Set<String> SCARED_OF = new HashSet<>(Collections.singletonList("NO_FEAR"));
+    private static final Set<String> SCARED_OF = new HashSet<>(Collections.singletonList("tyamgin"));
     private static final List<LaneRole> ALL_MID = Arrays.asList(new LaneRole(LaneType.MIDDLE, WizardRole.FROST_BOLT),
             new LaneRole(LaneType.MIDDLE, WizardRole.HASTE_QUICK),
             new LaneRole(LaneType.MIDDLE, WizardRole.RANGE),
@@ -49,12 +49,11 @@ public class MasterWizardTacticBuilder implements TacticBuilder {
 
             Queue<LaneRole> roles;
             if (scared) {
-                LaneType edgeLane = self.getFaction() == Faction.ACADEMY ? LaneType.TOP : LaneType.BOTTOM;
                 roles = new ArrayDeque<>(Arrays.asList(new LaneRole(LaneType.MIDDLE, WizardRole.RANGE),
                         new LaneRole(LaneType.MIDDLE, WizardRole.HASTE_DELAYED),
                         new LaneRole(LaneType.MIDDLE, WizardRole.SHIELD_DELAYED),
-                        new LaneRole(edgeLane, WizardRole.FIREBALL_SOLO),
-                        new LaneRole(edgeLane, WizardRole.FIREBALL_SOLO)));
+                        new LaneRole(LaneType.BOTTOM, WizardRole.FIREBALL_SOLO),
+                        new LaneRole(LaneType.TOP, WizardRole.FIREBALL_SOLO)));
             } else {
                 roles = new ArrayDeque<>(ALL_MID);
             }
