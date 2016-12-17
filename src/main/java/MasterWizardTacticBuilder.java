@@ -136,8 +136,8 @@ public class MasterWizardTacticBuilder implements TacticBuilder {
     }
 
     private Optional<LocationType> enemySideLaneHope(TurnContainer turnContainer) {
-        int enemySideLanes = 0;
-        LocationType locationHope = null;
+        int topLaneEnemies = 0;
+        int bottomLaneEnemies = 0;
         Memory memory = turnContainer.getMemory();
         for (Long wizardId : memory.getEnemyDominantLocation().keySet()) {
             Optional<LocationType> locationOpt = WizardControl.getDominantLocation(memory, wizardId);
@@ -145,13 +145,14 @@ public class MasterWizardTacticBuilder implements TacticBuilder {
                 continue;
             }
             LocationType locationType = locationOpt.get();
-            if (locationType == LocationType.TOP_LANE || locationType == LocationType.BOTTOM_LANE) {
-                enemySideLanes++;
-                locationHope = locationType;
+            if (locationType == LocationType.TOP_LANE) {
+                topLaneEnemies++;
+            } else if (locationType == LocationType.BOTTOM_LANE) {
+                bottomLaneEnemies++;
             }
         }
-        if (enemySideLanes == 1) {
-            return Optional.of(locationHope);
+        if (topLaneEnemies > 0 ^ bottomLaneEnemies > 0) {
+            return Optional.of(topLaneEnemies > 0 ? LocationType.TOP_LANE : LocationType.BOTTOM_LANE);
         }
         return Optional.empty();
     }
