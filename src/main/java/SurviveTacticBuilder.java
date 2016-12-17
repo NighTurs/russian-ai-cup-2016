@@ -17,7 +17,7 @@ public class SurviveTacticBuilder implements TacticBuilder {
         Action wizardsAction = shouldRunFromWizards(turnContainer);
         if (towerAction == Action.RUN || wizardsAction == Action.RUN) {
             turnContainer.getMemory().setExpectedPushDuration(0);
-            Point retreatWaypoint = mapUtils.retreatWaypoint(self.getX(), self.getY(), lane);
+            Point retreatWaypoint = mapUtils.retreatWaypoint(self.getX(), self.getY(), lane, turnContainer.getMemory());
             Movement mov = turnContainer.getPathFinder()
                     .findPath(self, retreatWaypoint.getX(), retreatWaypoint.getY(), 0, false);
             MoveBuilder moveBuilder = new MoveBuilder();

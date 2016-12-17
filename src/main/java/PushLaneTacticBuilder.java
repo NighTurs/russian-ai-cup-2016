@@ -79,18 +79,17 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         }
 
         if (pushWaypoint == null) {
-            pushWaypoint = mapUtils.pushWaypoint(self.getX(), self.getY(), lane);
+            pushWaypoint = mapUtils.pushWaypoint(self.getX(), self.getY(), lane, turnContainer.getMemory());
         }
         if (retreatWaypoint == null) {
-            retreatWaypoint = mapUtils.retreatWaypoint(self.getX(), self.getY(), lane);
+            retreatWaypoint = mapUtils.retreatWaypoint(self.getX(), self.getY(), lane, turnContainer.getMemory());
         }
         Movement mov;
 
         turnContainer.getMemory().setExpectedPushDuration(0);
         Optional<Point> goHam = goHam(turnContainer);
         if (goHam.isPresent()) {
-            mov = turnContainer.getPathFinder()
-                    .findPath(self, goHam.get().getX(), goHam.get().getY(), 0, true);
+            mov = turnContainer.getPathFinder().findPath(self, goHam.get().getX(), goHam.get().getY(), 0, true);
         } else {
             switch (action.getActionType()) {
                 case STAY:
@@ -102,7 +101,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                 case PUSH:
                     Optional<Unit> enemy = nearestEnemy(turnContainer);
                     //noinspection OptionalIsPresent
-                    if (enemy.isPresent() && mapUtils.getLocationType(self.getId()) != LocationType.RIVER) {
+                    if (enemy.isPresent() && (myLocation == lane || myLocation == LocationType.ENEMY_BASE ||
+                            myLocation == LocationType.ALLY_BASE)) {
                         Point pushPoint = enemyUnitPushPoint(turnContainer, enemy.get());
                         mov = turnContainer.getPathFinder()
                                 .findPath(self,

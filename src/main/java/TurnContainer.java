@@ -126,5 +126,6 @@ public class TurnContainer {
         for (WizardProxy wizard : worldProxy.getWizards()) {
             memory.getWizardPreviousPosition().put(wizard.getId(), new Point(wizard.getX(), wizard.getY()));
         }
+        wizardControl.updateEnemyDominantLocations(self, memory, worldProxy, game, mapUtils);
     }
 }

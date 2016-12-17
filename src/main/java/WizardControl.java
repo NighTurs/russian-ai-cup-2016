@@ -95,8 +95,39 @@ public class WizardControl {
                 .collect(Collectors.toList()));
     }
 
+    public void updateEnemyDominantLocations(WizardProxy self,
+                                             Memory memory,
+                                             WorldProxy world,
+                                             Game game,
+                                             MapUtils mapUtils) {
+        for (WizardProxy wizard : world.getWizards()) {
+            if (wizard.getFaction() == self.getFaction()) {
+                continue;
+            }
+            LocationType curLocationType = mapUtils.getLocationType(wizard.getId());
+            Map<Long, Map<LocationType, Integer>> wizards = memory.getEnemyDominantLocation();
+            wizards.putIfAbsent(wizard.getId(), new EnumMap<>(LocationType.class));
+            Map<LocationType, Integer> locations = wizards.get(wizard.getId());
+            locations.putIfAbsent(curLocationType, 0);
+            locations.put(curLocationType, locations.get(curLocationType) + 1);
+        }
+    }
+
     public List<WizardProxy> shadowWizardsForCurrentTurn() {
         return shadowWizardsForCurrentTurn;
+    }
+
+    public static Optional<LocationType> getDominantLocation(Memory memory, Long wizardId) {
+        memory.getEnemyDominantLocation().putIfAbsent(wizardId, new EnumMap<>(LocationType.class));
+        int maxTics = 0;
+        LocationType dominantLocation = null;
+        for (Map.Entry<LocationType, Integer> entry : memory.getEnemyDominantLocation().get(wizardId).entrySet()) {
+            if (maxTics < entry.getValue()) {
+                maxTics = entry.getValue();
+                dominantLocation = entry.getKey();
+            }
+        }
+        return Optional.ofNullable(dominantLocation);
     }
 
     private double visionRange(LivingUnit unit) {

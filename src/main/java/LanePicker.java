@@ -24,6 +24,10 @@ public class LanePicker {
                 if (message.getLane() == null) {
                     continue;
                 }
+                if (message.getRawMessage() != null && message.getRawMessage().length > 0 &&
+                        message.getRawMessage()[0] == MasterWizardTacticBuilder.LANE_SWITCH_CODE) {
+                    memory.setLaneGotSwitched(true);
+                }
                 switch (message.getLane()) {
                     case BOTTOM:
                         memory.setLane(LocationType.BOTTOM_LANE);

@@ -19,6 +19,13 @@ public class BuildingControl {
         return buildingsIncludingEnemy;
     }
 
+    public static boolean isMidEnemyTower(TurnContainer turnContainer, Building building) {
+        double unit = turnContainer.getWorldProxy().allyBase().getX();
+        return building.getType() == BuildingType.GUARDIAN_TOWER &&
+                building.getFaction() == turnContainer.opposingFaction() && building.getX() >= unit * 4 &&
+                building.getX() <= unit * 6 && building.getY() >= unit * 3 && building.getY() <= unit * 5;
+    }
+
     private static List<Building> buildingsIncludingEnemy(Wizard self, Memory memory, World world, Game game) {
         if (memory.getAllyGuardianTowers().isEmpty()) {
             for (Building building : world.getBuildings()) {

@@ -19,6 +19,7 @@ public class MapUtils {
     private final double worldWidth;
     private final double worldHeight;
     private final double waypointBaseInfluence;
+    private final double waypointBaseInfluenceLess;
     private final Point laneAllyWaypoint;
     private final Point laneEnemyWaypoint;
     private final Point bottomLaneMidWaypoint;
@@ -43,6 +44,7 @@ public class MapUtils {
         this.worldHeight = world.getHeight();
 
         this.waypointBaseInfluence = base * 4;
+        this.waypointBaseInfluenceLess = base * 3;
         this.laneAllyWaypoint = new Point(0, worldHeight);
         this.laneEnemyWaypoint = new Point(worldWidth - halfBase, halfBase);
         this.bottomLaneMidWaypoint = new Point(worldWidth - halfBase, worldHeight - halfBase);
@@ -68,9 +70,19 @@ public class MapUtils {
         }
     }
 
-    public Point pushWaypoint(double x, double y, LocationType lane) {
+    public Point pushWaypoint(double x, double y, LocationType lane, Memory memory) {
         LocationType curLocationType = getLocationType(x, y);
-        if (Math.hypot(x, y - worldHeight) < waypointBaseInfluence) {
+        double allyInfluenceDist = allyBaseInfluenceDist(x, y);
+
+        if (memory.isLaneGotSwitched()) {
+            if (allyInfluenceDist > waypointBaseInfluenceLess) {
+                return laneAllyWaypoint;
+            } else {
+                memory.setLaneGotSwitched(false);
+            }
+        }
+
+        if (allyInfluenceDist < waypointBaseInfluence) {
             return midPoint(lane);
         }
         if (Math.hypot(x - worldWidth, y) < waypointBaseInfluence) {
@@ -105,9 +117,19 @@ public class MapUtils {
         }
     }
 
-    public Point retreatWaypoint(double x, double y, LocationType lane) {
+    public Point retreatWaypoint(double x, double y, LocationType lane, Memory memory) {
         LocationType curLocationType = getLocationType(x, y);
-        if (Math.hypot(x, y - worldHeight) < waypointBaseInfluence) {
+        double allyInfluenceDist = allyBaseInfluenceDist(x, y);
+
+        if (memory.isLaneGotSwitched()) {
+            if (allyInfluenceDist > waypointBaseInfluenceLess) {
+                return laneAllyWaypoint;
+            } else {
+                memory.setLaneGotSwitched(false);
+            }
+        }
+
+        if (allyInfluenceDist < waypointBaseInfluence) {
             return laneAllyWaypoint;
         }
         if (Math.hypot(x - worldWidth, y) < waypointBaseInfluence) {
@@ -199,6 +221,10 @@ public class MapUtils {
                 (selfLocation == LocationType.MIDDLE_LANE && buildingLocation == LocationType.TOP_LANE);
     }
 
+    public double allyBaseInfluenceDist(double x, double y) {
+        return Math.hypot(x, y - worldHeight);
+    }
+
     private double forestTriangleSquare(int ind) {
         List<Point> p = forestTriangles.get(ind);
         return triangleSquare(p.get(0).getX(),
@@ -211,5 +237,9 @@ public class MapUtils {
 
     private double triangleSquare(double x1, double y1, double x2, double y2, double x3, double y3) {
         return 1.0 / 2 * Math.abs((x1 - x3) * (y2 - y3) - (x2 - x3) * (y1 - y3));
+    }
+
+    public double getWaypointBaseInfluence() {
+        return waypointBaseInfluence;
     }
 }

@@ -24,6 +24,9 @@ public class Memory {
     private int expectedPushDuration;
     private Map<Integer, Integer> buildingCooldownByX;
     private Map<Long, Integer> lifeByLivingUnit;
+    private Map<Long, Map<LocationType, Integer>> enemyDominantLocation;
+    private boolean masterDidSwitch;
+    private boolean laneGotSwitched;
 
     public Memory() {
         this.allyGuardianTowers = new ArrayList<>();
@@ -39,6 +42,9 @@ public class Memory {
         this.expectedPushDuration = 0;
         this.buildingCooldownByX = new HashMap<>();
         this.lifeByLivingUnit = new HashMap<>();
+        this.masterDidSwitch = false;
+        this.laneGotSwitched = false;
+        this.enemyDominantLocation = new HashMap<>();
     }
 
     public LocationType getLane() {
@@ -139,5 +145,25 @@ public class Memory {
 
     public Map<Long, Integer> getLifeByLivingUnit() {
         return lifeByLivingUnit;
+    }
+
+    public boolean isMasterDidSwitch() {
+        return masterDidSwitch;
+    }
+
+    public void setMasterDidSwitch(boolean masterDidSwitch) {
+        this.masterDidSwitch = masterDidSwitch;
+    }
+
+    public boolean isLaneGotSwitched() {
+        return laneGotSwitched;
+    }
+
+    public void setLaneGotSwitched(boolean laneGotSwitched) {
+        this.laneGotSwitched = laneGotSwitched;
+    }
+
+    public Map<Long, Map<LocationType, Integer>> getEnemyDominantLocation() {
+        return enemyDominantLocation;
     }
 }

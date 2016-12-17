@@ -117,11 +117,8 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
         Point bottomBonus = turnContainer.getBonusControl().bottomBonusPosition();
         // Going for top bonus on middle is dangerous if middle enemy tower is up
         if (turnContainer.getLanePicker().myLane() == LocationType.MIDDLE_LANE) {
-            double unit = turnContainer.getWorldProxy().allyBase().getX();
             for (Building building : turnContainer.getWorldProxy().getBuildings()) {
-                if (building.getType() == BuildingType.GUARDIAN_TOWER &&
-                        building.getFaction() == turnContainer.opposingFaction() && building.getX() >= unit * 4 &&
-                        building.getX() <= unit * 6 && building.getY() >= unit * 3 && building.getY() <= unit * 5) {
+                if (BuildingControl.isMidEnemyTower(turnContainer, building)) {
                     return true;
                 }
             }
