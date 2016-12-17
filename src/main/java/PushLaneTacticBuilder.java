@@ -224,6 +224,9 @@ public class PushLaneTacticBuilder implements TacticBuilder {
 
     private Action actionBecauseOfBuilding(TurnContainer turnContainer, Building building) {
         WizardProxy self = turnContainer.getSelf();
+        if (turnContainer.getGame().isRawMessagesEnabled() && turnContainer.againstSidePushMaster()) {
+            return NONE_ACTION;
+        }
         // Middle tower near enemy base prevents me from moving forward, just ignore it
         if (turnContainer.getMapUtils().isIgnorableBuilding(self, building)) {
             return NONE_ACTION;

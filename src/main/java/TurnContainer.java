@@ -1,6 +1,11 @@
 import model.*;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 public class TurnContainer {
+    private static final Set<String> SIDE_PUSH_MASTERS = new HashSet<>(Collections.singletonList("core2duo"));
 
     private final WizardProxy self;
     private final World world;
@@ -127,5 +132,14 @@ public class TurnContainer {
             memory.getWizardPreviousPosition().put(wizard.getId(), new Point(wizard.getX(), wizard.getY()));
         }
         wizardControl.updateEnemyDominantLocations(self, memory, worldProxy, game, mapUtils);
+    }
+
+    public boolean againstSidePushMaster() {
+        for (Player player : worldProxy.getPlayers()) {
+            if (SIDE_PUSH_MASTERS.contains(player.getName())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
