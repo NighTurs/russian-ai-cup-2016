@@ -27,6 +27,7 @@ public class Memory {
     private Map<Long, Map<LocationType, Integer>> enemyDominantLocation;
     private boolean masterDidSwitch;
     private boolean laneGotSwitched;
+    private int trickTriesLeft;
 
     public Memory() {
         this.allyGuardianTowers = new ArrayList<>();
@@ -45,6 +46,7 @@ public class Memory {
         this.masterDidSwitch = false;
         this.laneGotSwitched = false;
         this.enemyDominantLocation = new HashMap<>();
+        this.trickTriesLeft = 2;
     }
 
     public LocationType getLane() {
@@ -165,5 +167,13 @@ public class Memory {
 
     public Map<Long, Map<LocationType, Integer>> getEnemyDominantLocation() {
         return enemyDominantLocation;
+    }
+
+    public int getTrickTriesLeft() {
+        return trickTriesLeft;
+    }
+
+    public void setTrickTriesLeft(int trickTriesLeft) {
+        this.trickTriesLeft = trickTriesLeft;
     }
 }

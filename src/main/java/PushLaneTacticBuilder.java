@@ -26,6 +26,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     private static final Action RETREAT_ACTION = new Action(ActionType.RETREAT);
     private static final Action STAY_ACTION = new Action(ActionType.STAY);
     private static final Action NONE_ACTION = new Action(ActionType.PUSH);
+    private static final double TRICK_SPARE_DODGE_DISTANCE = 0.3;
+    private static final int TRICK_TRIES = 3;
     private final DirectionOptionalTacticBuilder directionOptional;
 
     public PushLaneTacticBuilder(DirectionOptionalTacticBuilder directionOptional) {
@@ -98,8 +100,10 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         } else {
             switch (action.getActionType()) {
                 case STAY:
+                    turnContainer.getMemory().setTrickTriesLeft(TRICK_TRIES);
                     return Optional.empty();
                 case RETREAT:
+                    turnContainer.getMemory().setTrickTriesLeft(TRICK_TRIES);
                     mov = turnContainer.getPathFinder()
                             .findPath(self, retreatWaypoint.getX(), retreatWaypoint.getY(), 0, true);
                     break;
@@ -121,6 +125,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                         mov = turnContainer.getPathFinder()
                                 .findPath(self, pushWaypoint.getX(), pushWaypoint.getY(), 0, true);
                     }
+                    mov = tryToTrick(turnContainer, mov);
                     break;
                 default:
                     throw new RuntimeException("Unexpected action " + action);
@@ -521,6 +526,61 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             }
         }
         return new Point(unit.getX(), unit.getY());
+    }
+
+    private static Movement tryToTrick(TurnContainer turnContainer, Movement mov) {
+        Memory memory = turnContainer.getMemory();
+        WizardProxy self = turnContainer.getSelf();
+        if (memory.getTrickTriesLeft() == 0) {
+            memory.setTrickTriesLeft(TRICK_TRIES);
+            return mov;
+        }
+        WorldProxy world = turnContainer.getWorldProxy();
+        Game game = turnContainer.getGame();
+        for (WizardProxy wizard : world.getWizards()) {
+            if (wizard.getFaction() == self.getFaction()) {
+                continue;
+            }
+            int untilNextMissile =
+                    CastProjectileTacticBuilders.untilNextProjectile(wizard, ProjectileType.MAGIC_MISSILE, game);
+            if (untilNextMissile > 1 || !CastProjectileTacticBuilders.inCastSector(turnContainer,
+                    wizard,
+                    new Point(self.getX(), self.getY()))) {
+                continue;
+            }
+            Point myPrevPoint = memory.getWizardPreviousPosition().get(self.getId());
+            if (myPrevPoint == null) {
+                continue;
+            }
+            boolean iPushed =
+                    wizard.getDistanceTo(myPrevPoint.getX(), myPrevPoint.getY()) -
+                            wizard.getDistanceTo(self) > ENEMY_INTENTIONAL_MOVE_THRESHOLD;
+            if (!iPushed) {
+                continue;
+            }
+            double distToEnemy = self.getDistanceTo(wizard);
+            double enemyCastRange = turnContainer.getCastRangeService()
+                    .castRangeToWizardOptimistic(wizard, self, turnContainer.getGame(), ProjectileType.MAGIC_MISSILE)
+                    .getDistToCenter();
+            double curApproachDist = Math.hypot(mov.getSpeed(), mov.getStrafeSpeed());
+            if (distToEnemy > enemyCastRange && distToEnemy - curApproachDist <= enemyCastRange) {
+                System.out.println(String.format("%s trying trick untilMissle=%s distToEnemy=%s enemyCastRange=%s curApproachDist=%s tricksLeft=%s distDiff=%s",
+                        world.getTickIndex(),
+                        untilNextMissile,
+                        distToEnemy,
+                        enemyCastRange,
+                        curApproachDist,
+                        memory.getTrickTriesLeft(),
+                        distToEnemy - enemyCastRange));
+                double newApproachDist = Math.max(0, distToEnemy - enemyCastRange - TRICK_SPARE_DODGE_DISTANCE);
+                double maxSpeed = mov.getSpeed();
+                double maxStrafe = mov.getStrafeSpeed();
+                double ratio = newApproachDist / Math.hypot(maxSpeed, maxStrafe);
+                memory.setTrickTriesLeft(memory.getTrickTriesLeft() - 1);
+                return new Movement(maxSpeed * ratio, maxStrafe * ratio, mov.getTurn());
+            }
+        }
+        return mov;
     }
 
     public static class Action {
