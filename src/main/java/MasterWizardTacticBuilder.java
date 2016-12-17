@@ -74,7 +74,7 @@ public class MasterWizardTacticBuilder implements TacticBuilder {
             return Optional.empty();
         }
         Optional<LocationType> locationHopeOpt = enemySideLaneHope(turnContainer);
-        Optional<Long> lowOrDeadWizardOpt = lowOrDeadWizard(turnContainer);
+        Optional<Long> lowOrDeadWizardOpt = lowOrRevivedWizard(turnContainer);
         if (!locationHopeOpt.isPresent() || !lowOrDeadWizardOpt.isPresent()) {
             return Optional.empty();
         }
@@ -97,7 +97,7 @@ public class MasterWizardTacticBuilder implements TacticBuilder {
         return Optional.empty();
     }
 
-    private Optional<Long> lowOrDeadWizard(TurnContainer turnContainer) {
+    private Optional<Long> lowOrRevivedWizard(TurnContainer turnContainer) {
         WorldProxy world = turnContainer.getWorldProxy();
         Memory memory = turnContainer.getMemory();
         MapUtils mapUtils = turnContainer.getMapUtils();
@@ -121,7 +121,8 @@ public class MasterWizardTacticBuilder implements TacticBuilder {
         }
         for (Long wizardId : memory.getAllyWizardMessageIndex().keySet()) {
             if (!currentWizardId.contains(wizardId)) {
-                return Optional.of(wizardId);
+                // will send message after his revival
+                return Optional.empty();
             }
         }
         if (lowestWizard == null) {
