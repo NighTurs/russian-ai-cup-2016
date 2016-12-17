@@ -85,7 +85,7 @@ public class MapUtils {
         if (allyInfluenceDist < waypointBaseInfluence) {
             return midPoint(lane);
         }
-        if (Math.hypot(x - worldWidth, y) < waypointBaseInfluence) {
+        if (enemyBaseInfluenceDist(x, y) < waypointBaseInfluence) {
             return laneEnemyWaypoint;
         }
         switch (lane) {
@@ -132,7 +132,7 @@ public class MapUtils {
         if (allyInfluenceDist < waypointBaseInfluence) {
             return laneAllyWaypoint;
         }
-        if (Math.hypot(x - worldWidth, y) < waypointBaseInfluence) {
+        if (enemyBaseInfluenceDist(x, y) < waypointBaseInfluence) {
             return midPoint(lane);
         }
         switch (lane) {
@@ -223,6 +223,10 @@ public class MapUtils {
 
     public double allyBaseInfluenceDist(double x, double y) {
         return Math.hypot(x, y - worldHeight);
+    }
+
+    public double enemyBaseInfluenceDist(double x, double y) {
+        return Math.hypot(x - worldWidth, y);
     }
 
     private double forestTriangleSquare(int ind) {

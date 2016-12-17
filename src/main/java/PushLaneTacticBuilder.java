@@ -22,6 +22,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     private static final double TEAM_LEVEL_ADVANTAGE_RATIO = 2;
     private static final double TANK_TOWER_HIT_LIFE_THRESHOLD = 0.9;
     private static final int GO_HAM_WIZARDS_THRESHOLD = 3;
+    private static final double GO_HAM_LIFE_RATIO_THRESHOLD = 0.3;
     private static final Action RETREAT_ACTION = new Action(ActionType.RETREAT);
     private static final Action STAY_ACTION = new Action(ActionType.STAY);
     private static final Action NONE_ACTION = new Action(ActionType.PUSH);
@@ -457,6 +458,11 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         if (!turnContainer.getGame().isRawMessagesEnabled()) {
             return Optional.empty();
         }
+        MapUtils mapUtils = turnContainer.getMapUtils();
+        if (mapUtils.enemyBaseInfluenceDist(self.getX(), self.getY()) > mapUtils.getWaypointBaseInfluence() ||
+                self.getShieldedLifeRatio(turnContainer.getGame()) < GO_HAM_LIFE_RATIO_THRESHOLD) {
+            return Optional.empty();
+        }
         if (!(teamAdvantageService.getHealthAlly() / TEAM_HEALTH_BIG_ADVANTAGE_RATIO >
                 teamAdvantageService.getHealthEnemy() &&
                 teamAdvantageService.getLevelAlly() / TEAM_LEVEL_ADVANTAGE_RATIO >
@@ -484,7 +490,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             if (wizard.getFaction() != self.getFaction()) {
                 continue;
             }
-            if (wizard.getDistanceTo(enemyBase) <= enemyBase.getAttackRange()) {
+            if (wizard.getDistanceTo(enemyBase) <= enemyBase.getAttackRange() &&
+                    wizard.getShieldedLifeRatio(turnContainer.getGame()) >= GO_HAM_LIFE_RATIO_THRESHOLD) {
                 allyWizardsReadyToGo++;
             }
         }
