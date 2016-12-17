@@ -25,6 +25,7 @@ public class MapUtils {
     private final Point bottomLaneMidWaypoint;
     private final Point topLaneMidWaypoint;
     private final Point midLaneMidWaypoint;
+    private final Point safeMidLaneMidWaypoint;
     private final List<List<Point>> forestTriangles;
 
     public MapUtils(WorldProxy world) {
@@ -50,6 +51,7 @@ public class MapUtils {
         this.bottomLaneMidWaypoint = new Point(worldWidth - halfBase, worldHeight - halfBase);
         this.topLaneMidWaypoint = new Point(halfBase, halfBase);
         this.midLaneMidWaypoint = new Point(worldWidth / 2, worldHeight / 2);
+        this.safeMidLaneMidWaypoint = new Point(worldWidth / 2 - 2 * base, worldHeight / 2 + 2 * base);
 
         this.forestTriangles = Arrays.asList(Arrays.asList(new Point(base, worldHeight - 2 * base),
                 new Point(4 * base, 5 * base),
@@ -70,7 +72,7 @@ public class MapUtils {
         }
     }
 
-    public Point pushWaypoint(double x, double y, LocationType lane, Memory memory) {
+    public Point pushWaypoint(double x, double y, LocationType lane, Memory memory, boolean isEnemyMiddleTowerUp) {
         LocationType curLocationType = getLocationType(x, y);
         double allyInfluenceDist = allyBaseInfluenceDist(x, y);
 
@@ -90,8 +92,10 @@ public class MapUtils {
         }
         switch (lane) {
             case MIDDLE_LANE:
-                if (curLocationType != lane) {
+                if (curLocationType != lane && !isEnemyMiddleTowerUp) {
                     return midLaneMidWaypoint;
+                } else if (curLocationType != lane) {
+                    return safeMidLaneMidWaypoint;
                 }
                 return laneEnemyWaypoint;
             case TOP_LANE:

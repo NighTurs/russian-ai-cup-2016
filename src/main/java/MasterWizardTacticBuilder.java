@@ -69,7 +69,7 @@ public class MasterWizardTacticBuilder implements TacticBuilder {
         Memory memory = turnContainer.getMemory();
         boolean alreadySwitched = memory.isMasterDidSwitch();
         boolean fearSetup = inFearMode(turnContainer);
-        boolean midTowerDestroyed = isMidEnemyTowerDestroyed(turnContainer);
+        boolean midTowerDestroyed = turnContainer.isMidEnemyTowerDestroyed();
         if (alreadySwitched || fearSetup || !midTowerDestroyed) {
             return Optional.empty();
         }
@@ -155,15 +155,6 @@ public class MasterWizardTacticBuilder implements TacticBuilder {
             return Optional.of(topLaneEnemies > 0 ? LocationType.TOP_LANE : LocationType.BOTTOM_LANE);
         }
         return Optional.empty();
-    }
-
-    private boolean isMidEnemyTowerDestroyed(TurnContainer turnContainer) {
-        for (Building building : turnContainer.getMemory().getDestroyedEnemyGuardianTowers()) {
-            if (BuildingControl.isMidEnemyTower(turnContainer, building)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private boolean inFearMode(TurnContainer turnContainer) {

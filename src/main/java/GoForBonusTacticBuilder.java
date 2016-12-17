@@ -115,14 +115,6 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
         WizardProxy self = turnContainer.getSelf();
         Point topBonus = turnContainer.getBonusControl().topBonusPosition();
         Point bottomBonus = turnContainer.getBonusControl().bottomBonusPosition();
-        // Going for top bonus on middle is dangerous if middle enemy tower is up
-        if (turnContainer.getLanePicker().myLane() == LocationType.MIDDLE_LANE) {
-            for (Building building : turnContainer.getWorldProxy().getBuildings()) {
-                if (BuildingControl.isMidEnemyTower(turnContainer, building)) {
-                    return true;
-                }
-            }
-        }
         return self.getDistanceTo(topBonus.getX(), topBonus.getY()) >
                 self.getDistanceTo(bottomBonus.getX(), bottomBonus.getY());
     }

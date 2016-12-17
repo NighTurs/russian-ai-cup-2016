@@ -142,4 +142,13 @@ public class TurnContainer {
         }
         return false;
     }
+
+    public boolean isMidEnemyTowerDestroyed() {
+        for (Building building : memory.getDestroyedEnemyGuardianTowers()) {
+            if (BuildingControl.isMidEnemyTower(this, building)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

@@ -80,7 +80,11 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         }
 
         if (pushWaypoint == null) {
-            pushWaypoint = mapUtils.pushWaypoint(self.getX(), self.getY(), lane, turnContainer.getMemory());
+            pushWaypoint = mapUtils.pushWaypoint(self.getX(),
+                    self.getY(),
+                    lane,
+                    turnContainer.getMemory(),
+                    !turnContainer.isMidEnemyTowerDestroyed());
         }
         if (retreatWaypoint == null) {
             retreatWaypoint = mapUtils.retreatWaypoint(self.getX(), self.getY(), lane, turnContainer.getMemory());
