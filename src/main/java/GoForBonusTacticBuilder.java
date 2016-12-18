@@ -11,6 +11,8 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
     private static final int ACCEPTABLE_TICKS_TO_TAKE_BONUS_WITH_SKILLS = 1000;
     private static final int ACCEPTABLE_TICKS_TO_TAKE_BONUS_WITHOUT_SKILLS = 1300;
     private static final int KEEP_DISTANCE_TO_BONUS = 2;
+    public static final int GO_FOR_FIRST_BONUS = 2100;
+    public static final int FIRST_BONUS_TICK = 2500;
     private final DirectionOptionalTacticBuilder directionOptional;
 
     public GoForBonusTacticBuilder(DirectionOptionalTacticBuilder directionOptional) {
@@ -52,14 +54,17 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
         double ticksToBonus =
                 roughDistToBonus(self, pathFinder, goForBonus) / self.getWizardForwardSpeed(turnContainer.getGame()) +
                         ARRIVE_BEFORE_TICKS;
-        if (ticksToBonus * 2 > getAcceptableTicksToTakeBonus(turnContainer)) {
-            turnContainer.getMemory().setWentForBonusPrevTurn(false);
-            return Optional.empty();
-        }
-        if (ticksToBonus < ticksUntilBonus && (!turnContainer.getMemory().isWentForBonusPrevTurn() ||
-                ticksToBonus + EXPECTED_TICKS_TO_BONUS_ERROR < ticksUntilBonus)) {
-            turnContainer.getMemory().setWentForBonusPrevTurn(false);
-            return Optional.empty();
+        if (!turnContainer.againstAntmsuLike() || !(world.getTickIndex() >= GO_FOR_FIRST_BONUS && world.getTickIndex() <=
+                FIRST_BONUS_TICK)) {
+            if (ticksToBonus * 2 > getAcceptableTicksToTakeBonus(turnContainer)) {
+                turnContainer.getMemory().setWentForBonusPrevTurn(false);
+                return Optional.empty();
+            }
+            if (ticksToBonus < ticksUntilBonus && (!turnContainer.getMemory().isWentForBonusPrevTurn() ||
+                    ticksToBonus + EXPECTED_TICKS_TO_BONUS_ERROR < ticksUntilBonus)) {
+                turnContainer.getMemory().setWentForBonusPrevTurn(false);
+                return Optional.empty();
+            }
         }
         turnContainer.getMemory().setWentForBonusPrevTurn(true);
         turnContainer.getMemory().setExpectedPushDuration(0);

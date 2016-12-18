@@ -242,7 +242,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             return NONE_ACTION;
         }
         TeamAdvantageService teamAdvantageService = turnContainer.getTeamAdvantageService();
-        if ((!turnContainer.shouldApplyTresholdToTowerPush() ||
+        if ((!turnContainer.againstAntmsuLike() ||
                 turnContainer.getWorldProxy().getTickIndex() >= TOWER_PUSH_THRESHOLD) &&
                 (turnContainer.getGame().isRawMessagesEnabled() &&
                         teamAdvantageService.getHealthAlly() / TEAM_HEALTH_ADVANTAGE_RATIO >
