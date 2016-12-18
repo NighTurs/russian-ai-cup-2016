@@ -13,7 +13,7 @@ public class PathFinder {
     private static final int SHORT_SEARCH_GRID_SPAN = 250;
     private static final int LONG_DISTANCE_MIN_FIRST_MOVE = 500;
     private static final int MAX_ANGLE_RADIUS = 150;
-    private static final int ALLY_WIZARD_PENALTY = 2;
+    private static final int ALLY_WIZARD_PENALTY = 4;
     private static final int ALLY_WIZARD_PENALTY_RADIUS = 50;
     private final WorldProxy world;
     private final Game game;
