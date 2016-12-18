@@ -564,14 +564,6 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                     .getDistToCenter();
             double curApproachDist = Math.hypot(mov.getSpeed(), mov.getStrafeSpeed());
             if (distToEnemy > enemyCastRange && distToEnemy - curApproachDist <= enemyCastRange) {
-                System.out.println(String.format("%s trying trick untilMissle=%s distToEnemy=%s enemyCastRange=%s curApproachDist=%s tricksLeft=%s distDiff=%s",
-                        world.getTickIndex(),
-                        untilNextMissile,
-                        distToEnemy,
-                        enemyCastRange,
-                        curApproachDist,
-                        memory.getTrickTriesLeft(),
-                        distToEnemy - enemyCastRange));
                 double newApproachDist = Math.max(0, distToEnemy - enemyCastRange - TRICK_SPARE_DODGE_DISTANCE);
                 double maxSpeed = mov.getSpeed();
                 double maxStrafe = mov.getStrafeSpeed();
