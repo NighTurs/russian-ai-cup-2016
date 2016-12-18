@@ -28,6 +28,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     private static final Action NONE_ACTION = new Action(ActionType.PUSH);
     private static final double TRICK_SPARE_DODGE_DISTANCE = 0.3;
     private static final int TRICK_TRIES = 3;
+    private static final int TOWER_PUSH_THRESHOLD = 630;
     private final DirectionOptionalTacticBuilder directionOptional;
 
     public PushLaneTacticBuilder(DirectionOptionalTacticBuilder directionOptional) {
@@ -241,10 +242,12 @@ public class PushLaneTacticBuilder implements TacticBuilder {
             return NONE_ACTION;
         }
         TeamAdvantageService teamAdvantageService = turnContainer.getTeamAdvantageService();
-        if (turnContainer.getGame().isRawMessagesEnabled() &&
-                teamAdvantageService.getHealthAlly() / TEAM_HEALTH_ADVANTAGE_RATIO >
-                        teamAdvantageService.getHealthEnemy() &&
-                self.getLife() / (double) self.getMaxLife() >= TANK_TOWER_HIT_LIFE_THRESHOLD) {
+        if ((!turnContainer.shouldApplyTresholdToTowerPush() ||
+                turnContainer.getWorldProxy().getTickIndex() >= TOWER_PUSH_THRESHOLD) &&
+                (turnContainer.getGame().isRawMessagesEnabled() &&
+                        teamAdvantageService.getHealthAlly() / TEAM_HEALTH_ADVANTAGE_RATIO >
+                                teamAdvantageService.getHealthEnemy() &&
+                        self.getLife() / (double) self.getMaxLife() >= TANK_TOWER_HIT_LIFE_THRESHOLD)) {
             return NONE_ACTION;
         }
         int c = 0;
@@ -553,8 +556,8 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                 continue;
             }
             boolean iPushed =
-                    wizard.getDistanceTo(myPrevPoint.getX(), myPrevPoint.getY()) -
-                            wizard.getDistanceTo(self) > ENEMY_INTENTIONAL_MOVE_THRESHOLD;
+                    wizard.getDistanceTo(myPrevPoint.getX(), myPrevPoint.getY()) - wizard.getDistanceTo(self) >
+                            ENEMY_INTENTIONAL_MOVE_THRESHOLD;
             if (!iPushed) {
                 continue;
             }

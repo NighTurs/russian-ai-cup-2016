@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class TurnContainer {
+
+    private static final Set<String> THRESHOLD_TO_PUSH_INTO_TOWER = new HashSet<>(Collections.singletonList("Antmsu"));
     private static final Set<String> SIDE_PUSH_MASTERS = new HashSet<>(Collections.singletonList("core2duo"));
 
     private final WizardProxy self;
@@ -137,6 +139,15 @@ public class TurnContainer {
     public boolean againstSidePushMaster() {
         for (Player player : worldProxy.getPlayers()) {
             if (SIDE_PUSH_MASTERS.contains(player.getName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean shouldApplyTresholdToTowerPush() {
+        for (Player player : worldProxy.getPlayers()) {
+            if (THRESHOLD_TO_PUSH_INTO_TOWER.contains(player.getName())) {
                 return true;
             }
         }
