@@ -11,8 +11,9 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
     private static final int ACCEPTABLE_TICKS_TO_TAKE_BONUS_WITH_SKILLS = 1000;
     private static final int ACCEPTABLE_TICKS_TO_TAKE_BONUS_WITHOUT_SKILLS = 1300;
     private static final int KEEP_DISTANCE_TO_BONUS = 2;
-    public static final int GO_FOR_FIRST_BONUS = 2100;
-    public static final int FIRST_BONUS_TICK = 2500;
+    private static final int GO_FOR_FIRST_BONUS = 2000;
+    private static final int FIRST_BONUS_TICK = 2500;
+    private static final int OPTIONAL_RELAX_BONUS_MANHATTAN_BASES = 50;
     private final DirectionOptionalTacticBuilder directionOptional;
 
     public GoForBonusTacticBuilder(DirectionOptionalTacticBuilder directionOptional) {
@@ -26,9 +27,11 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
         PathFinder pathFinder = turnContainer.getPathFinder();
         WorldProxy world = turnContainer.getWorldProxy();
         Game game = turnContainer.getGame();
+        boolean againstAntmsuLike = turnContainer.againstAntmsuLike();
 
         if (self.getX() + world.getHeight() - self.getY() <=
-                turnContainer.getWorldProxy().allyBase().getX() * ALLY_HALF_MANHATTAN_BASES) {
+                turnContainer.getWorldProxy().allyBase().getX() * ALLY_HALF_MANHATTAN_BASES -
+                        (againstAntmsuLike ? OPTIONAL_RELAX_BONUS_MANHATTAN_BASES : 0)) {
             turnContainer.getMemory().setWentForBonusPrevTurn(false);
             return Optional.empty();
         }
@@ -54,7 +57,7 @@ public class GoForBonusTacticBuilder implements TacticBuilder {
         double ticksToBonus =
                 roughDistToBonus(self, pathFinder, goForBonus) / self.getWizardForwardSpeed(turnContainer.getGame()) +
                         ARRIVE_BEFORE_TICKS;
-        if (!turnContainer.againstAntmsuLike() || !(world.getTickIndex() >= GO_FOR_FIRST_BONUS && world.getTickIndex() <=
+        if (!againstAntmsuLike || !(world.getTickIndex() >= GO_FOR_FIRST_BONUS && world.getTickIndex() <=
                 FIRST_BONUS_TICK)) {
             if (ticksToBonus * 2 > getAcceptableTicksToTakeBonus(turnContainer)) {
                 turnContainer.getMemory().setWentForBonusPrevTurn(false);
