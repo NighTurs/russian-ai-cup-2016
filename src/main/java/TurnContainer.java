@@ -1,12 +1,13 @@
 import model.*;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 public class TurnContainer {
 
-    private static final Set<String> ANTMSU_LIKE = new HashSet<>(Collections.singletonList("Antmsu"));
+    private static final Set<String> ANTMSU_LIKE = new HashSet<>(Arrays.asList("Antmsu", "Commandos"));
     private static final Set<String> SIDE_PUSH_MASTERS = new HashSet<>(Collections.singletonList("core2duo"));
 
     private final WizardProxy self;
