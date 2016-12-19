@@ -29,6 +29,9 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     private static final double TRICK_SPARE_DODGE_DISTANCE = 0.3;
     private static final int TRICK_TRIES = 3;
     private static final int TOWER_PUSH_THRESHOLD = 630;
+    private static final double FLANK_MIN_ANGLE = Math.PI / 3;
+    private static final double FLANK_MAX_ANGLE = Math.PI / 2;
+    private static final double FLANKED_MIN_DISTANCE = 400;
     private final DirectionOptionalTacticBuilder directionOptional;
 
     public PushLaneTacticBuilder(DirectionOptionalTacticBuilder directionOptional) {
@@ -311,6 +314,11 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                     actionFireball.getActionType() == ActionType.STAY) {
                 shouldStay = true;
             }
+
+            if (amIFlanked(turnContainer, enemy)) {
+                return RETREAT_ACTION;
+            }
+
             if (self.getDistanceTo(enemy) < turnContainer.getCastRangeService()
                     .castRangeToWizardPessimistic(self, enemy, game, ProjectileType.MAGIC_MISSILE)
                     .getDistToCenter() - enemy.getWizardForwardSpeed(game) * 2) {
@@ -331,6 +339,24 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                                 .map(x -> new Point(x.getX(), x.getY()))
                                 .orElse(null),
                         null);
+    }
+
+    private boolean amIFlanked(TurnContainer turnContainer, WizardProxy enemy) {
+        WizardProxy self = turnContainer.getSelf();
+        LocationType lane = turnContainer.getLanePicker().myLane();
+        if (self.getDistanceTo(enemy) < FLANKED_MIN_DISTANCE) {
+            return false;
+        }
+        Point retreatPoint = turnContainer.getMapUtils()
+                .retreatWaypoint(self.getX(),
+                        self.getY(),
+                        lane,
+                        turnContainer.getMemory());
+        double toRetreat = Math.atan2(retreatPoint.getX() - self.getX(), retreatPoint.getY() - self.getY());
+        double toEnemy = Math.atan2(enemy.getX() - self.getX(), enemy.getY() - self.getY());
+        double between = Math.abs(toRetreat - toEnemy) % Math.PI;
+        System.out.println(turnContainer.getWorldProxy().getTickIndex() + " " + between);
+        return FLANK_MIN_ANGLE <= between && FLANK_MAX_ANGLE >= between;
     }
 
     private Action actionBecauseOfWizardSpell(TurnContainer turnContainer,
