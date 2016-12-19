@@ -30,7 +30,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     private static final int TRICK_TRIES = 3;
     private static final int TOWER_PUSH_THRESHOLD = 630;
     private static final double FLANK_MIN_ANGLE = Math.PI / 3;
-    private static final double FLANK_MAX_ANGLE = Math.PI / 2;
+    private static final double FLANK_MAX_ANGLE = Math.PI * 2 / 3;
     private static final double FLANKED_MIN_DISTANCE = 400;
     private final DirectionOptionalTacticBuilder directionOptional;
 
@@ -309,14 +309,16 @@ public class PushLaneTacticBuilder implements TacticBuilder {
                         0,
                         null,
                         MathMethods.distPoint(enemy.getX(), enemy.getY(), self.getX(), self.getY(), IGNORE_RANGE));
-            } else if (actionMissle.getActionType() == ActionType.STAY ||
-                    actionFrostBolt.getActionType() == ActionType.STAY ||
-                    actionFireball.getActionType() == ActionType.STAY) {
-                shouldStay = true;
             }
 
             if (amIFlanked(turnContainer, enemy)) {
                 return RETREAT_ACTION;
+            }
+
+            if (actionMissle.getActionType() == ActionType.STAY ||
+                    actionFrostBolt.getActionType() == ActionType.STAY ||
+                    actionFireball.getActionType() == ActionType.STAY) {
+                shouldStay = true;
             }
 
             if (self.getDistanceTo(enemy) < turnContainer.getCastRangeService()
@@ -355,7 +357,6 @@ public class PushLaneTacticBuilder implements TacticBuilder {
         double toRetreat = Math.atan2(retreatPoint.getX() - self.getX(), retreatPoint.getY() - self.getY());
         double toEnemy = Math.atan2(enemy.getX() - self.getX(), enemy.getY() - self.getY());
         double between = Math.abs(toRetreat - toEnemy) % Math.PI;
-        System.out.println(turnContainer.getWorldProxy().getTickIndex() + " " + between);
         return FLANK_MIN_ANGLE <= between && FLANK_MAX_ANGLE >= between;
     }
 
