@@ -28,7 +28,7 @@ public class PushLaneTacticBuilder implements TacticBuilder {
     private static final Action NONE_ACTION = new Action(ActionType.PUSH);
     private static final double TRICK_SPARE_DODGE_DISTANCE = 0.3;
     private static final int TRICK_TRIES = 3;
-    private static final int TOWER_PUSH_THRESHOLD = 1000;
+    private static final int TOWER_PUSH_THRESHOLD = 1300;
     private static final double FLANK_MIN_ANGLE = Math.PI / 3;
     private static final double FLANK_MAX_ANGLE = Math.PI * 2 / 3;
     private static final double FLANKED_MIN_DISTANCE = 400;
